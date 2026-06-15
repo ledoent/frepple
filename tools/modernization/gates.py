@@ -83,9 +83,17 @@ GATES = [
     (
         "Phase 0",
         "ts-client",
-        "TypeScript client generates with 0 errors (script ready; needs runtime+SPA repo)",
-        "pending",
-        None,
+        "Typed TS client generates from the schema + tsc-compiles (run in CI build job)",
+        "active",
+        lambda: file_contains(
+            ("tools", "modernization", "gen_api_client.sh"),
+            "spectacular",
+            "openapi-typescript",
+            "tsc",
+        )
+        and file_contains(
+            (".github", "workflows", "ubuntu24.yml"), "gen_api_client.sh"
+        ),
     ),
     (
         "Phase 0",

@@ -30,8 +30,9 @@ echo ">> generating OpenAPI schema -> ${SCHEMA}"
 echo ">> generating TypeScript types -> ${CLIENT}"
 npx --yes openapi-typescript "${SCHEMA}" -o "${CLIENT}"
 
-# 3. Smoke type-check the generated file.
+# 3. Smoke type-check the generated file. Run tsc from the typescript package
+#    (-p), in strict mode; --skipLibCheck keeps it to the generated file only.
 echo ">> type-checking ${CLIENT}"
-npx --yes typescript tsc --noEmit --strict "${CLIENT}"
+npx --yes -p typescript tsc --noEmit --strict --skipLibCheck "${CLIENT}"
 
 echo ">> done: ${SCHEMA}, ${CLIENT}"

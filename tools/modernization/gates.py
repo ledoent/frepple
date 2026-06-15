@@ -279,9 +279,15 @@ GATES = [
     (
         "Engine E2",
         "structural-asserts",
-        "Structural invariants asserted on every golden scenario",
-        "pending",
-        None,
+        "Golden-free structural-invariant scenarios (qty>=0, end>=start) over material/distribution/resource",
+        "active",
+        lambda: sum(
+            1
+            for d in os.listdir(os.path.join(REPO, "test"))
+            if d.startswith("structural_")
+            and os.path.isdir(os.path.join(REPO, "test", d))
+        )
+        >= 3,
     ),
     (
         "Engine E2",

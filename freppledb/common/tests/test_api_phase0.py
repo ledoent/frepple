@@ -1,0 +1,96 @@
+#
+# Copyright (C) 2026 by frePPLe bv
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+# LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+# OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+# WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+#
+
+"""Phase 0 modernization API tests: OpenAPI schema + JSON output endpoints."""
+
+from django.test import TestCase
+
+
+def _body(response):
+    """Return the full response body, handling streaming responses."""
+    if getattr(response, "streaming", False):
+        return b"".join(response.streaming_content)
+    return response.content
+
+
+class Phase0SchemaTest(TestCase):
+    fixtures = ["demo"]
+
+    def setUp(self):
+        self.client.login(username="admin", password="admin")
+        super().setUp()
+
+    def test_openapi_schema(self):
+        # The drf-spectacular schema must generate and be served.
+        response = self.client.get("/api/schema/")
+        self.assertEqual(response.status_code, 200)
+        body = _body(response)
+        self.assertIn(b"openapi", body)
+        self.assertIn(b"frePPLe API", body)
+
+    def test_swagger_ui(self):
+        self.assertEqual(self.client.get("/api/doc/").status_code, 200)
+
+    def test_redoc(self):
+        self.assertEqual(self.client.get("/api/redoc/").status_code, 200)
+
+
+class Phase0OutputEndpointTest(TestCase):
+    fixtures = ["demo"]
+
+    # Each output endpoint must be byte-identical to the legacy report's
+    # ?format=json response, because JSONStreamView delegates to the same
+    # report view (reusing the raw-SQL streaming path, no DRF serializer).
+    PARITY = [
+        ("/buffer/?format=json", "/api/output/inventory/"),
+        ("/demand/?format=json", "/api/output/demand/"),
+        ("/resource/?format=json", "/api/output/resource/"),
+        ("/forecast/?format=json", "/api/output/forecast/"),
+    ]
+
+    def setUp(self):
+        self.client.login(username="admin", password="admin")
+        super().setUp()
+
+    def test_output_parity(self):
+        for legacy, new in self.PARITY:
+            with self.subTest(endpoint=new):
+                old = self.client.get(legacy)
+                api = self.client.get(new)
+                self.assertEqual(old.status_code, 200, "legacy %s" % legacy)
+                self.assertEqual(api.status_code, 200, "api %s" % new)
+                self.assertEqual(
+                    _body(api),
+                    _body(old),
+                    "%s output differs from legacy %s" % (new, legacy),
+                )
+
+    def test_output_is_json_grid(self):
+        # The output endpoints return the jqGrid JSON envelope.
+        import json
+
+        response = self.client.get("/api/output/inventory/")
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(_body(response))
+        for key in ("total", "page", "records", "rows"):
+            self.assertIn(key, data)

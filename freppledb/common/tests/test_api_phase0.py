@@ -262,14 +262,21 @@ class Phase0WebsocketTest(TransactionTestCase):
 
         return async_to_sync(run)()
 
-    def test_ws_query_string_carrier(self):
+    # End-to-end WS auth (decode -> get_user -> accept) is proven by
+    # test_ws_authorization_header_echoes_scenario. The two carrier tests below
+    # verify the browser-only carriers (query string + subprotocol) that a header
+    # cannot deliver: that TokenMiddleware extracts the JWT from them and it
+    # decodes to the right user. Driving the full consumer for these carriers is a
+    # Phase 1A follow-up once the Execute-screen WS client exercises them for real.
+
+    def test_ws_query_string_carrier_decodes(self):
         token = self._token()
         info = self._probe(path="/ws/?token=" + token)
         self.assertEqual(
             (info.get("decoded") or {}).get("user"), "admin", "qs: %r" % info
         )
 
-    def test_ws_subprotocol_carrier(self):
+    def test_ws_subprotocol_carrier_decodes(self):
         token = self._token()
         info = self._probe(subprotocols=["bearer", token])
         self.assertEqual(

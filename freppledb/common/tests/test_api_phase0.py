@@ -101,3 +101,57 @@ class Phase0OutputEndpointTest(TestCase):
                     old.split(b'"records":')[0],
                     "%s envelope differs from legacy %s" % (new, legacy),
                 )
+
+
+class Phase0JwtUtilTest(TestCase):
+    """The shared JWT/scenario helpers (common/jwtauth.py) used by REST + WS."""
+
+    def test_encode_decode_roundtrip(self):
+        from freppledb.common.jwtauth import encode_jwt, decode_jwt
+
+        token = encode_jwt("default", user="admin")
+        self.assertEqual(decode_jwt(token, "default").get("user"), "admin")
+
+    def test_decode_invalid_returns_none(self):
+        from freppledb.common.jwtauth import decode_jwt
+
+        self.assertIsNone(decode_jwt("not.a.valid.token", "default"))
+
+    def test_decode_expired_raises(self):
+        import jwt as pyjwt
+        from freppledb.common.jwtauth import encode_jwt, decode_jwt
+
+        # exp is an absolute timestamp; 1 => 1970 => already expired.
+        token = encode_jwt("default", user="admin", exp=1)
+        with self.assertRaises(pyjwt.exceptions.ExpiredSignatureError):
+            decode_jwt(token, "default")
+
+    def test_extract_scenario_default(self):
+        from freppledb.common.jwtauth import extract_scenario
+
+        db, path = extract_scenario("/some/path/")
+        self.assertEqual(db, "default")
+        self.assertEqual(path, "/some/path/")
+
+    def test_extract_scenario_url_prefix(self):
+        from freppledb.common.jwtauth import extract_scenario
+        from freppledb.common.utils import get_databases
+
+        others = [d for d in get_databases() if d != "default"]
+        if not others:
+            self.skipTest("no non-default scenario configured")
+        db, path = extract_scenario("/%s/foo/bar/" % others[0])
+        self.assertEqual(db, others[0])
+        self.assertEqual(path, "/foo/bar/")
+
+    def test_extract_scenario_header(self):
+        from freppledb.common.jwtauth import extract_scenario
+        from freppledb.common.utils import get_databases
+
+        others = [d for d in get_databases() if d != "default"]
+        if not others:
+            self.skipTest("no non-default scenario configured")
+        db, path = extract_scenario(
+            "/foo/", headers=[(b"x-frepple-scenario", others[0].encode("ascii"))]
+        )
+        self.assertEqual(db, others[0])

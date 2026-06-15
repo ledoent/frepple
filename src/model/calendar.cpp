@@ -482,7 +482,13 @@ Calendar::EventIterator& Calendar::EventIterator::operator--() {
     curDate = Date::infinitePast;
   } else {
     curDate = cacheiter->first;
-    --cacheiter;
+    if (cacheiter == theCalendar->eventlist.begin())
+      // Stepping back before the first event. Decrementing begin() is undefined
+      // behaviour for a std::map iterator (and trips AddressSanitizer); represent
+      // it explicitly as end(), which the extension logic below already expects.
+      cacheiter = theCalendar->eventlist.end();
+    else
+      --cacheiter;
     if (cacheiter == theCalendar->eventlist.end()) {
       auto firstDate = theCalendar->eventlist.begin()->first;
       if (!theCalendar->eventlist.empty() && firstDate != Date::infinitePast) {

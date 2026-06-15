@@ -183,9 +183,12 @@ def _extract_credentials(scope, headers):
             break
 
     # 2. Websocket subprotocol carrier: ["bearer", "<jwt>"].
-    subs = scope.get("subprotocols") or []
-    if len(subs) >= 2 and subs[0].lower() == "bearer":
-        return "bearer", subs[1], subs[0]
+    subs = [
+        s.decode("ascii") if isinstance(s, bytes) else s
+        for s in (scope.get("subprotocols") or [])
+    ]
+    if len(subs) >= 2 and subs[0].strip().lower() == "bearer":
+        return "bearer", subs[1].strip(), "bearer"
 
     # 3. Websocket query-string carrier: ?token=<jwt>.
     qs = scope.get("query_string", b"")

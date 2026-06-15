@@ -169,22 +169,23 @@ class Phase0WebsocketTest(TransactionTestCase):
 
     fixtures = ["demo"]
 
-    def _connect(self, headers=None, subprotocols=None):
+    def _connect(self, path="/ws/", headers=None, subprotocols=None):
         from asgiref.sync import async_to_sync
         from channels.testing import WebsocketCommunicator
         from freppledb.asgi import application
 
         async def run():
             communicator = WebsocketCommunicator(
-                application, "/ws/", headers=headers, subprotocols=subprotocols
+                application, path, headers=headers, subprotocols=subprotocols
             )
-            connected, _ = await communicator.connect()
+            # connect() returns (False, close_code) on reject, else (True, subprotocol).
+            connected, detail = await communicator.connect()
             reply = None
             if connected:
                 await communicator.send_to(text_data=json.dumps({"message": "hi"}))
                 reply = json.loads(await communicator.receive_from())
             await communicator.disconnect()
-            return connected, reply
+            return connected, detail, reply
 
         return async_to_sync(run)()
 
@@ -194,18 +195,20 @@ class Phase0WebsocketTest(TransactionTestCase):
         return encode_jwt("default", user="admin")
 
     def test_ws_rejects_without_token(self):
-        connected, _ = self._connect()
+        connected, detail, _ = self._connect()
         self.assertFalse(connected)
+        self.assertEqual(detail, 4401)
 
     def test_ws_rejects_bad_token(self):
-        connected, _ = self._connect(
+        connected, detail, _ = self._connect(
             headers=[(b"authorization", b"Bearer not.a.valid.token")]
         )
         self.assertFalse(connected)
+        self.assertEqual(detail, 4401)
 
     def test_ws_authorization_header_echoes_scenario(self):
         token = self._token()
-        connected, reply = self._connect(
+        connected, _, reply = self._connect(
             headers=[(b"authorization", b"Bearer " + token.encode("ascii"))]
         )
         self.assertTrue(connected)
@@ -213,8 +216,17 @@ class Phase0WebsocketTest(TransactionTestCase):
         self.assertEqual(reply["database"], "default")
         self.assertEqual(reply["user"], "admin")
 
+    def test_ws_query_string_carrier(self):
+        token = self._token()
+        connected, detail, reply = self._connect(path="/ws/?token=" + token)
+        self.assertTrue(connected, "rejected with close code %r" % detail)
+        self.assertEqual(reply["database"], "default")
+        self.assertEqual(reply["user"], "admin")
+
     def test_ws_subprotocol_carrier(self):
         token = self._token()
-        connected, reply = self._connect(subprotocols=["bearer", token])
-        self.assertTrue(connected)
+        connected, detail, reply = self._connect(subprotocols=["bearer", token])
+        self.assertTrue(connected, "rejected with close code %r" % detail)
+        # The negotiated subprotocol is echoed back in the handshake.
+        self.assertEqual(detail, "bearer")
         self.assertEqual(reply["database"], "default")

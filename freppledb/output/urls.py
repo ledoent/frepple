@@ -24,6 +24,7 @@
 from django.urls import re_path
 
 from freppledb import mode
+from freppledb.common.api.output import JSONStreamView
 
 # Automatically add these URLs when the application is installed
 autodiscover = True
@@ -38,6 +39,36 @@ if mode == "WSGI":
     import freppledb.output.views.pegging
 
     urlpatterns = [
+        # JSON output API (Phase 0 modernization): thin wrappers that reuse each
+        # report's raw-SQL ?format=json streaming path. See common/api/output.py.
+        re_path(
+            r"^api/output/inventory/$",
+            JSONStreamView.as_view(
+                report_class=freppledb.output.views.buffer.OverviewReport
+            ),
+            name="api_output_inventory",
+        ),
+        re_path(
+            r"^api/output/demand/$",
+            JSONStreamView.as_view(
+                report_class=freppledb.output.views.demand.OverviewReport
+            ),
+            name="api_output_demand",
+        ),
+        re_path(
+            r"^api/output/resource/$",
+            JSONStreamView.as_view(
+                report_class=freppledb.output.views.resource.OverviewReport
+            ),
+            name="api_output_resource",
+        ),
+        re_path(
+            r"^api/output/pegging/(.+)/$",
+            JSONStreamView.as_view(
+                report_class=freppledb.output.views.pegging.ReportByDemand
+            ),
+            name="api_output_pegging",
+        ),
         re_path(
             r"^buffer/item/(.+)/$",
             freppledb.output.views.buffer.OverviewReport.as_view(),

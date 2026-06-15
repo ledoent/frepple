@@ -27,6 +27,11 @@ from django.urls import include, re_path
 from django.conf import settings
 from django.views.generic.base import RedirectView
 from django.views.i18n import JavaScriptCatalog
+from drf_spectacular.views import (
+    SpectacularAPIView,
+    SpectacularRedocView,
+    SpectacularSwaggerView,
+)
 
 from freppledb.admin import data_site
 
@@ -71,4 +76,16 @@ urlpatterns += [
     ),
     re_path(r"^data/", data_site.urls),
     re_path(r"^api-auth/", include("rest_framework.urls", namespace="rest_framework")),
+    # OpenAPI schema + interactive docs (Phase 0 modernization API).
+    re_path(r"^api/schema/$", SpectacularAPIView.as_view(), name="schema"),
+    re_path(
+        r"^api/doc/$",
+        SpectacularSwaggerView.as_view(url_name="schema"),
+        name="swagger-ui",
+    ),
+    re_path(
+        r"^api/redoc/$",
+        SpectacularRedocView.as_view(url_name="schema"),
+        name="redoc",
+    ),
 ]

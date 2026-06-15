@@ -443,6 +443,17 @@ REST_FRAMEWORK = {
         "rest_framework.renderers.JSONRenderer",
         "freppledb.common.api.renderers.freppleBrowsableAPI",
     ),
+    # OpenAPI schema generation (drf-spectacular). Inert at request time -
+    # only used when generating the schema, so the existing API is unaffected.
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+# OpenAPI / Swagger settings for the modernization REST API (Phase 0).
+SPECTACULAR_SETTINGS = {
+    "TITLE": "frePPLe API",
+    "DESCRIPTION": "REST API for the frePPLe planning application.",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
 }
 
 # Bootstrap

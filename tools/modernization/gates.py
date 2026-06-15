@@ -239,8 +239,8 @@ GATES = [
         "Engine E1",
         "review-report",
         "Engine code-review + debt/TODO triage report committed",
-        "pending",
-        None,
+        "active",
+        lambda: has_file("ENGINE_REVIEW.md"),
     ),
     (
         "Engine E1",

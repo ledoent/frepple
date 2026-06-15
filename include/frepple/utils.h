@@ -2647,6 +2647,25 @@ class PythonData : public DataValue {
     Py_INCREF(obj);
   }
 
+  /* Factory that ADOPTS an already-owned ("new") reference.
+   * Unlike the PythonData(const PyObject*) constructor, this does NOT
+   * increment the refcount: the caller's owned reference is taken over and
+   * released by the resulting PythonData's destructor. Use this to wrap the
+   * result of a Python C-API call that returns a new reference (e.g.
+   * PyObject_CallFunction/CallMethod) without leaking it. A nullptr is
+   * treated as Py_None. The caller must hold the GIL. */
+  static inline PythonData fromOwned(PyObject* o) {
+    PythonData d;
+    d.setNull();
+    if (o)
+      d.obj = o;  // adopt the owned reference as-is (no INCREF)
+    else {
+      d.obj = Py_None;
+      Py_INCREF(Py_None);
+    }
+    return d;
+  }
+
   /* Set the internal pointer to nullptr. */
   inline void setNull() {
     if (obj) Py_DECREF(obj);

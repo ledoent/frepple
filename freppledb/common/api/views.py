@@ -95,6 +95,10 @@ class frePPleListCreateAPIView(ListBulkCreateUpdateDestroyAPIView):
     permission_classes = (frepplePermissionClass,)
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            # OpenAPI schema generation has no scenario request; use the base
+            # queryset so the endpoint is still introspected.
+            return super().get_queryset()
         queryset = super().get_queryset().using(self.request.database)
         return queryset
 
@@ -122,6 +126,9 @@ class frePPleRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
     permission_classes = (frepplePermissionClass,)
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            # OpenAPI schema generation has no scenario request.
+            return super().get_queryset()
         if self.request.database == "default":
             return super().get_queryset()
         else:

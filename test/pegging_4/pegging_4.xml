@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <plan xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <!-- No .expect golden: alternate/routing selection output is platform-sensitive,
+       so this runs as a smoke/ASan regression test (passes if frepple processes it
+       without error). The 7 golden-backed pegging tests cover correctness. -->
 	<name>Test model for alternate selection</name>
 	<description>
     This test verifies that alternates are searched and selected correctly.

@@ -75,8 +75,10 @@ PyObject* OperatorDelete::create(PyTypeObject*, PyObject*, PyObject* kwds) {
       };
     }
 
-    // Return the object
-    Py_INCREF(s);
+    // Return the object. No Py_INCREF: as in the sibling SolverCreate::create
+    // factory, the freshly-created object already has a refcount of 1 and must
+    // stay collectable by the garbage collector. An extra INCREF would pin it
+    // forever (a leak of one OperatorDelete per construction).
     return static_cast<PyObject*>(s);
   } catch (...) {
     PythonType::evalException();

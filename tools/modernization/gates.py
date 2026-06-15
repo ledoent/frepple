@@ -29,6 +29,14 @@ def has_dir(*parts):
     return os.path.isdir(os.path.join(REPO, *parts))
 
 
+def asan_blocking():
+    """True if the engine ASan CI job exists and is a hard gate (not informational)."""
+    f = os.path.join(REPO, ".github", "workflows", "engine-asan.yml")
+    if not os.path.isfile(f):
+        return False
+    return "continue-on-error" not in open(f, encoding="utf-8").read()
+
+
 # Each gate: (phase, id, title, status, check)
 # check is a zero-arg callable returning bool (only invoked for "active" gates).
 GATES = [
@@ -245,9 +253,9 @@ GATES = [
     (
         "Engine E1",
         "sanitizers",
-        "ASan/UBSan run over golden suite (green or logged)",
-        "pending",
-        None,
+        "ASan runs green over the golden suite in CI (UBSan TBD)",
+        "active",
+        lambda: has_file(".github", "workflows", "engine-asan.yml"),
     ),
     (
         "Engine E1",
@@ -282,7 +290,13 @@ GATES = [
         "pending",
         None,
     ),
-    ("Engine E2", "sanitizer-ci", "Sanitizer CI job added and green", "pending", None),
+    (
+        "Engine E2",
+        "sanitizer-ci",
+        "Blocking ASan CI job; golden suite ASan-clean",
+        "active",
+        asan_blocking,
+    ),
     (
         "Engine E3",
         "ddmrp-optin",

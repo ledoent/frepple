@@ -1,14 +1,12 @@
-name: Engine ASan (informational)
+name: Engine ASan
 
 # Debug build with AddressSanitizer over the C++ engine golden-test suite.
 # Catches memory errors (buffer overflows, use-after-free) that the Release CI
 # can't see. Deterministically flags the weight[] out-of-bounds read via the
 # test/forecast_11 long-history scenario.
 #
-# NON-BLOCKING (continue-on-error) for now: the suite under ASan may also trip
-# on OTHER known bugs from the immediate-fix queue (model/pegging). Keep this
-# informational until that queue is cleared, then flip to blocking and activate
-# the E2 sanitizer-ci gate.
+# BLOCKING: the golden suite is ASan-clean (the 8 crashes rooted in the
+# Calendar::EventIterator operator-- UB are fixed). A new memory error now fails CI.
 #
 # Path-filtered so doc/CI/gate-only commits don't trigger the heavy build.
 
@@ -32,7 +30,8 @@ jobs:
   build-asan:
     name: Debug + ASan engine tests
     runs-on: ubuntu-24.04
-    continue-on-error: true # informational until the immediate-fix queue is cleared
+    # Blocking: the golden suite is ASan-clean (the 8 crashes from the
+    # Calendar::EventIterator UB are fixed). Future memory regressions fail CI.
     steps:
       - name: Checking out source code
         uses: actions/checkout@v6

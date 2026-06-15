@@ -452,9 +452,10 @@ void Buffer::setMaximum(double m) {
         // Update existing event
         static_cast<flowplanlist::EventMaxQuantity*>(&*oo)->setMax(max_val);
       } else {
-        // Delete existing event
-        flowplans.erase(&(*oo));
-        delete &(*(oo++));
+        // Delete existing event (capture before erase; see setMaximumCalendar)
+        flowplanlist::Event* tmp = &*oo;
+        flowplans.erase(tmp);
+        delete tmp;
       }
       return;
     }
@@ -474,12 +475,17 @@ void Buffer::setMaximumCalendar(Calendar* cal) {
   setChanged();
 
   // Delete previous events.
-  for (auto oo = flowplans.begin(); oo != flowplans.end();)
-    if (oo->getEventType() == 4) {
-      flowplans.erase(&(*oo));
-      delete &(*(oo++));
-    } else
-      ++oo;
+  // Capture the node and advance the iterator BEFORE erasing: erase() nulls the
+  // node's next/prev, so "oo++" after the erase would read freed memory and jump
+  // to end() (stopping after the first deletion). Mirrors setMinimumCalendar.
+  for (auto oo = flowplans.begin(); oo != flowplans.end();) {
+    flowplanlist::Event* tmp = &*oo;
+    ++oo;
+    if (tmp->getEventType() == 4) {
+      flowplans.erase(tmp);
+      delete tmp;
+    }
+  }
 
   // Null pointer passed. Change back to time independent max.
   if (!cal) {

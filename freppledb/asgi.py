@@ -78,8 +78,12 @@ for app in settings.INSTALLED_APPS:
     try:
         mod = import_module("%s.services" % app)
     except ModuleNotFoundError as e:
-        # Silently ignore if the missing module is called urls
-        if "services" not in str(e):
+        # Skip if the app simply has no services module, or if the engine module
+        # ("frepple") isn't importable in this process. The latter lets asgi.py be
+        # imported in a plain Django/test/schema context (where the embedded C++
+        # interpreter is absent) instead of only inside the worker; the engine-only
+        # services it would have registered are meaningless there anyway.
+        if e.name != "frepple" and not (e.name or "").endswith(".services"):
             raise e
 
 

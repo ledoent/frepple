@@ -113,16 +113,24 @@ GATES = [
     (
         "Phase 0",
         "jwt-auth",
-        "JWT auth works for REST + WS; 401 on bad token",
-        "pending",
-        None,
+        "JWT auth works for REST + WS; 401/close on bad token (shared jwtauth util)",
+        "active",
+        lambda: file_contains(("freppledb", "common", "jwtauth.py"), "def decode_jwt")
+        and file_contains(("freppledb", "asgi.py"), "decode_jwt")
+        and file_contains(
+            ("freppledb", "common", "tests", "test_api_phase0.py"),
+            "test_ws_rejects_bad_token",
+        ),
     ),
     (
         "Phase 0",
         "ws-scenario-routing",
-        "WS layer reads scenario from URL/header (not env var)",
-        "pending",
-        None,
+        "WS layer reads scenario from URL/header (not env var); websocket protocol enabled",
+        "active",
+        lambda: file_contains(("freppledb", "asgi.py"), "extract_scenario")
+        and file_contains(
+            ("freppledb", "asgi.py"), '"websocket": AllowedHostsOriginValidator'
+        ),
     ),
     # ---- Phase 1A — Websocket beachhead (Execute screen) ----
     (

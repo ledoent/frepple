@@ -23,7 +23,9 @@
 
 """Phase 0 modernization API tests: OpenAPI schema + JSON output endpoints."""
 
-from django.test import TestCase
+import json
+
+from django.test import TestCase, TransactionTestCase
 
 
 def _body(response):
@@ -155,3 +157,64 @@ class Phase0JwtUtilTest(TestCase):
             "/foo/", headers=[(b"x-frepple-scenario", others[0].encode("ascii"))]
         )
         self.assertEqual(db, others[0])
+
+
+class Phase0WebsocketTest(TransactionTestCase):
+    """The authenticated websocket endpoint (asgi.py).
+
+    Uses TransactionTestCase: the consumer's user lookup runs through
+    database_sync_to_async on a separate thread/connection, so the fixture user
+    must be committed (a wrapping TestCase transaction would hide it).
+    """
+
+    fixtures = ["demo"]
+
+    def _connect(self, headers=None, subprotocols=None):
+        from asgiref.sync import async_to_sync
+        from channels.testing import WebsocketCommunicator
+        from freppledb.asgi import application
+
+        async def run():
+            communicator = WebsocketCommunicator(
+                application, "/ws/", headers=headers, subprotocols=subprotocols
+            )
+            connected, _ = await communicator.connect()
+            reply = None
+            if connected:
+                await communicator.send_to(text_data=json.dumps({"message": "hi"}))
+                reply = json.loads(await communicator.receive_from())
+            await communicator.disconnect()
+            return connected, reply
+
+        return async_to_sync(run)()
+
+    def _token(self):
+        from freppledb.common.jwtauth import encode_jwt
+
+        return encode_jwt("default", user="admin")
+
+    def test_ws_rejects_without_token(self):
+        connected, _ = self._connect()
+        self.assertFalse(connected)
+
+    def test_ws_rejects_bad_token(self):
+        connected, _ = self._connect(
+            headers=[(b"authorization", b"Bearer not.a.valid.token")]
+        )
+        self.assertFalse(connected)
+
+    def test_ws_authorization_header_echoes_scenario(self):
+        token = self._token()
+        connected, reply = self._connect(
+            headers=[(b"authorization", b"Bearer " + token.encode("ascii"))]
+        )
+        self.assertTrue(connected)
+        self.assertEqual(reply["message"], "hi")
+        self.assertEqual(reply["database"], "default")
+        self.assertEqual(reply["user"], "admin")
+
+    def test_ws_subprotocol_carrier(self):
+        token = self._token()
+        connected, reply = self._connect(subprotocols=["bearer", token])
+        self.assertTrue(connected)
+        self.assertEqual(reply["database"], "default")

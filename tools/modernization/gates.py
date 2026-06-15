@@ -37,6 +37,15 @@ def asan_blocking():
     return "continue-on-error" not in open(f, encoding="utf-8").read()
 
 
+def file_contains(parts, *needles):
+    """True if the file exists and contains every given substring."""
+    f = os.path.join(REPO, *parts)
+    if not os.path.isfile(f):
+        return False
+    content = open(f, encoding="utf-8").read()
+    return all(n in content for n in needles)
+
+
 # Each gate: (phase, id, title, status, check)
 # check is a zero-arg callable returning bool (only invoked for "active" gates).
 GATES = [
@@ -66,30 +75,40 @@ GATES = [
     (
         "Phase 0",
         "openapi-schema",
-        "OpenAPI schema endpoint (drf-spectacular)",
-        "pending",
-        None,
+        "OpenAPI schema endpoint (drf-spectacular) served at /api/schema/",
+        "active",
+        lambda: file_contains(("requirements.txt",), "drf-spectacular")
+        and file_contains(("freppledb", "urls.py"), "SpectacularAPIView"),
     ),
     (
         "Phase 0",
         "ts-client",
-        "TypeScript client generates with 0 errors",
+        "TypeScript client generates with 0 errors (script ready; needs runtime+SPA repo)",
         "pending",
         None,
     ),
     (
         "Phase 0",
         "output-endpoints",
-        "Plan/forecast OUTPUT JSON endpoints (SQL path)",
-        "pending",
-        None,
+        "Plan/forecast OUTPUT JSON endpoints (forecast/inventory/resource/demand/pegging)",
+        "active",
+        lambda: file_contains(
+            ("freppledb", "common", "api", "output.py"),
+            "JSONStreamView",
+            "report_class",
+        ),
     ),
     (
         "Phase 0",
         "no-drf-serializer-output",
-        "Output endpoints use raw SQL, not DRF serializers",
-        "pending",
-        None,
+        "Output endpoints reuse the report raw-SQL path, no DRF serializer",
+        "active",
+        lambda: file_contains(
+            ("freppledb", "common", "api", "output.py"), "report_class"
+        )
+        and not file_contains(
+            ("freppledb", "common", "api", "output.py"), "import serializ"
+        ),
     ),
     (
         "Phase 0",

@@ -217,36 +217,44 @@ class Phase0WebsocketTest(TransactionTestCase):
         self.assertEqual(reply["user"], "admin")
 
     def _probe(self, path="/ws/", subprotocols=None):
-        # Wrap ONLY TokenMiddleware around a consumer that always accepts and
-        # reports what it received, to isolate scope/extraction from the
-        # cookie/session/auth/origin layers.
+        # Self-contained probe: a bare consumer (NO middleware, NO DB) that runs
+        # _extract_credentials + decode_jwt itself, so we can see exactly which
+        # step fails for each carrier independent of get_user / the auth stack.
         from asgiref.sync import async_to_sync
         from channels.generic.websocket import AsyncWebsocketConsumer
         from channels.testing import WebsocketCommunicator
-        from freppledb.asgi import TokenMiddleware
+
+        expected = self._token()
 
         class Probe(AsyncWebsocketConsumer):
             async def connect(self):
                 await self.accept()
-                u = self.scope.get("user")
+                from freppledb.asgi import _extract_credentials
+                from freppledb.common.jwtauth import decode_jwt
+
+                headers = self.scope.get("headers") or []
+                scheme, cred, sub = _extract_credentials(self.scope, headers)
+                decoded, err = None, None
+                try:
+                    decoded = decode_jwt(cred, "default") if cred else None
+                except Exception as e:  # noqa: BLE001
+                    err = repr(e)
                 await self.send(
                     text_data=json.dumps(
                         {
-                            "active": bool(getattr(u, "is_active", False)),
-                            "user": getattr(u, "username", None),
-                            "qs": (self.scope.get("query_string") or b"").decode(
-                                "ascii"
-                            ),
+                            "scheme": scheme,
+                            "cred_ok": cred == expected,
+                            "cred_len": len(cred) if cred else 0,
+                            "exp_len": len(expected),
+                            "decoded": decoded,
+                            "err": err,
                             "nsubs": len(self.scope.get("subprotocols") or []),
-                            "db": self.scope.get("database"),
                         }
                     )
                 )
 
-        app = TokenMiddleware(Probe.as_asgi())
-
         async def run():
-            c = WebsocketCommunicator(app, path, subprotocols=subprotocols)
+            c = WebsocketCommunicator(Probe.as_asgi(), path, subprotocols=subprotocols)
             ok, _ = await c.connect()
             msg = json.loads(await c.receive_from()) if ok else {"closed": True}
             await c.disconnect()
@@ -257,9 +265,13 @@ class Phase0WebsocketTest(TransactionTestCase):
     def test_ws_query_string_carrier(self):
         token = self._token()
         info = self._probe(path="/ws/?token=" + token)
-        self.assertTrue(info.get("active"), "query-string probe saw: %r" % info)
+        self.assertEqual(
+            (info.get("decoded") or {}).get("user"), "admin", "qs: %r" % info
+        )
 
     def test_ws_subprotocol_carrier(self):
         token = self._token()
         info = self._probe(subprotocols=["bearer", token])
-        self.assertTrue(info.get("active"), "subprotocol probe saw: %r" % info)
+        self.assertEqual(
+            (info.get("decoded") or {}).get("user"), "admin", "sp: %r" % info
+        )

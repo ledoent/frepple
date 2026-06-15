@@ -10,9 +10,16 @@ Next.js, expose a clean API + websocket/event layer, and rework the Odoo integra
 
 ## 1. Guiding principles
 
-1. **Keep the crown jewels.** The C++ planning solver (A-grade) and forecast engine (B+)
-   are mature, performance-critical, and welded to an embedded CPython interpreter. They are
-   wrapped, never rewritten. A rewrite's best-case outcome is "identical behavior, years later."
+1. **Keep the crown jewels — but earn any rewrite decision with evidence, don't assume it.**
+   The C++ solver and forecast engine are mature (modern C++23), performance-critical, and welded to
+   an embedded CPython interpreter via a MetaClass reflection layer — not separable. They are wrapped,
+   not rewritten *today*. BUT the engine is genuinely pointer-heavy (~70 manual `new`/`delete`, raw-
+   pointer graph traversal in solver/pegging) with real memory-safety surface and a few correctness
+   TODOs — a legitimate Rust argument. The decision is deferred to the **Engine track** (§7): review →
+   harden tests (the rewrite oracle) → run the already-wired ASan/UBSan → pilot ONE module in Rust/PyO3
+   → let data decide. A full-engine rewrite's best case is still "identical behavior, years later"; a
+   *scoped* pilot (greenfield DDMRP solver, or the isolated forecast module) is how you evaluate Rust
+   without betting the proven MRP core.
 2. **Keep Django as orchestration + data layer.** Modern deps (DRF 3.15, channels 4, allauth 65),
    multi-scenario DB isolation, and fast raw-SQL report queries are years of plumbing worth keeping.
    The web layer is *not* the bottleneck — I/O and N+1 queries are.
@@ -301,5 +308,71 @@ Ingress (one host)
     (legacy UI keeps sessions during co-existence). Scenario stays in the URL path (`/api/v1/<scenario>/`).
   - Phase 3.5 (Helm): one ingress with the three path routes above; web + nextjs are separate stateless
     Deployments behind it.
-```
-```
+
+---
+
+## 7. Engine track (parallel to the UI/API phases) — RESOLVED direction (2026-06-15)
+
+A separate workstream focused on the C++ engine: code quality, test hardening, DDMRP, and an
+evidence-based Rust decision. Runs **in parallel** with Phases 0–3 (different skill set, no shared
+critical path). Sequenced E1 → E4.
+
+### Context from the engine audit
+- **C++ is modern (C++23) and clean-ish**, but **pointer-heavy**: ~70 manual `new`/`delete`, raw-pointer
+  graph traversal in `src/model/pegging.cpp` + `src/solver/solveroperation.cpp`; deep embedded-CPython
+  coupling (`src/utils/python.cpp`, MetaClass reflection) — **not separable** from Python.
+- **Scary correctness TODOs** in the hot path (e.g. `solveroperation.cpp:123` "doesn't this loop
+  increment a_penalty incorrectly???"; `operatordelete.cpp` "dangerous side effects").
+- **Test oracle exists but has a hole:** 82 golden scenarios → ~275 `.expect` files → ~196k lines of
+  expected output (strong), BUT **pegging has only 2 tests**, no C++ unit tests, no stress/perf/negative
+  tests, Python bindings barely tested. ASan/UBSan are already wired in CMake but not run in CI.
+- **Licensing confirmed (skeptical re-audit):** the repo is the **complete, ungated MIT Community
+  Edition**. `edition` is a cosmetic display string; **no runtime license/edition gating** in Python
+  or C++; paid features (2FA, advanced Odoo export, quoting) are a **separate absent codebase**, not a
+  gate. (A few connector methods like `export_forecasts` carry "Enterprise only" *comments* but nothing
+  enforces them.)
+- **DDMRP:** frePPLe is classic full-BOM-explosion push MRP (single `solver_mrp`, `solverplan.cpp:64`).
+  Partial DDMRP primitives already exist — **decoupled lead time** (`buffer.cpp:1300 getDecoupledLeadTime`,
+  a real head start) and a decoupling-point flag (`model.h:5220 IP_DATA`, used only for pegging today).
+  Missing: buffer zones (R/Y/G), ADU, Net Flow Position, qualified/spike demand, dynamic buffer
+  adjustment. Adding a hybrid `solver_ddmrp` mode is a **feature project (~a quarter)**, not a rewrite.
+
+### E1 — Thorough code review + sanitizer baseline
+**Build:** Structured review of engine + Django (debt catalog, the scary TODOs triaged); run the
+already-wired **ASan/UBSan** over the golden test suite; run clang-tidy/analyzer; document findings.
+**Verification gate:**
+- [ ] Review report committed: prioritized debt list, TODO triage, risk hotspots (pegging, solver state machine).
+- [ ] ASan + UBSan run green (or all findings logged with severity) across the 82 golden scenarios.
+- [ ] clang-tidy baseline captured; no *new* warnings gate going forward.
+
+### E2 — Test hardening (the rewrite-safety oracle)
+**Build:** Fill the pegging hole (multi-level BOM, circular supply, coalescence, alternate flows);
+add **structural assertions** to the test runner (capacity never exceeded, demand≤due-or-flagged);
+add a stress scenario (10k+ operationplans) with time/memory baselines; add negative/infeasible cases.
+**Verification gate:**
+- [ ] Pegging test count ≥ 12 (from 2), covering ≥3-level BOM + a cycle case.
+- [ ] Structural-invariant assertions run on every golden scenario (not just line-diff).
+- [ ] One stress scenario with recorded solve-time + peak-memory baseline (regression-gated).
+- [ ] Sanitizer CI job added and green on the branch.
+
+### E3 — DDMRP mode (hybrid with classic MRP)
+**Build:** Data model (buffer zone profiles, ADU config, spike horizon — via new fields/attributes);
+ADU + Net Flow Position calculation; a `solver_ddmrp` path with per-buffer opt-in; reuse the existing
+`getDecoupledLeadTime`. Classic-MRP buffers and DDMRP buffers coexist in one model.
+**Verification gate:**
+- [ ] Per-buffer `ddmrp` opt-in routes to the DDMRP solver; non-opted buffers unchanged (MRP parity preserved).
+- [ ] Golden DDMRP scenarios: zone (R/Y/G) transitions + NFP-triggered replenishment match hand-computed expectations.
+- [ ] Spike-horizon qualification demonstrably filters order spikes from the buffer signal.
+- [ ] Decoupling point stops BOM explosion at the buffer (vs. classic full explosion) — verified on a multi-level model.
+
+### E4 — Rust pilot + decision (evidence-based)
+**Build:** Pilot ONE isolated module in Rust via **PyO3** — preferred candidate is the **new DDMRP
+solver** (greenfield → zero regression risk) OR the **forecast module** (`src/forecast/`, ~5.6k LOC,
+most isolated). Measure dev experience, safety (no manual refcount/ptr bugs), perf vs C++.
+**Verification gate (this gate decides Rust yes/no):**
+- [ ] Pilot module passes the SAME golden/structural tests as its C++ equivalent (or, for greenfield
+      DDMRP, its own hand-computed oracle).
+- [ ] Measured comparison recorded: LOC, perf (solve time/mem), and a written safety/maintainability
+      assessment vs the C++ baseline.
+- [ ] **Decision documented**: proceed to wider Rust migration, or stop at the pilot — justified by the
+      measurements above, not preference. (A "stop" outcome is a success — it's an answered question.)

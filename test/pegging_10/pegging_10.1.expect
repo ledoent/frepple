@@ -1,0 +1,249 @@
+Upstream pegging of operationplan with id buffer A @ factory with quantity 10.0 of 'Inventory buffer A @ factory':
+	0	buffer A @ factory	Inventory buffer A @ factory	10.0
+Downstream pegging of operationplan with id buffer A @ factory with quantity 10.0 of 'Inventory buffer A @ factory':
+	0	buffer A @ factory	Inventory buffer A @ factory	10.0
+	1	1008	Ship buffer A @ factory	10.0
+Upstream pegging of operationplan with id buffer B @ factory with quantity 10.0 of 'Inventory buffer B @ factory':
+	0	buffer B @ factory	Inventory buffer B @ factory	10.0
+Downstream pegging of operationplan with id buffer B @ factory with quantity 10.0 of 'Inventory buffer B @ factory':
+	0	buffer B @ factory	Inventory buffer B @ factory	10.0
+	1	1009	Ship buffer B @ factory	10.0
+Upstream pegging of operationplan with id buffer C @ factory with quantity 10.0 of 'Inventory buffer C @ factory':
+	0	buffer C @ factory	Inventory buffer C @ factory	10.0
+Downstream pegging of operationplan with id buffer C @ factory with quantity 10.0 of 'Inventory buffer C @ factory':
+	0	buffer C @ factory	Inventory buffer C @ factory	10.0
+	1	1010	Ship buffer C @ factory	10.0
+Upstream pegging of operationplan with id buffer D @ factory with quantity 10.0 of 'Inventory buffer D @ factory':
+	0	buffer D @ factory	Inventory buffer D @ factory	10.0
+Downstream pegging of operationplan with id buffer D @ factory with quantity 10.0 of 'Inventory buffer D @ factory':
+	0	buffer D @ factory	Inventory buffer D @ factory	10.0
+Upstream pegging of operationplan with id buffer E @ factory with quantity 10.0 of 'Inventory buffer E @ factory':
+	0	buffer E @ factory	Inventory buffer E @ factory	10.0
+Downstream pegging of operationplan with id buffer E @ factory with quantity 10.0 of 'Inventory buffer E @ factory':
+	0	buffer E @ factory	Inventory buffer E @ factory	10.0
+	1	1011	Ship buffer E @ factory	10.0
+Upstream pegging of operationplan with id buffer F @ factory with quantity 15.0 of 'Inventory buffer F @ factory':
+	0	buffer F @ factory	Inventory buffer F @ factory	15.0
+Downstream pegging of operationplan with id buffer F @ factory with quantity 15.0 of 'Inventory buffer F @ factory':
+	0	buffer F @ factory	Inventory buffer F @ factory	15.0
+	1	1012	Ship buffer F @ factory	15.0
+Upstream pegging of operationplan with id buffer G @ factory with quantity 15.0 of 'Inventory buffer G @ factory':
+	0	buffer G @ factory	Inventory buffer G @ factory	15.0
+Downstream pegging of operationplan with id buffer G @ factory with quantity 15.0 of 'Inventory buffer G @ factory':
+	0	buffer G @ factory	Inventory buffer G @ factory	15.0
+	1	1013	Ship buffer G @ factory	15.0
+Upstream pegging of operationplan with id 1014 with quantity 20.0 of 'Purchase item H1 @ factory from Supplier for H':
+	0	1014	Purchase item H1 @ factory from Supplier for H	20.0
+Downstream pegging of operationplan with id 1014 with quantity 20.0 of 'Purchase item H1 @ factory from Supplier for H':
+	0	1014	Purchase item H1 @ factory from Supplier for H	20.0
+	1	1015	Ship item H1 @ factory	20.0
+Upstream pegging of operationplan with id 1016 with quantity 20.0 of 'Purchase item H2 @ factory from Supplier for H':
+	0	1016	Purchase item H2 @ factory from Supplier for H	20.0
+Downstream pegging of operationplan with id 1016 with quantity 20.0 of 'Purchase item H2 @ factory from Supplier for H':
+	0	1016	Purchase item H2 @ factory from Supplier for H	20.0
+	1	1017	Ship item H2 @ factory	20.0
+Upstream pegging of operationplan with id 1018 with quantity 20.0 of 'Purchase item H3 @ factory from Supplier for H':
+	0	1018	Purchase item H3 @ factory from Supplier for H	20.0
+Downstream pegging of operationplan with id 1018 with quantity 20.0 of 'Purchase item H3 @ factory from Supplier for H':
+	0	1018	Purchase item H3 @ factory from Supplier for H	20.0
+	1	1019	Ship item H3 @ factory	20.0
+Upstream pegging of operationplan with id 1020 with quantity 20.0 of 'Purchase item I1 @ factory from Supplier for I':
+	0	1020	Purchase item I1 @ factory from Supplier for I	20.0
+Downstream pegging of operationplan with id 1020 with quantity 20.0 of 'Purchase item I1 @ factory from Supplier for I':
+	0	1020	Purchase item I1 @ factory from Supplier for I	20.0
+	1	1021	Ship item I1 @ factory	20.0
+Upstream pegging of operationplan with id 1022 with quantity 20.0 of 'Purchase item I2 @ factory from Supplier for I':
+	0	1022	Purchase item I2 @ factory from Supplier for I	20.0
+Downstream pegging of operationplan with id 1022 with quantity 20.0 of 'Purchase item I2 @ factory from Supplier for I':
+	0	1022	Purchase item I2 @ factory from Supplier for I	20.0
+	1	1023	Ship item I2 @ factory	20.0
+Upstream pegging of operationplan with id 1024 with quantity 20.0 of 'Purchase item I3 @ factory from Supplier for I':
+	0	1024	Purchase item I3 @ factory from Supplier for I	20.0
+Downstream pegging of operationplan with id 1024 with quantity 20.0 of 'Purchase item I3 @ factory from Supplier for I':
+	0	1024	Purchase item I3 @ factory from Supplier for I	20.0
+	1	1025	Ship item I3 @ factory	20.0
+Upstream pegging of operationplan with id 1026 with quantity 20.0 of 'Purchase item J1 @ factory from Supplier for J':
+	0	1026	Purchase item J1 @ factory from Supplier for J	20.0
+Downstream pegging of operationplan with id 1026 with quantity 20.0 of 'Purchase item J1 @ factory from Supplier for J':
+	0	1026	Purchase item J1 @ factory from Supplier for J	20.0
+	1	1027	Ship item J1 @ factory	20.0
+Upstream pegging of operationplan with id 1028 with quantity 20.0 of 'Purchase item J2 @ factory from Supplier for J':
+	0	1028	Purchase item J2 @ factory from Supplier for J	20.0
+Downstream pegging of operationplan with id 1028 with quantity 20.0 of 'Purchase item J2 @ factory from Supplier for J':
+	0	1028	Purchase item J2 @ factory from Supplier for J	20.0
+	1	1029	Ship item J2 @ factory	20.0
+Upstream pegging of operationplan with id 1030 with quantity 20.0 of 'Purchase item J3 @ factory from Supplier for J':
+	0	1030	Purchase item J3 @ factory from Supplier for J	20.0
+Downstream pegging of operationplan with id 1030 with quantity 20.0 of 'Purchase item J3 @ factory from Supplier for J':
+	0	1030	Purchase item J3 @ factory from Supplier for J	20.0
+	1	1031	Ship item J3 @ factory	20.0
+Upstream pegging of operationplan with id 1008 with quantity 10.0 of 'Ship buffer A @ factory':
+	0	1008	Ship buffer A @ factory	10.0
+	1	buffer A @ factory	Inventory buffer A @ factory	10.0
+Downstream pegging of operationplan with id 1008 with quantity 10.0 of 'Ship buffer A @ factory':
+	0	1008	Ship buffer A @ factory	10.0
+Upstream pegging of operationplan with id 1032 with quantity 10.0 of 'Ship buffer A @ factory':
+	0	1032	Ship buffer A @ factory	10.0
+	1	1001	supply item A	10.0
+Downstream pegging of operationplan with id 1032 with quantity 10.0 of 'Ship buffer A @ factory':
+	0	1032	Ship buffer A @ factory	10.0
+Upstream pegging of operationplan with id 1009 with quantity 10.0 of 'Ship buffer B @ factory':
+	0	1009	Ship buffer B @ factory	10.0
+	1	buffer B @ factory	Inventory buffer B @ factory	10.0
+Downstream pegging of operationplan with id 1009 with quantity 10.0 of 'Ship buffer B @ factory':
+	0	1009	Ship buffer B @ factory	10.0
+Upstream pegging of operationplan with id 1010 with quantity 20.0 of 'Ship buffer C @ factory':
+	0	1010	Ship buffer C @ factory	20.0
+	1	buffer C @ factory	Inventory buffer C @ factory	10.0
+	1	1003	supply item C	10.0
+Downstream pegging of operationplan with id 1010 with quantity 20.0 of 'Ship buffer C @ factory':
+	0	1010	Ship buffer C @ factory	20.0
+Upstream pegging of operationplan with id 1011 with quantity 10.0 of 'Ship buffer E @ factory':
+	0	1011	Ship buffer E @ factory	10.0
+	1	buffer E @ factory	Inventory buffer E @ factory	10.0
+Downstream pegging of operationplan with id 1011 with quantity 10.0 of 'Ship buffer E @ factory':
+	0	1011	Ship buffer E @ factory	10.0
+Upstream pegging of operationplan with id 1012 with quantity 20.0 of 'Ship buffer F @ factory':
+	0	1012	Ship buffer F @ factory	20.0
+	1	buffer F @ factory	Inventory buffer F @ factory	15.0
+	1	1006	supply item F	5.0
+Downstream pegging of operationplan with id 1012 with quantity 20.0 of 'Ship buffer F @ factory':
+	0	1012	Ship buffer F @ factory	20.0
+Upstream pegging of operationplan with id 1013 with quantity 30.0 of 'Ship buffer G @ factory':
+	0	1013	Ship buffer G @ factory	30.0
+	1	buffer G @ factory	Inventory buffer G @ factory	15.0
+	1	1007	supply item G	15.0
+Downstream pegging of operationplan with id 1013 with quantity 30.0 of 'Ship buffer G @ factory':
+	0	1013	Ship buffer G @ factory	30.0
+Upstream pegging of operationplan with id 1015 with quantity 20.0 of 'Ship item H1 @ factory':
+	0	1015	Ship item H1 @ factory	20.0
+	1	1014	Purchase item H1 @ factory from Supplier for H	20.0
+Downstream pegging of operationplan with id 1015 with quantity 20.0 of 'Ship item H1 @ factory':
+	0	1015	Ship item H1 @ factory	20.0
+Upstream pegging of operationplan with id 1017 with quantity 20.0 of 'Ship item H2 @ factory':
+	0	1017	Ship item H2 @ factory	20.0
+	1	1016	Purchase item H2 @ factory from Supplier for H	20.0
+Downstream pegging of operationplan with id 1017 with quantity 20.0 of 'Ship item H2 @ factory':
+	0	1017	Ship item H2 @ factory	20.0
+Upstream pegging of operationplan with id 1019 with quantity 20.0 of 'Ship item H3 @ factory':
+	0	1019	Ship item H3 @ factory	20.0
+	1	1018	Purchase item H3 @ factory from Supplier for H	20.0
+Downstream pegging of operationplan with id 1019 with quantity 20.0 of 'Ship item H3 @ factory':
+	0	1019	Ship item H3 @ factory	20.0
+Upstream pegging of operationplan with id 1021 with quantity 20.0 of 'Ship item I1 @ factory':
+	0	1021	Ship item I1 @ factory	20.0
+	1	1020	Purchase item I1 @ factory from Supplier for I	20.0
+Downstream pegging of operationplan with id 1021 with quantity 20.0 of 'Ship item I1 @ factory':
+	0	1021	Ship item I1 @ factory	20.0
+Upstream pegging of operationplan with id 1023 with quantity 20.0 of 'Ship item I2 @ factory':
+	0	1023	Ship item I2 @ factory	20.0
+	1	1022	Purchase item I2 @ factory from Supplier for I	20.0
+Downstream pegging of operationplan with id 1023 with quantity 20.0 of 'Ship item I2 @ factory':
+	0	1023	Ship item I2 @ factory	20.0
+Upstream pegging of operationplan with id 1025 with quantity 20.0 of 'Ship item I3 @ factory':
+	0	1025	Ship item I3 @ factory	20.0
+	1	1024	Purchase item I3 @ factory from Supplier for I	20.0
+Downstream pegging of operationplan with id 1025 with quantity 20.0 of 'Ship item I3 @ factory':
+	0	1025	Ship item I3 @ factory	20.0
+Upstream pegging of operationplan with id 1027 with quantity 20.0 of 'Ship item J1 @ factory':
+	0	1027	Ship item J1 @ factory	20.0
+	1	1026	Purchase item J1 @ factory from Supplier for J	20.0
+Downstream pegging of operationplan with id 1027 with quantity 20.0 of 'Ship item J1 @ factory':
+	0	1027	Ship item J1 @ factory	20.0
+Upstream pegging of operationplan with id 1029 with quantity 20.0 of 'Ship item J2 @ factory':
+	0	1029	Ship item J2 @ factory	20.0
+	1	1028	Purchase item J2 @ factory from Supplier for J	20.0
+Downstream pegging of operationplan with id 1029 with quantity 20.0 of 'Ship item J2 @ factory':
+	0	1029	Ship item J2 @ factory	20.0
+Upstream pegging of operationplan with id 1031 with quantity 20.0 of 'Ship item J3 @ factory':
+	0	1031	Ship item J3 @ factory	20.0
+	1	1030	Purchase item J3 @ factory from Supplier for J	20.0
+Downstream pegging of operationplan with id 1031 with quantity 20.0 of 'Ship item J3 @ factory':
+	0	1031	Ship item J3 @ factory	20.0
+Upstream pegging of operationplan with id 1001 with quantity 10.0 of 'supply item A':
+	0	1001	supply item A	10.0
+Downstream pegging of operationplan with id 1001 with quantity 10.0 of 'supply item A':
+	0	1001	supply item A	10.0
+	1	1032	Ship buffer A @ factory	10.0
+Upstream pegging of operationplan with id 1002 with quantity 10.0 of 'supply item B':
+	0	1002	supply item B	10.0
+Downstream pegging of operationplan with id 1002 with quantity 10.0 of 'supply item B':
+	0	1002	supply item B	10.0
+Upstream pegging of operationplan with id 1003 with quantity 10.0 of 'supply item C':
+	0	1003	supply item C	10.0
+Downstream pegging of operationplan with id 1003 with quantity 10.0 of 'supply item C':
+	0	1003	supply item C	10.0
+	1	1010	Ship buffer C @ factory	10.0
+Upstream pegging of operationplan with id 1004 with quantity 10.0 of 'supply item D':
+	0	1004	supply item D	10.0
+Downstream pegging of operationplan with id 1004 with quantity 10.0 of 'supply item D':
+	0	1004	supply item D	10.0
+Upstream pegging of operationplan with id 1005 with quantity 10.0 of 'supply item E':
+	0	1005	supply item E	10.0
+Downstream pegging of operationplan with id 1005 with quantity 10.0 of 'supply item E':
+	0	1005	supply item E	10.0
+Upstream pegging of operationplan with id 1006 with quantity 10.0 of 'supply item F':
+	0	1006	supply item F	10.0
+Downstream pegging of operationplan with id 1006 with quantity 10.0 of 'supply item F':
+	0	1006	supply item F	10.0
+	1	1012	Ship buffer F @ factory	5.0
+Upstream pegging of operationplan with id 1007 with quantity 50.0 of 'supply item G':
+	0	1007	supply item G	50.0
+Downstream pegging of operationplan with id 1007 with quantity 50.0 of 'supply item G':
+	0	1007	supply item G	50.0
+	1	1013	Ship buffer G @ factory	15.0
+Pegging of demand ignore me with quantity 20.0:
+Pegging of demand order A with quantity 20.0:
+	0	1008	Ship buffer A @ factory	10.0
+	1	buffer A @ factory	Inventory buffer A @ factory	10.0
+	0	1032	Ship buffer A @ factory	10.0
+	1	1001	supply item A	10.0
+Pegging of demand order B with quantity 20.0:
+	0	1009	Ship buffer B @ factory	10.0
+	1	buffer B @ factory	Inventory buffer B @ factory	10.0
+Pegging of demand order C with quantity 20.0:
+	0	1010	Ship buffer C @ factory	20.0
+	1	buffer C @ factory	Inventory buffer C @ factory	10.0
+	1	1003	supply item C	10.0
+Pegging of demand order D with quantity 20.0:
+Pegging of demand order E with quantity 20.0:
+	0	1011	Ship buffer E @ factory	10.0
+	1	buffer E @ factory	Inventory buffer E @ factory	10.0
+Pegging of demand order F with quantity 20.0:
+	0	1012	Ship buffer F @ factory	20.0
+	1	buffer F @ factory	Inventory buffer F @ factory	15.0
+	1	1006	supply item F	5.0
+Pegging of demand order G with quantity 20.0:
+	0	1013	Ship buffer G @ factory	30.0
+	1	buffer G @ factory	Inventory buffer G @ factory	15.0
+	1	1007	supply item G	15.0
+Pegging of demand order H with quantity 0.0:
+Pegging of demand order H1 with quantity 20.0:
+	0	1015	Ship item H1 @ factory	20.0
+	1	1014	Purchase item H1 @ factory from Supplier for H	20.0
+Pegging of demand order H2 with quantity 20.0:
+	0	1017	Ship item H2 @ factory	20.0
+	1	1016	Purchase item H2 @ factory from Supplier for H	20.0
+Pegging of demand order H3 with quantity 20.0:
+	0	1019	Ship item H3 @ factory	20.0
+	1	1018	Purchase item H3 @ factory from Supplier for H	20.0
+Pegging of demand order I with quantity 0.0:
+Pegging of demand order I1 with quantity 20.0:
+	0	1021	Ship item I1 @ factory	20.0
+	1	1020	Purchase item I1 @ factory from Supplier for I	20.0
+Pegging of demand order I2 with quantity 20.0:
+	0	1023	Ship item I2 @ factory	20.0
+	1	1022	Purchase item I2 @ factory from Supplier for I	20.0
+Pegging of demand order I3 with quantity 20.0:
+	0	1025	Ship item I3 @ factory	20.0
+	1	1024	Purchase item I3 @ factory from Supplier for I	20.0
+Pegging of demand order J with quantity 0.0:
+Pegging of demand order J1 with quantity 20.0:
+	0	1027	Ship item J1 @ factory	20.0
+	1	1026	Purchase item J1 @ factory from Supplier for J	20.0
+Pegging of demand order J2 with quantity 20.0:
+	0	1029	Ship item J2 @ factory	20.0
+	1	1028	Purchase item J2 @ factory from Supplier for J	20.0
+Pegging of demand order J3 with quantity 20.0:
+	0	1031	Ship item J3 @ factory	20.0
+	1	1030	Purchase item J3 @ factory from Supplier for J	20.0

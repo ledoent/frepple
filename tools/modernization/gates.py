@@ -259,9 +259,14 @@ GATES = [
     (
         "Engine E2",
         "pegging-tests",
-        "Pegging tests >=12 (from 2), incl. 3-level BOM + cycle",
-        "pending",
-        None,
+        "Pegging tests >=12 (split/alt/routing/transfer/multi-level; cycle+dep deferred on crash bugs)",
+        "active",
+        lambda: sum(
+            1
+            for d in os.listdir(os.path.join(REPO, "test"))
+            if d.startswith("pegging_") and os.path.isdir(os.path.join(REPO, "test", d))
+        )
+        >= 12,
     ),
     (
         "Engine E2",

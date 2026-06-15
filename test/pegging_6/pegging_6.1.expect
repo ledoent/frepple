@@ -1,0 +1,218 @@
+Upstream pegging of operationplan with id product A @ Central WH with quantity 10.0 of 'Inventory product A @ Central WH':
+	0	product A @ Central WH	Inventory product A @ Central WH	10.0
+Downstream pegging of operationplan with id product A @ Central WH with quantity 10.0 of 'Inventory product A @ Central WH':
+	0	product A @ Central WH	Inventory product A @ Central WH	10.0
+	1	5	Ship product A from Central WH to Regional DC 1	10.0
+	2	6	Ship product A from Regional DC 1 to Local DC 1a	10.0
+	3	7	Ship product A @ Local DC 1a	10.0
+Upstream pegging of operationplan with id 8 with quantity 90.0 of 'Purchase product A @ Central WH from Supplier 1':
+	0	8	Purchase product A @ Central WH from Supplier 1	90.0
+Downstream pegging of operationplan with id 8 with quantity 90.0 of 'Purchase product A @ Central WH from Supplier 1':
+	0	8	Purchase product A @ Central WH from Supplier 1	90.0
+	1	9	Ship product A from Central WH to Regional DC 1	90.0
+	2	10	Ship product A from Regional DC 1 to Local DC 1a	90.0
+	3	11	Ship product A @ Local DC 1a	50.0
+	3	12	Ship product A @ Local DC 1a	40.0
+Upstream pegging of operationplan with id 13 with quantity 100.0 of 'Purchase product A @ Central WH from Supplier 1':
+	0	13	Purchase product A @ Central WH from Supplier 1	100.0
+Downstream pegging of operationplan with id 13 with quantity 100.0 of 'Purchase product A @ Central WH from Supplier 1':
+	0	13	Purchase product A @ Central WH from Supplier 1	100.0
+	1	14	Replenish product A @ Regional DC 2	100.0
+	2	15	Ship product A from Central WH to Regional DC 2	100.0
+	3	16	Ship product A from Regional DC 2 to Local DC 2b	100.0
+	4	17	Ship product A @ Local DC 2b	100.0
+Upstream pegging of operationplan with id 18 with quantity 100.0 of 'Purchase product A @ Central WH from Supplier 1':
+	0	18	Purchase product A @ Central WH from Supplier 1	100.0
+Downstream pegging of operationplan with id 18 with quantity 100.0 of 'Purchase product A @ Central WH from Supplier 1':
+	0	18	Purchase product A @ Central WH from Supplier 1	100.0
+	1	19	Ship product A from Central WH to Regional DC 1	100.0
+	2	20	Ship product A from Regional DC 1 to Local DC 1b	100.0
+	3	21	Ship product A @ Local DC 1b	100.0
+Upstream pegging of operationplan with id 22 with quantity 100.0 of 'Purchase product A @ Central WH from Supplier 1':
+	0	22	Purchase product A @ Central WH from Supplier 1	100.0
+Downstream pegging of operationplan with id 22 with quantity 100.0 of 'Purchase product A @ Central WH from Supplier 1':
+	0	22	Purchase product A @ Central WH from Supplier 1	100.0
+	1	1	Ship product A from Central WH to Local DC 2b	100.0
+Upstream pegging of operationplan with id 23 with quantity 100.0 of 'Purchase product A @ Regional DC 2 from Supplier 1':
+	0	24	Replenish product A @ Regional DC 2	100.0
+	1	23	Purchase product A @ Regional DC 2 from Supplier 1	100.0
+Downstream pegging of operationplan with id 23 with quantity 100.0 of 'Purchase product A @ Regional DC 2 from Supplier 1':
+	0	24	Replenish product A @ Regional DC 2	100.0
+	1	23	Purchase product A @ Regional DC 2 from Supplier 1	100.0
+	2	25	Ship product A from Regional DC 2 to Local DC 2a	100.0
+	3	26	Ship product A @ Local DC 2a	100.0
+Upstream pegging of operationplan with id 24 with quantity 100.0 of 'Replenish product A @ Regional DC 2':
+	0	24	Replenish product A @ Regional DC 2	100.0
+	1	23	Purchase product A @ Regional DC 2 from Supplier 1	100.0
+Downstream pegging of operationplan with id 24 with quantity 100.0 of 'Replenish product A @ Regional DC 2':
+	0	24	Replenish product A @ Regional DC 2	100.0
+	1	23	Purchase product A @ Regional DC 2 from Supplier 1	100.0
+	2	25	Ship product A from Regional DC 2 to Local DC 2a	100.0
+	3	26	Ship product A @ Local DC 2a	100.0
+Upstream pegging of operationplan with id 14 with quantity 100.0 of 'Replenish product A @ Regional DC 2':
+	0	14	Replenish product A @ Regional DC 2	100.0
+	1	15	Ship product A from Central WH to Regional DC 2	100.0
+	2	13	Purchase product A @ Central WH from Supplier 1	100.0
+Downstream pegging of operationplan with id 14 with quantity 100.0 of 'Replenish product A @ Regional DC 2':
+	0	14	Replenish product A @ Regional DC 2	100.0
+	1	15	Ship product A from Central WH to Regional DC 2	100.0
+	2	16	Ship product A from Regional DC 2 to Local DC 2b	100.0
+	3	17	Ship product A @ Local DC 2b	100.0
+Upstream pegging of operationplan with id 4 with quantity 100.0 of 'Ship In transit product from Source':
+	0	4	Ship In transit product from Source	100.0
+Downstream pegging of operationplan with id 4 with quantity 100.0 of 'Ship In transit product from Source':
+	0	4	Ship In transit product from Source	100.0
+Upstream pegging of operationplan with id 2 with quantity 100.0 of 'Ship In transit product from Source to Destination':
+	0	2	Ship In transit product from Source to Destination	100.0
+Downstream pegging of operationplan with id 2 with quantity 100.0 of 'Ship In transit product from Source to Destination':
+	0	2	Ship In transit product from Source to Destination	100.0
+Upstream pegging of operationplan with id 3 with quantity 100.0 of 'Ship In transit product to Destination':
+	0	3	Ship In transit product to Destination	100.0
+Downstream pegging of operationplan with id 3 with quantity 100.0 of 'Ship In transit product to Destination':
+	0	3	Ship In transit product to Destination	100.0
+Upstream pegging of operationplan with id 7 with quantity 10.0 of 'Ship product A @ Local DC 1a':
+	0	7	Ship product A @ Local DC 1a	10.0
+	1	6	Ship product A from Regional DC 1 to Local DC 1a	10.0
+	2	5	Ship product A from Central WH to Regional DC 1	10.0
+	3	product A @ Central WH	Inventory product A @ Central WH	10.0
+Downstream pegging of operationplan with id 7 with quantity 10.0 of 'Ship product A @ Local DC 1a':
+	0	7	Ship product A @ Local DC 1a	10.0
+Upstream pegging of operationplan with id 11 with quantity 50.0 of 'Ship product A @ Local DC 1a':
+	0	11	Ship product A @ Local DC 1a	50.0
+	1	10	Ship product A from Regional DC 1 to Local DC 1a	50.0
+	2	9	Ship product A from Central WH to Regional DC 1	50.0
+	3	8	Purchase product A @ Central WH from Supplier 1	50.0
+Downstream pegging of operationplan with id 11 with quantity 50.0 of 'Ship product A @ Local DC 1a':
+	0	11	Ship product A @ Local DC 1a	50.0
+Upstream pegging of operationplan with id 12 with quantity 40.0 of 'Ship product A @ Local DC 1a':
+	0	12	Ship product A @ Local DC 1a	40.0
+	1	10	Ship product A from Regional DC 1 to Local DC 1a	40.0
+	2	9	Ship product A from Central WH to Regional DC 1	40.0
+	3	8	Purchase product A @ Central WH from Supplier 1	40.0
+Downstream pegging of operationplan with id 12 with quantity 40.0 of 'Ship product A @ Local DC 1a':
+	0	12	Ship product A @ Local DC 1a	40.0
+Upstream pegging of operationplan with id 21 with quantity 100.0 of 'Ship product A @ Local DC 1b':
+	0	21	Ship product A @ Local DC 1b	100.0
+	1	20	Ship product A from Regional DC 1 to Local DC 1b	100.0
+	2	19	Ship product A from Central WH to Regional DC 1	100.0
+	3	18	Purchase product A @ Central WH from Supplier 1	100.0
+Downstream pegging of operationplan with id 21 with quantity 100.0 of 'Ship product A @ Local DC 1b':
+	0	21	Ship product A @ Local DC 1b	100.0
+Upstream pegging of operationplan with id 26 with quantity 100.0 of 'Ship product A @ Local DC 2a':
+	0	26	Ship product A @ Local DC 2a	100.0
+	1	25	Ship product A from Regional DC 2 to Local DC 2a	100.0
+	2	24	Replenish product A @ Regional DC 2	100.0
+	3	23	Purchase product A @ Regional DC 2 from Supplier 1	100.0
+Downstream pegging of operationplan with id 26 with quantity 100.0 of 'Ship product A @ Local DC 2a':
+	0	26	Ship product A @ Local DC 2a	100.0
+Upstream pegging of operationplan with id 17 with quantity 100.0 of 'Ship product A @ Local DC 2b':
+	0	17	Ship product A @ Local DC 2b	100.0
+	1	16	Ship product A from Regional DC 2 to Local DC 2b	100.0
+	2	14	Replenish product A @ Regional DC 2	100.0
+	3	15	Ship product A from Central WH to Regional DC 2	100.0
+	4	13	Purchase product A @ Central WH from Supplier 1	100.0
+Downstream pegging of operationplan with id 17 with quantity 100.0 of 'Ship product A @ Local DC 2b':
+	0	17	Ship product A @ Local DC 2b	100.0
+Upstream pegging of operationplan with id 1 with quantity 100.0 of 'Ship product A from Central WH to Local DC 2b':
+	0	1	Ship product A from Central WH to Local DC 2b	100.0
+	1	22	Purchase product A @ Central WH from Supplier 1	100.0
+Downstream pegging of operationplan with id 1 with quantity 100.0 of 'Ship product A from Central WH to Local DC 2b':
+	0	1	Ship product A from Central WH to Local DC 2b	100.0
+Upstream pegging of operationplan with id 5 with quantity 10.0 of 'Ship product A from Central WH to Regional DC 1':
+	0	5	Ship product A from Central WH to Regional DC 1	10.0
+	1	product A @ Central WH	Inventory product A @ Central WH	10.0
+Downstream pegging of operationplan with id 5 with quantity 10.0 of 'Ship product A from Central WH to Regional DC 1':
+	0	5	Ship product A from Central WH to Regional DC 1	10.0
+	1	6	Ship product A from Regional DC 1 to Local DC 1a	10.0
+	2	7	Ship product A @ Local DC 1a	10.0
+Upstream pegging of operationplan with id 9 with quantity 90.0 of 'Ship product A from Central WH to Regional DC 1':
+	0	9	Ship product A from Central WH to Regional DC 1	90.0
+	1	8	Purchase product A @ Central WH from Supplier 1	90.0
+Downstream pegging of operationplan with id 9 with quantity 90.0 of 'Ship product A from Central WH to Regional DC 1':
+	0	9	Ship product A from Central WH to Regional DC 1	90.0
+	1	10	Ship product A from Regional DC 1 to Local DC 1a	90.0
+	2	11	Ship product A @ Local DC 1a	50.0
+	2	12	Ship product A @ Local DC 1a	40.0
+Upstream pegging of operationplan with id 19 with quantity 100.0 of 'Ship product A from Central WH to Regional DC 1':
+	0	19	Ship product A from Central WH to Regional DC 1	100.0
+	1	18	Purchase product A @ Central WH from Supplier 1	100.0
+Downstream pegging of operationplan with id 19 with quantity 100.0 of 'Ship product A from Central WH to Regional DC 1':
+	0	19	Ship product A from Central WH to Regional DC 1	100.0
+	1	20	Ship product A from Regional DC 1 to Local DC 1b	100.0
+	2	21	Ship product A @ Local DC 1b	100.0
+Upstream pegging of operationplan with id 15 with quantity 100.0 of 'Ship product A from Central WH to Regional DC 2':
+	0	14	Replenish product A @ Regional DC 2	100.0
+	1	15	Ship product A from Central WH to Regional DC 2	100.0
+	2	13	Purchase product A @ Central WH from Supplier 1	100.0
+Downstream pegging of operationplan with id 15 with quantity 100.0 of 'Ship product A from Central WH to Regional DC 2':
+	0	14	Replenish product A @ Regional DC 2	100.0
+	1	15	Ship product A from Central WH to Regional DC 2	100.0
+	2	16	Ship product A from Regional DC 2 to Local DC 2b	100.0
+	3	17	Ship product A @ Local DC 2b	100.0
+Upstream pegging of operationplan with id 6 with quantity 10.0 of 'Ship product A from Regional DC 1 to Local DC 1a':
+	0	6	Ship product A from Regional DC 1 to Local DC 1a	10.0
+	1	5	Ship product A from Central WH to Regional DC 1	10.0
+	2	product A @ Central WH	Inventory product A @ Central WH	10.0
+Downstream pegging of operationplan with id 6 with quantity 10.0 of 'Ship product A from Regional DC 1 to Local DC 1a':
+	0	6	Ship product A from Regional DC 1 to Local DC 1a	10.0
+	1	7	Ship product A @ Local DC 1a	10.0
+Upstream pegging of operationplan with id 10 with quantity 90.0 of 'Ship product A from Regional DC 1 to Local DC 1a':
+	0	10	Ship product A from Regional DC 1 to Local DC 1a	90.0
+	1	9	Ship product A from Central WH to Regional DC 1	90.0
+	2	8	Purchase product A @ Central WH from Supplier 1	90.0
+Downstream pegging of operationplan with id 10 with quantity 90.0 of 'Ship product A from Regional DC 1 to Local DC 1a':
+	0	10	Ship product A from Regional DC 1 to Local DC 1a	90.0
+	1	11	Ship product A @ Local DC 1a	50.0
+	1	12	Ship product A @ Local DC 1a	40.0
+Upstream pegging of operationplan with id 20 with quantity 100.0 of 'Ship product A from Regional DC 1 to Local DC 1b':
+	0	20	Ship product A from Regional DC 1 to Local DC 1b	100.0
+	1	19	Ship product A from Central WH to Regional DC 1	100.0
+	2	18	Purchase product A @ Central WH from Supplier 1	100.0
+Downstream pegging of operationplan with id 20 with quantity 100.0 of 'Ship product A from Regional DC 1 to Local DC 1b':
+	0	20	Ship product A from Regional DC 1 to Local DC 1b	100.0
+	1	21	Ship product A @ Local DC 1b	100.0
+Upstream pegging of operationplan with id 25 with quantity 100.0 of 'Ship product A from Regional DC 2 to Local DC 2a':
+	0	25	Ship product A from Regional DC 2 to Local DC 2a	100.0
+	1	24	Replenish product A @ Regional DC 2	100.0
+	2	23	Purchase product A @ Regional DC 2 from Supplier 1	100.0
+Downstream pegging of operationplan with id 25 with quantity 100.0 of 'Ship product A from Regional DC 2 to Local DC 2a':
+	0	25	Ship product A from Regional DC 2 to Local DC 2a	100.0
+	1	26	Ship product A @ Local DC 2a	100.0
+Upstream pegging of operationplan with id 16 with quantity 100.0 of 'Ship product A from Regional DC 2 to Local DC 2b':
+	0	16	Ship product A from Regional DC 2 to Local DC 2b	100.0
+	1	14	Replenish product A @ Regional DC 2	100.0
+	2	15	Ship product A from Central WH to Regional DC 2	100.0
+	3	13	Purchase product A @ Central WH from Supplier 1	100.0
+Downstream pegging of operationplan with id 16 with quantity 100.0 of 'Ship product A from Regional DC 2 to Local DC 2b':
+	0	16	Ship product A from Regional DC 2 to Local DC 2b	100.0
+	1	17	Ship product A @ Local DC 2b	100.0
+Pegging of demand order 1a for product A with quantity 50.0:
+	0	7	Ship product A @ Local DC 1a	10.0
+	1	6	Ship product A from Regional DC 1 to Local DC 1a	10.0
+	2	5	Ship product A from Central WH to Regional DC 1	10.0
+	3	product A @ Central WH	Inventory product A @ Central WH	10.0
+	0	12	Ship product A @ Local DC 1a	40.0
+	1	10	Ship product A from Regional DC 1 to Local DC 1a	40.0
+	2	9	Ship product A from Central WH to Regional DC 1	40.0
+	3	8	Purchase product A @ Central WH from Supplier 1	40.0
+Pegging of demand order 1b for product A with quantity 50.0:
+	0	11	Ship product A @ Local DC 1a	50.0
+	1	10	Ship product A from Regional DC 1 to Local DC 1a	50.0
+	2	9	Ship product A from Central WH to Regional DC 1	50.0
+	3	8	Purchase product A @ Central WH from Supplier 1	50.0
+Pegging of demand order 2 for product A with quantity 100.0:
+	0	21	Ship product A @ Local DC 1b	100.0
+	1	20	Ship product A from Regional DC 1 to Local DC 1b	100.0
+	2	19	Ship product A from Central WH to Regional DC 1	100.0
+	3	18	Purchase product A @ Central WH from Supplier 1	100.0
+Pegging of demand order 3 for product A with quantity 100.0:
+	0	26	Ship product A @ Local DC 2a	100.0
+	1	25	Ship product A from Regional DC 2 to Local DC 2a	100.0
+	2	24	Replenish product A @ Regional DC 2	100.0
+	3	23	Purchase product A @ Regional DC 2 from Supplier 1	100.0
+Pegging of demand order 4 for product A with quantity 100.0:
+	0	17	Ship product A @ Local DC 2b	100.0
+	1	16	Ship product A from Regional DC 2 to Local DC 2b	100.0
+	2	14	Replenish product A @ Regional DC 2	100.0
+	3	15	Ship product A from Central WH to Regional DC 2	100.0
+	4	13	Purchase product A @ Central WH from Supplier 1	100.0

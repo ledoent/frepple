@@ -1,0 +1,72 @@
+Upstream pegging of operationplan with id A3 @ factory with quantity 10.0 of 'Inventory A3 @ factory':
+	0	A3 @ factory	Inventory A3 @ factory	10.0
+Downstream pegging of operationplan with id A3 @ factory with quantity 10.0 of 'Inventory A3 @ factory':
+	0	A3 @ factory	Inventory A3 @ factory	10.0
+	1	1	assembly	5.0
+	2	2	Ship product @ factory	5.0
+	1	3	assembly	5.0
+	2	2	Ship product @ factory	5.0
+Upstream pegging of operationplan with id B3 @ factory with quantity 5.0 of 'Inventory B3 @ factory':
+	0	B3 @ factory	Inventory B3 @ factory	5.0
+Downstream pegging of operationplan with id B3 @ factory with quantity 5.0 of 'Inventory B3 @ factory':
+	0	B3 @ factory	Inventory B3 @ factory	5.0
+	1	3	assembly	5.0
+	2	2	Ship product @ factory	5.0
+Upstream pegging of operationplan with id B4 @ factory with quantity 5.0 of 'Inventory B4 @ factory':
+	0	B4 @ factory	Inventory B4 @ factory	5.0
+Downstream pegging of operationplan with id B4 @ factory with quantity 5.0 of 'Inventory B4 @ factory':
+	0	B4 @ factory	Inventory B4 @ factory	5.0
+	1	1	assembly	5.0
+	2	2	Ship product @ factory	5.0
+Upstream pegging of operationplan with id C2 @ factory with quantity 10.0 of 'Inventory C2 @ factory':
+	0	C2 @ factory	Inventory C2 @ factory	10.0
+Downstream pegging of operationplan with id C2 @ factory with quantity 10.0 of 'Inventory C2 @ factory':
+	0	C2 @ factory	Inventory C2 @ factory	10.0
+	1	1	assembly	5.0
+	2	2	Ship product @ factory	5.0
+	1	3	assembly	5.0
+	2	2	Ship product @ factory	5.0
+Upstream pegging of operationplan with id C3 @ factory with quantity 5.0 of 'Inventory C3 @ factory':
+	0	C3 @ factory	Inventory C3 @ factory	5.0
+Downstream pegging of operationplan with id C3 @ factory with quantity 5.0 of 'Inventory C3 @ factory':
+	0	C3 @ factory	Inventory C3 @ factory	5.0
+Upstream pegging of operationplan with id C4 @ factory with quantity 5.0 of 'Inventory C4 @ factory':
+	0	C4 @ factory	Inventory C4 @ factory	5.0
+Downstream pegging of operationplan with id C4 @ factory with quantity 5.0 of 'Inventory C4 @ factory':
+	0	C4 @ factory	Inventory C4 @ factory	5.0
+Upstream pegging of operationplan with id 2 with quantity 10.0 of 'Ship product @ factory':
+	0	2	Ship product @ factory	10.0
+	1	3	assembly	5.0
+	2	C2 @ factory	Inventory C2 @ factory	5.0
+	2	B3 @ factory	Inventory B3 @ factory	5.0
+	2	A3 @ factory	Inventory A3 @ factory	5.0
+	1	1	assembly	5.0
+	2	C2 @ factory	Inventory C2 @ factory	5.0
+	2	B4 @ factory	Inventory B4 @ factory	5.0
+	2	A3 @ factory	Inventory A3 @ factory	5.0
+Downstream pegging of operationplan with id 2 with quantity 10.0 of 'Ship product @ factory':
+	0	2	Ship product @ factory	10.0
+Upstream pegging of operationplan with id 3 with quantity 5.0 of 'assembly':
+	0	3	assembly	5.0
+	1	C2 @ factory	Inventory C2 @ factory	5.0
+	1	B3 @ factory	Inventory B3 @ factory	5.0
+	1	A3 @ factory	Inventory A3 @ factory	5.0
+Downstream pegging of operationplan with id 3 with quantity 5.0 of 'assembly':
+	0	3	assembly	5.0
+	1	2	Ship product @ factory	5.0
+Upstream pegging of operationplan with id 1 with quantity 5.0 of 'assembly':
+	0	1	assembly	5.0
+	1	C2 @ factory	Inventory C2 @ factory	5.0
+	1	B4 @ factory	Inventory B4 @ factory	5.0
+	1	A3 @ factory	Inventory A3 @ factory	5.0
+Downstream pegging of operationplan with id 1 with quantity 5.0 of 'assembly':
+	0	1	assembly	5.0
+	1	2	Ship product @ factory	5.0
+Pegging of demand order 1 with quantity 10.0:
+	0	2	Ship product @ factory	10.0
+	1	3	assembly	5.0
+	2	C2 @ factory	Inventory C2 @ factory	10.0
+	2	B3 @ factory	Inventory B3 @ factory	5.0
+	2	A3 @ factory	Inventory A3 @ factory	10.0
+	1	1	assembly	5.0
+	2	B4 @ factory	Inventory B4 @ factory	5.0

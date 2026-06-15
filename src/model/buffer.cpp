@@ -596,8 +596,15 @@ void Buffer::followPegging(PeggingIterator& iter, FlowPlan* curflowplan,
           }
           if (f->getCumulativeProduced() > endQty)
             newqty -= f->getCumulativeProduced() - endQty;
-          OperationPlan* opplan =
-              dynamic_cast<const FlowPlan*>(&(*f))->getOperationPlan();
+          // Skip non-flowplan timeline events (min/max/onhand have no
+          // operationplan; dynamic_cast<FlowPlan*> returns null for them and
+          // dereferencing it segfaults on buffers with such events).
+          auto* fp = dynamic_cast<const FlowPlan*>(&(*f));
+          if (!fp) {
+            ++f;
+            continue;
+          }
+          OperationPlan* opplan = fp->getOperationPlan();
           OperationPlan* topopplan = opplan->getTopOwner();
           if (topopplan->getOperation()->hasType<OperationSplit>() ||
               (iter.getMaxLevel() > 0)) {
@@ -636,8 +643,13 @@ void Buffer::followPegging(PeggingIterator& iter, FlowPlan* curflowplan,
           }
           if (f->getCumulativeProduced() > endQty)
             newqty -= f->getCumulativeProduced() - endQty;
-          OperationPlan* opplan =
-              dynamic_cast<FlowPlan*>(&(*f))->getOperationPlan();
+          // Skip non-flowplan timeline events (see CASE 1A above).
+          auto* fp = dynamic_cast<const FlowPlan*>(&(*f));
+          if (!fp) {
+            --f;
+            continue;
+          }
+          OperationPlan* opplan = fp->getOperationPlan();
           OperationPlan* topopplan = opplan->getTopOwner();
           if (topopplan->getOperation()->hasType<OperationSplit>() ||
               (iter.getMaxLevel() > 0)) {
@@ -692,8 +704,13 @@ void Buffer::followPegging(PeggingIterator& iter, FlowPlan* curflowplan,
           }
           if (f->getCumulativeConsumed() > endQty)
             newqty -= f->getCumulativeConsumed() - endQty;
-          OperationPlan* opplan =
-              dynamic_cast<FlowPlan*>(&(*f))->getOperationPlan();
+          // Skip non-flowplan timeline events (see CASE 1A above).
+          auto* fp = dynamic_cast<const FlowPlan*>(&(*f));
+          if (!fp) {
+            ++f;
+            continue;
+          }
+          OperationPlan* opplan = fp->getOperationPlan();
           OperationPlan* topopplan = opplan->getTopOwner();
           if (topopplan->getOperation()->hasType<OperationSplit>() ||
               (iter.getMaxLevel() > 0)) {
@@ -751,7 +768,13 @@ void Buffer::followPegging(PeggingIterator& iter, FlowPlan* curflowplan,
                 startQty - (f->getCumulativeConsumed() + f->getQuantity());
           if (f->getCumulativeConsumed() > endQty)
             newqty -= f->getCumulativeConsumed() - endQty;
-          auto opplan = dynamic_cast<FlowPlan*>(&(*f))->getOperationPlan();
+          // Skip non-flowplan timeline events (see CASE 1A above).
+          auto* fp = dynamic_cast<const FlowPlan*>(&(*f));
+          if (!fp) {
+            --f;
+            continue;
+          }
+          auto opplan = fp->getOperationPlan();
           OperationPlan* topopplan = opplan->getTopOwner();
           if (topopplan->getOperation()->hasType<OperationSplit>() ||
               (iter.getMaxLevel() > 0)) {

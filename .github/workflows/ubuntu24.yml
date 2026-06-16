@@ -36,6 +36,15 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - name: Checking out source code
@@ -69,6 +78,8 @@ jobs:
         run: |
           export POSTGRES_HOST=localhost
           export POSTGRES_PORT=5432
+          export REDIS_HOST=localhost
+          export REDIS_PORT=6379
           export FREPPLE_DATE_STYLE="day-month-year"
           ./test/runtest.py
           ./frepplectl.py test freppledb --verbosity=2

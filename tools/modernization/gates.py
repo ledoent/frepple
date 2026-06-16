@@ -144,9 +144,15 @@ GATES = [
     (
         "Phase 1A",
         "ws-task-progress",
-        "Live task progress over WS (replaces 5s polling)",
-        "pending",
-        None,
+        "Live task progress over WS (ws/tasks/ + Task post_save broadcast; replaces 5s polling)",
+        "active",
+        lambda: file_contains(
+            ("freppledb", "asgi.py"), "TaskProgressConsumer", "ws/tasks/"
+        )
+        and file_contains(
+            ("freppledb", "execute", "models.py"), "broadcast_task_progress"
+        )
+        and file_contains(("requirements.txt",), "channels-redis"),
     ),
     ("Phase 1A", "ws-log-tail", "Live log tail streams <1s", "pending", None),
     (

@@ -128,6 +128,39 @@ class WebsocketService(AsyncWebsocketConsumer):
         )
 
 
+class TaskProgressConsumer(AsyncWebsocketConsumer):
+    """
+    Live task progress for the Execute screen (Phase 1A).
+
+    Subscribes to the scenario's ``tasks.<database>`` channel-layer group and
+    relays the messages that ``Task`` post-save broadcasts (status/progress,
+    started/finished), so the UI advances from server pushes instead of polling.
+    Authentication + scenario routing are handled by the middleware stack.
+    """
+
+    async def connect(self):
+        user = self.scope.get("user")
+        if not user or not getattr(user, "is_active", False):
+            await self.close(code=4401)
+            return
+        if self.channel_layer is None:
+            # No channel layer configured: nothing to subscribe to.
+            await self.close(code=1011)
+            return
+        self.group = "tasks.%s" % self.scope.get("database", DEFAULT_DB_ALIAS)
+        await self.channel_layer.group_add(self.group, self.channel_name)
+        await self.accept(subprotocol=self.scope.get("jwt_subprotocol"))
+
+    async def disconnect(self, close_code):
+        group = getattr(self, "group", None)
+        if group and self.channel_layer is not None:
+            await self.channel_layer.group_discard(group, self.channel_name)
+
+    async def task_update(self, event):
+        # Handler for {"type": "task.update", "task": {...}} group messages.
+        await self.send(text_data=json.dumps(event["task"]))
+
+
 class HTTPNotFound(AsyncHttpConsumer):
     async def handle(self, body):
         self.scope["response_headers"].append((b"Content-Type", b"text/plain"))
@@ -375,7 +408,15 @@ application = ProtocolTypeRouter(
                 SessionMiddleware(
                     TokenMiddleware(
                         AuthAndPermissionMiddleware(
-                            URLRouter([re_path(r"^ws/$", WebsocketService.as_asgi())])
+                            URLRouter(
+                                [
+                                    re_path(
+                                        r"^ws/tasks/$",
+                                        TaskProgressConsumer.as_asgi(),
+                                    ),
+                                    re_path(r"^ws/$", WebsocketService.as_asgi()),
+                                ]
+                            )
                         )
                     )
                 )

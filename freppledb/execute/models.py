@@ -372,3 +372,49 @@ class DataExport(models.Model):
         if os.sep in self.name:
             raise Exception("Export names can't contain %s" % os.sep)
         super().save(*args, **kwargs)
+
+
+from django.db.models.signals import post_save  # noqa: E402
+from django.dispatch import receiver  # noqa: E402
+
+
+@receiver(post_save, sender=Task)
+def broadcast_task_progress(sender, instance, **kwargs):
+    """
+    Publish a task's status/progress to the scenario's websocket group so the
+    Execute screen updates live (Phase 1A) instead of polling every 5s.
+
+    The worker process saves progress into Task.status ("0%"->...->"Done"); this
+    relays each change over the channel layer (Redis in a load-balanced deploy)
+    to web pods, which fan it out to connected browsers. A broadcast failure
+    (e.g. Redis unavailable) must never break task bookkeeping, so it is
+    swallowed.
+    """
+    from asgiref.sync import async_to_sync
+    from channels.layers import get_channel_layer
+
+    layer = get_channel_layer()
+    if layer is None:
+        return
+    database = instance._state.db or DEFAULT_DB_ALIAS
+    try:
+        async_to_sync(layer.group_send)(
+            "tasks.%s" % database,
+            {
+                "type": "task.update",
+                "task": {
+                    "id": instance.id,
+                    "name": instance.name,
+                    "status": instance.status,
+                    "message": instance.message,
+                    "started": (
+                        instance.started.isoformat() if instance.started else None
+                    ),
+                    "finished": (
+                        instance.finished.isoformat() if instance.finished else None
+                    ),
+                },
+            },
+        )
+    except Exception:
+        logger.warning("Could not broadcast task progress", exc_info=True)

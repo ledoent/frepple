@@ -44,18 +44,23 @@ class Phase1ATaskProgressTest(TransactionTestCase):
         # rather than through the middleware's threaded get_user, which is
         # unreliable in later TransactionTestCase methods. The admin user is read
         # on the main thread (which always sees the loaded fixtures).
+        from types import SimpleNamespace
+
         from asgiref.sync import async_to_sync
         from channels.layers import get_channel_layer
         from channels.testing import WebsocketCommunicator
         from freppledb.asgi import TaskProgressConsumer
-        from freppledb.common.models import User
 
-        admin = User.objects.using("default").get(username="admin")
+        # The consumer only inspects user.is_active, so a zero-DB stand-in keeps
+        # this focused on the relay and free of fixture/connection flakiness.
+        active_user = SimpleNamespace(
+            is_active=True, is_authenticated=True, username="admin"
+        )
         consumer_app = TaskProgressConsumer.as_asgi()
 
         async def auth_app(scope, receive, send):
             scope = dict(scope)
-            scope["user"] = admin
+            scope["user"] = active_user
             scope["database"] = "default"
             return await consumer_app(scope, receive, send)
 

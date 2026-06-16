@@ -115,9 +115,13 @@ and "null the back-pointer before deleting" comments.
   → silent wrong pegging quantities when `OperationDependency` edges exist (`model.h:9817`,
   `pegging.cpp:323-339,68-77`).
 - **H3** `setMaximumCalendar` iterator-after-erase (`buffer.cpp:477-482`) — see fix #9.
-- **H4** `followPegging` does `dynamic_cast<FlowPlan*>(...)->...` with **no null check** inside
-  quantity-driven unbounded scans → null-deref crash if a non-flowplan event falls in the window
-  (`buffer.cpp:594,634,690,748`).
+- **H4 [FIXED]** `followPegging` did `dynamic_cast<FlowPlan*>(...)->...` with **no null check** inside
+  quantity-driven unbounded scans → null-deref if a non-flowplan event (min/max/onhand) falls in the
+  window. All four scan cases (CASE 1A/1B/2A/2B, `buffer.cpp:602,647,708,772`) now null-check the cast
+  and skip the event. A remaining macOS-only Release *segfault* on `pegging_4/5/7` turned out to be a
+  local toolchain artifact (RTTI/`dynamic_cast` across the `libfrepple.dylib` boundary): under Linux
+  Debug+ASan *and* Release (reproduced in Docker) all 12 pegging scenarios run clean, so the scenarios
+  were restored to the suite as no-crash smoke tests.
 - **M2** `OperationPlan` is a god object (~220 methods, 13 pointer members across 5 linked structures) —
   concentrates the memory-safety risk.
 

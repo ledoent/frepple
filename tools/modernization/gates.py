@@ -302,14 +302,14 @@ GATES = [
     (
         "Engine E2",
         "pegging-tests",
-        "Pegging tests 2->9 (split/transfer/multi-level/offset); alternate/routing+cycle+dep deferred on crash bugs",
+        "Pegging tests 2->12 (split/transfer/multi-level/offset/alternate/routing); followPegging casts guarded, crash was macOS-local",
         "active",
         lambda: sum(
             1
             for d in os.listdir(os.path.join(REPO, "test"))
             if d.startswith("pegging_") and os.path.isdir(os.path.join(REPO, "test", d))
         )
-        >= 9,
+        >= 12,
     ),
     (
         "Engine E2",

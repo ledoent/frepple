@@ -37,20 +37,30 @@ class Phase1ATaskProgressTest(TransactionTestCase):
 
     fixtures = ["demo"]
 
-    def _bearer(self):
-        from freppledb.common.jwtauth import encode_jwt
-
-        token = encode_jwt("default", user="admin")
-        return [(b"authorization", b"Bearer " + token.encode("ascii"))]
-
     def test_ws_tasks_relays_group_message(self):
+        # This verifies the consumer's group->client RELAY (auth is covered by
+        # test_ws_tasks_rejects_unauthenticated + the Phase 0 jwt-auth tests).
+        # We authenticate by injecting an active user into the consumer scope
+        # rather than through the middleware's threaded get_user, which is
+        # unreliable in later TransactionTestCase methods. The admin user is read
+        # on the main thread (which always sees the loaded fixtures).
         from asgiref.sync import async_to_sync
         from channels.layers import get_channel_layer
         from channels.testing import WebsocketCommunicator
-        from freppledb.asgi import application
+        from freppledb.asgi import TaskProgressConsumer
+        from freppledb.common.models import User
+
+        admin = User.objects.using("default").get(username="admin")
+        consumer_app = TaskProgressConsumer.as_asgi()
+
+        async def auth_app(scope, receive, send):
+            scope = dict(scope)
+            scope["user"] = admin
+            scope["database"] = "default"
+            return await consumer_app(scope, receive, send)
 
         async def run():
-            c = WebsocketCommunicator(application, "/ws/tasks/", headers=self._bearer())
+            c = WebsocketCommunicator(auth_app, "/ws/tasks/")
             connected, detail = await c.connect()
             if not connected:
                 return {"connected": False, "detail": detail}

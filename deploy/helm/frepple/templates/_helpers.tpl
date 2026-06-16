@@ -48,6 +48,19 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
   value: "6379"
 - name: FREPPLE_DATE_STYLE
   value: day-month-year
+# Generated/persisted signing key (not the public in-repo default).
+- name: FREPPLE_SECRETKEY
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "frepple.name" . }}-secret
+      key: SECRET_KEY
+# Serve with tracebacks off + a real host allowlist even though it's runserver.
+- name: FREPPLE_DEBUG
+  value: "false"
+- name: FREPPLE_ALLOWED_HOSTS
+  value: {{ .Values.allowedHosts | default .Values.host | quote }}
+- name: FREPPLE_LOAD_DEMO
+  value: {{ .Values.app.loadDemo | quote }}
 {{- if .Values.ingress.tls }}
 # TLS is terminated at the ingress; tell Django the request is secure (via the
 # forwarded-proto header) and trust the https origin so login POST passes CSRF.

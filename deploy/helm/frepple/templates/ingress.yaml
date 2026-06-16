@@ -21,6 +21,10 @@ spec:
   rules:
     - host: {{ .Values.host }}
       http:
+        # Routing table — keep in sync with e2e/nginx.conf (compose) and the
+        # frontend next.config.mjs dev rewrites. These match the DEFAULT scenario
+        # (empty URL prefix); a scenario switch (/<scenario>/...) is not routed
+        # here, so this env is single-scenario until prefix-aware rules are added.
         paths:
           # Websockets + engine HTTP services -> asgi (daphne).
           - { path: /ws, pathType: Prefix, backend: { service: { name: {{ include "frepple.name" . }}-app, port: { name: ws } } } }

@@ -47,6 +47,8 @@ app:
   replicas: 1
   # Run an initial plan on first boot so the screens have data.
   initRunplan: true
+  # Load the demo dataset on first boot (FREPPLE_LOAD_DEMO). Set false for a
+  # blank scenario.
   loadDemo: true
   web:
     resources:
@@ -63,9 +65,10 @@ frontend:
     requests: { cpu: 25m, memory: 128Mi }
     limits: { cpu: 500m, memory: 512Mi }
 
-# Django SECRET_KEY. Left empty -> generated once and preserved across upgrades
-# (via lookup). Set explicitly to pin it.
+# Django SECRET_KEY (+ JWT signing). Left empty -> the chart generates one and
+# preserves it across upgrades via a lookup (templates/secret.yaml), wired into
+# the app as FREPPLE_SECRETKEY. Set explicitly to pin/share a key.
 secretKey: ""
 
-# Defaults to {{ .Values.host }} when empty.
+# FREPPLE_ALLOWED_HOSTS for the app. Defaults to {{ .Values.host }} when empty.
 allowedHosts: ""

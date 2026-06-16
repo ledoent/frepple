@@ -40,13 +40,23 @@ spec:
             - { name: http, containerPort: 8000 }
           volumeMounts:
             - { name: logs, mountPath: /app/logs }
+          # Probe with the public Host header: with DEBUG off + a real
+          # ALLOWED_HOSTS, a bare pod-IP Host would be rejected (DisallowedHost).
           readinessProbe:
-            httpGet: { path: /data/login/, port: 8000 }
+            httpGet:
+              path: /data/login/
+              port: 8000
+              httpHeaders:
+                - { name: Host, value: {{ .Values.host | quote }} }
             initialDelaySeconds: 30
             periodSeconds: 10
             failureThreshold: 30
           livenessProbe:
-            httpGet: { path: /data/login/, port: 8000 }
+            httpGet:
+              path: /data/login/
+              port: 8000
+              httpHeaders:
+                - { name: Host, value: {{ .Values.host | quote }} }
             initialDelaySeconds: 120
             periodSeconds: 20
             failureThreshold: 6
@@ -66,6 +76,11 @@ spec:
             initialDelaySeconds: 40
             periodSeconds: 10
             failureThreshold: 30
+          livenessProbe:
+            tcpSocket: { port: 8001 }
+            initialDelaySeconds: 120
+            periodSeconds: 20
+            failureThreshold: 6
           resources: {{- toYaml .Values.app.asgi.resources | nindent 12 }}
 ---
 apiVersion: v1

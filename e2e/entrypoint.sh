@@ -9,7 +9,8 @@ export POSTGRES_HOST="${POSTGRES_HOST:-db}"
 export POSTGRES_PORT="${POSTGRES_PORT:-5432}"
 
 echo ">> waiting for postgres at ${POSTGRES_HOST}:${POSTGRES_PORT}"
-until pg_isready -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -U frepple >/dev/null 2>&1; do
+until pg_isready -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" \
+  -U "${POSTGRES_USER:-frepple}" >/dev/null 2>&1; do
   sleep 1
 done
 
@@ -20,8 +21,11 @@ case "${1:-wsgi}" in
     echo ">> createdatabase + migrate"
     ${FREPPLECTL} createdatabase --skip-if-exists || true
     ${FREPPLECTL} migrate --noinput
-    echo ">> loading demo data"
-    ${FREPPLECTL} loaddata demo --verbosity=0 || true
+    # Demo data on by default; a deployment can skip it with FREPPLE_LOAD_DEMO=false.
+    if [ "${FREPPLE_LOAD_DEMO:-true}" != "false" ] && [ "${FREPPLE_LOAD_DEMO:-true}" != "0" ]; then
+      echo ">> loading demo data"
+      ${FREPPLECTL} loaddata demo --verbosity=0 || true
+    fi
     # Marker so the asgi role can wait for init to finish.
     ${FREPPLECTL} dbshell <<<"CREATE TABLE IF NOT EXISTS e2e_ready(ok int);" || true
     # Optional: compute an initial plan so the screens have data (set by the Helm

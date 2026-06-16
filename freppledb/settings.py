@@ -104,7 +104,9 @@ DEBUG_JS = DEBUG
 # will match example.com, www.example.com, and any other subdomain of example.com.
 # A value of '*' will match anything, effectively disabling this feature.
 # This option is only active when DEBUG = false.
-ALLOWED_HOSTS = ["*"]
+# Space-separated FREPPLE_ALLOWED_HOSTS narrows this for a deployment (the Helm
+# chart sets it to the public host); defaults to '*' for dev/test.
+ALLOWED_HOSTS = os.environ.get("FREPPLE_ALLOWED_HOSTS", "*").split() or ["*"]
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name

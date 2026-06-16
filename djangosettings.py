@@ -36,14 +36,21 @@ try:
     DEBUG = "runserver" in sys.argv
 except Exception:
     DEBUG = False
+# A deployment can force DEBUG off even when served via `runserver --insecure`
+# (FREPPLE_DEBUG=false), so a public env isn't running with tracebacks on.
+_debug_env = os.environ.get("FREPPLE_DEBUG")
+if _debug_env is not None:
+    DEBUG = _debug_env.strip().lower() in ("1", "true", "yes", "on")
 DEBUG_JS = DEBUG
 
 ADMINS = (
     # ('Your Name', 'your_email@domain.com'),
 )
 
-# Make this unique, and don't share it with anybody.
-SECRET_KEY = "%@mzit!i8b*$zc&6oev96=RANDOMSTRING"
+# Make this unique, and don't share it with anybody. A deployment should set
+# FREPPLE_SECRETKEY (the Helm chart generates and persists one per release); the
+# literal below is only a dev/test fallback and must not protect a real env.
+SECRET_KEY = os.environ.get("FREPPLE_SECRETKEY") or "%@mzit!i8b*$zc&6oev96=RANDOMSTRING"
 
 # Configuration of the frepple database
 MIN_NUMBER_OF_SCENARIOS = 2

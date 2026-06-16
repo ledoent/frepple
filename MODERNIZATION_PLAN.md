@@ -229,6 +229,23 @@ fix the confirmed N+1s with set-based prefetch; split into (a) scheduled master-
 - [ ] Memory: a large plan does not OOMKill the worker (MAXMEMORYSIZE ≤ pod limit, verified).
 - [ ] `helm upgrade` performs a zero-downtime rollout of `web`/`nextjs`.
 
+**Delivered (staging review env) — `deploy/helm/frepple/`:**
+- Live at **https://frepple-staging.hz.ledoweb.com** (k3s `hetzner-ledo`, ns `frepple-staging`):
+  modernized Execute + Forecast screens on the **real C++ engine**. TLS via cert-manager
+  `letsencrypt-prod`; one nginx ingress mirrors `e2e/nginx.conf` routing (`/ws`,`/forecast/detail`,
+  `/flush`→asgi; `/api`,`/data`,`/static`,`/execute/launch`→web; `/`→SPA).
+- Images built on the **ledoent x86 ARC runners** (`.github/workflows/deploy-staging.yml`, plain
+  `docker build` on the dind sidecar) → `ghcr.io/ledoent/frepple-{app,frontend}:<sha>`. Test-new-images
+  loop: push → workflow → `helm upgrade --set image.tag=<sha>` → rollout (verified twice).
+- Postgres = shared CNPG `shared-db` (superuser, frepple creates `frepple0/1/2`). Redis in-release for
+  channels fan-out. App is **single-replica/Recreate** (web+asgi co-located sharing an `emptyDir` log dir,
+  since the cluster has only RWO storage) — the HPA/multi-pod gate above is the documented v2 (needs RWX
+  + a separated worker).
+- TLS-behind-proxy correctness: `FREPPLE_SECURE_PROXY_SSL_HEADER` + `FREPPLE_CSRF_TRUSTED_ORIGINS` set so
+  Django trusts the https origin; the SPA sends `X-CSRFToken` on the runplan launch POST.
+- Verified: all 6 Playwright specs (smoke + a11y + **live-progress**: Run plan → engine → WS → terminal
+  state) green against the live URL; cert Ready; `/data/login/`,`/execute`,`/forecast` → 200.
+
 ### Phase 4 (optional) — Go/Rust BFF
 **Only if measured need.** Thin gateway in front of Django for WS fan-out at scale or hot
 read-path offload. **Never the solver.**

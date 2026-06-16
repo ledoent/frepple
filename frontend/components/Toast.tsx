@@ -4,6 +4,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -20,10 +21,12 @@ const ToastCtx = createContext<ToastApi>(() => {});
 // previous silent failures (a click with no visible result).
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
-  let seq = 0;
+  // Stable monotonic counter for unique keys, even for toasts pushed in the same
+  // millisecond (a useRef survives re-renders; a render-local `let` would not).
+  const seq = useRef(0);
 
   const push = useCallback<ToastApi>((kind, title, body) => {
-    const id = Date.now() + seq++;
+    const id = Date.now() + seq.current++;
     setToasts((t) => [...t, { id, kind, title, body }]);
     setTimeout(() => {
       setToasts((t) => t.filter((x) => x.id !== id));

@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getToken } from "./auth";
+import { authedFetch } from "./api";
+import { HttpError, isAuthError } from "./errors";
 import {
   parseForecast,
   type ForecastSeries,
@@ -19,29 +20,29 @@ export function useForecast(
   buckets: ForecastBucketMeta[];
   loading: boolean;
   error: string | null;
+  authError: boolean;
   reload: () => void;
 } {
   const [series, setSeries] = useState<ForecastSeries[]>([]);
   const [buckets, setBuckets] = useState<ForecastBucketMeta[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [authError, setAuthError] = useState(false);
   const [nonce, setNonce] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setError(null);
+    setAuthError(false);
 
     async function load() {
       try {
-        const token = await getToken();
         const prefix = scenario ? `/${scenario}` : "";
         const qs = name ? `?name=${encodeURIComponent(name)}` : "";
-        const res = await fetch(`${prefix}/api/output/forecast/${qs}`, {
-          headers: { Authorization: `Bearer ${token}` },
-          credentials: "include",
-        });
-        if (!res.ok) throw new Error(`forecast fetch failed: ${res.status}`);
+        const res = await authedFetch(`${prefix}/api/output/forecast/${qs}`);
+        if (!res.ok)
+          throw new HttpError(res.status, `forecast fetch failed: ${res.status}`);
         const text = await res.text();
         if (cancelled) return;
         let json: unknown;
@@ -58,7 +59,9 @@ export function useForecast(
         setSeries(parsed.series);
         setBuckets(parsed.buckets);
       } catch (e) {
-        if (!cancelled) setError(e instanceof Error ? e.message : String(e));
+        if (cancelled) return;
+        if (isAuthError(e)) setAuthError(true);
+        setError(e instanceof Error ? e.message : String(e));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -70,5 +73,12 @@ export function useForecast(
     };
   }, [scenario, name, nonce]);
 
-  return { series, buckets, loading, error, reload: () => setNonce((n) => n + 1) };
+  return {
+    series,
+    buckets,
+    loading,
+    error,
+    authError,
+    reload: () => setNonce((n) => n + 1),
+  };
 }

@@ -26,6 +26,10 @@ export function useTaskLog(
         const ws = await openAuthedSocket(
           `${scenarioPrefix(scenario)}/ws/tasks/${taskId}/log/`,
         );
+        if (closed) {
+          ws.close();
+          return; // unmounted/switched task while awaiting the token
+        }
         wsRef.current = ws;
         ws.onopen = () => setConnected(true);
         ws.onmessage = (e: MessageEvent) => {
@@ -42,7 +46,6 @@ export function useTaskLog(
     connect();
     return () => {
       closed = true;
-      void closed;
       wsRef.current?.close();
     };
   }, [taskId, scenario]);

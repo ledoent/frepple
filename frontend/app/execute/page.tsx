@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { getToken } from "@/lib/auth";
-import { csrfToken } from "@/lib/csrf";
+import { authedFetch } from "@/lib/api";
+import { isAuthError } from "@/lib/errors";
 import { loginUrl } from "@/lib/session";
 import { useTaskProgress, type TaskUpdate } from "@/lib/useTaskProgress";
 import { useTaskLog } from "@/lib/useTaskLog";
@@ -26,32 +26,28 @@ export default function ExecutePage() {
   async function launchPlan() {
     setLaunching(true);
     try {
-      const token = await getToken();
-      const headers: Record<string, string> = {
-        Authorization: `Bearer ${token}`,
-      };
-      const csrf = csrfToken();
-      if (csrf) headers["X-CSRFToken"] = csrf;
-      const res = await fetch("/execute/launch/runplan/", {
-        method: "POST",
-        headers,
-        credentials: "include",
-      });
-      // The launch view 302-redirects to /execute/ on success; a redirect back
-      // to the login page means the session/CSRF was rejected.
-      if (res.url.includes("/login") || res.status === 401 || res.status === 403) {
+      // authedFetch adds the Bearer JWT + CSRF header and throws AuthError on a
+      // 401/403. The launch view 302-redirects (fetch follows it) to /execute/
+      // on success, or to /data/login/ when the session/CSRF is rejected.
+      const res = await authedFetch("/execute/launch/runplan/", { method: "POST" });
+      let path = res.url;
+      try {
+        path = new URL(res.url).pathname;
+      } catch {
+        /* res.url may be relative in tests; fall back to the raw string */
+      }
+      if (path.includes("/data/login")) {
         toast("error", "Sign-in required", "Your session expired — sign in again.");
-      } else if (!res.ok && !res.redirected) {
-        toast("error", "Launch failed", `Server returned ${res.status}.`);
-      } else {
+      } else if (res.ok) {
         toast("ok", "Plan launched", "Watch live progress below.");
+      } else {
+        toast("error", "Launch failed", `Server returned ${res.status}.`);
       }
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      if (/\b40[13]\b/.test(msg)) {
+      if (isAuthError(e)) {
         toast("error", "Sign-in required", "Sign in to launch a plan.");
       } else {
-        toast("error", "Launch failed", msg);
+        toast("error", "Launch failed", e instanceof Error ? e.message : String(e));
       }
     } finally {
       setLaunching(false);

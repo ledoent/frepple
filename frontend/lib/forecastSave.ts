@@ -1,4 +1,5 @@
-import { getToken } from "./auth";
+import { authedFetch } from "./api";
+import { HttpError } from "./errors";
 import { scenarioPrefix } from "./ws";
 import {
   buildOverrideMessage,
@@ -9,17 +10,13 @@ import {
 } from "./forecast";
 
 async function post(message: OverrideMessage, scenario: string): Promise<void> {
-  const token = await getToken();
-  const res = await fetch(`${scenarioPrefix(scenario)}/forecast/detail/`, {
+  const res = await authedFetch(`${scenarioPrefix(scenario)}/forecast/detail/`, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    credentials: "include",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(message),
   });
-  if (!res.ok) throw new Error(`forecast save failed: ${res.status}`);
+  if (!res.ok)
+    throw new HttpError(res.status, `forecast save failed: ${res.status}`);
 }
 
 // Persist one override edit. The engine updates the override and re-nets; callers

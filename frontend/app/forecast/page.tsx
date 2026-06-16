@@ -27,13 +27,12 @@ const fmt = (v: number | null | undefined) =>
   v == null ? "" : Number.isInteger(v) ? String(v) : v.toFixed(1);
 
 export default function ForecastPage() {
-  const { series, buckets, loading, error, reload } = useForecast();
+  const { series, buckets, loading, error, authError, reload } = useForecast();
   const [draft, setDraft] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [charted, setCharted] = useState<string | null>(null);
   const chartedSeries = series.find((s) => s.key === charted) ?? null;
-  const authError = !!error && /\b40[13]\b/.test(error);
 
   const key = (s: string, b: string) => `${s} ${b}`;
 

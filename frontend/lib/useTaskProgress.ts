@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { openAuthedSocket, scenarioPrefix } from "./ws";
+import { isAuthError } from "./errors";
 
 export type TaskUpdate = {
   id: number;
@@ -32,6 +33,10 @@ export function useTaskProgress(scenario = ""): {
     async function connect(): Promise<void> {
       try {
         const ws = await openAuthedSocket(`${scenarioPrefix(scenario)}/ws/tasks/`);
+        if (closed) {
+          ws.close();
+          return; // unmounted while awaiting the token — don't leak the socket
+        }
         setAuthError(false);
         wsRef.current = ws;
         ws.onopen = () => setConnected(true);
@@ -44,9 +49,9 @@ export function useTaskProgress(scenario = ""): {
           if (!closed) retry = setTimeout(connect, 2000);
         };
       } catch (e) {
-        // getToken() throws on 401 — no Django session. Surface it instead of
-        // looping invisibly so the screen can prompt the user to sign in.
-        if (e instanceof Error && /\b40[13]\b/.test(e.message)) {
+        // No Django session: surface it (the screen prompts sign-in) instead of
+        // looping invisibly. Other errors retry with a fixed 2s backoff.
+        if (isAuthError(e)) {
           setAuthError(true);
           return;
         }

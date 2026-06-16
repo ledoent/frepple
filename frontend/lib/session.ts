@@ -6,7 +6,9 @@
 
 export type Session = { user: string; exp: number };
 
-function decodeClaims(token: string): { user?: string; exp?: number } {
+// Exported for unit testing (decodes a JWT payload without verifying it — the
+// server is the authority; this is only for display of the username/exp).
+export function decodeClaims(token: string): { user?: string; exp?: number } {
   try {
     const payload = token.split(".")[1];
     const json = atob(payload.replace(/-/g, "+").replace(/_/g, "/"));

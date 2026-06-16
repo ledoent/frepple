@@ -60,13 +60,12 @@ class Phase0SchemaTest(TestCase):
 class Phase0OutputEndpointTest(TestCase):
     fixtures = ["demo"]
 
-    # Each output endpoint must be byte-identical to the legacy report's
+    # Each BARE output endpoint must be byte-identical to the legacy report's
     # ?format=json response, because JSONStreamView delegates to the same
     # report view (reusing the raw-SQL streaming path, no DRF serializer).
-    # The forecast endpoint is intentionally enriched (Phase 1B) and so is not
-    # byte-identical to the legacy report; it is covered separately below.
+    # The forecast (Phase 1B) and inventory (Phase 3) endpoints are intentionally
+    # enriched (PivotJSONStreamView) and so are covered separately below.
     PARITY = [
-        ("/buffer/?format=json", "/api/output/inventory/"),
         ("/demand/?format=json", "/api/output/demand/"),
         ("/resource/?format=json", "/api/output/resource/"),
     ]
@@ -112,6 +111,23 @@ class Phase0OutputEndpointTest(TestCase):
         self.assertTrue(body.startswith(b'{"measures":'), body[:48])
         self.assertIn(b'"buckets":', body)
         self.assertIn(b'"data":', body)
+
+    def test_inventory_output_enriched(self):
+        # Inventory (Phase 3) opts into the same enriched PivotJSONStreamView: a
+        # measures+buckets header over the report's UNCHANGED pivot under "data".
+        api = _body(self.client.get("/api/output/inventory/"))
+        self.assertTrue(api.startswith(b'{"measures":'), api[:48])
+        self.assertIn(b'"buckets":', api)
+        self.assertIn(b'"data":', api)
+        # The wrapped data stays byte-identical to the legacy /buffer/ envelope
+        # (up to the horizon-dependent "records" field) - data-parity holds.
+        old = _body(self.client.get("/buffer/?format=json"))
+        inner = api.split(b'"data":', 1)[1]
+        self.assertEqual(
+            inner.split(b'"records":')[0],
+            old.split(b'"records":')[0],
+            "inventory data differs from legacy /buffer/",
+        )
 
 
 class ApiTokenTest(TestCase):

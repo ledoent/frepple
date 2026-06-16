@@ -46,6 +46,15 @@ def file_contains(parts, *needles):
     return all(n in content for n in needles)
 
 
+def file_contains_any(parts, needles):
+    """True if the file exists and contains at least one of the substrings."""
+    f = os.path.join(REPO, *parts)
+    if not os.path.isfile(f):
+        return False
+    content = open(f, encoding="utf-8").read()
+    return any(n in content for n in needles)
+
+
 # Each gate: (phase, id, title, status, check)
 # check is a zero-arg callable returning bool (only invoked for "active" gates).
 GATES = [
@@ -114,8 +123,10 @@ GATES = [
         lambda: file_contains(
             ("freppledb", "common", "api", "output.py"), "report_class"
         )
-        and not file_contains(
-            ("freppledb", "common", "api", "output.py"), "import serializ"
+        and not file_contains_any(
+            ("freppledb", "common", "api", "output.py"),
+            # Catch both `import serializers` and `from ... import XSerializer`.
+            ("serializers import", "Serializer", "import serializ"),
         ),
     ),
     (
@@ -464,7 +475,7 @@ def evaluate():
     return rows, failures
 
 
-def render(rows, failures):
+def render(rows):
     active = [r for r in rows if r[3] in ("pass", "fail")]
     passing = [r for r in active if r[3] == "pass"]
     total = len(rows)
@@ -492,7 +503,7 @@ def render(rows, failures):
 
 def main():
     rows, failures = evaluate()
-    summary = render(rows, failures)
+    summary = render(rows)
     print(summary)
 
     step_summary = os.environ.get("GITHUB_STEP_SUMMARY")

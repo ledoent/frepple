@@ -195,7 +195,17 @@ GATES = [
         "pending",
         None,
     ),
-    ("Phase 1B", "fc-bulk-edit", "Bulk fill / ±% persists correctly", "pending", None),
+    (
+        "Phase 1B",
+        "fc-bulk-edit",
+        "Bulk fill/copy/±% math (unit-tested) + bulk-row save; persistence E2E needs engine",
+        "active",
+        lambda: file_contains(
+            ("frontend", "lib", "forecastEdit.ts"), "applyPercent", "detectOutliers"
+        )
+        and file_contains(("frontend", "lib", "forecastEdit.test.ts"), "applyPercent")
+        and file_contains(("frontend", "lib", "forecastSave.ts"), "saveBulkOverrides"),
+    ),
     (
         "Phase 1B",
         "fc-no-truncation",

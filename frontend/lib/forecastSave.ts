@@ -2,19 +2,13 @@ import { getToken } from "./auth";
 import { scenarioPrefix } from "./ws";
 import {
   buildOverrideMessage,
+  buildBulkOverrideMessage,
+  type OverrideMessage,
   type ForecastSeries,
   type ForecastBucketMeta,
 } from "./forecast";
 
-// Persist one override edit: POST the ForecastService message to /forecast/detail/.
-// The engine updates the override and re-nets; callers reload to pick up the new
-// forecastnet. Returns nothing on success, throws on a non-2xx response.
-export async function saveOverride(
-  series: ForecastSeries,
-  bucket: ForecastBucketMeta,
-  value: number | null,
-  scenario = "",
-): Promise<void> {
+async function post(message: OverrideMessage, scenario: string): Promise<void> {
   const token = await getToken();
   const res = await fetch(`${scenarioPrefix(scenario)}/forecast/detail/`, {
     method: "POST",
@@ -23,7 +17,28 @@ export async function saveOverride(
       "Content-Type": "application/json",
     },
     credentials: "include",
-    body: JSON.stringify(buildOverrideMessage(series, bucket, value)),
+    body: JSON.stringify(message),
   });
   if (!res.ok) throw new Error(`forecast save failed: ${res.status}`);
+}
+
+// Persist one override edit. The engine updates the override and re-nets; callers
+// reload to pick up the new forecastnet.
+export async function saveOverride(
+  series: ForecastSeries,
+  bucket: ForecastBucketMeta,
+  value: number | null,
+  scenario = "",
+): Promise<void> {
+  await post(buildOverrideMessage(series, bucket, value), scenario);
+}
+
+// Persist a bulk edit (fill / +-% across a row) in a single request.
+export async function saveBulkOverrides(
+  series: ForecastSeries,
+  edits: { bucket: ForecastBucketMeta; value: number | null }[],
+  scenario = "",
+): Promise<void> {
+  if (edits.length === 0) return;
+  await post(buildBulkOverrideMessage(series, edits), scenario);
 }

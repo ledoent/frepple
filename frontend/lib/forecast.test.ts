@@ -4,6 +4,7 @@ import {
   bucketNames,
   parseForecast,
   buildOverrideMessage,
+  buildBulkOverrideMessage,
   MEASURES,
 } from "./forecast";
 
@@ -133,5 +134,21 @@ describe("buildOverrideMessage", () => {
     const bucket = { name: "Feb 26", startdate: null, enddate: null };
     const msg = buildOverrideMessage(series, bucket, null);
     expect(msg.buckets[0].forecastoverride).toBeNull();
+  });
+
+  it("builds a bulk message with all edited buckets", () => {
+    const series = pivotForecast(resp)[0];
+    const msg = buildBulkOverrideMessage(series, [
+      { bucket: { name: "Jan 26", startdate: "a", enddate: "b" }, value: 1 },
+      { bucket: { name: "Feb 26", startdate: "c", enddate: "d" }, value: 2 },
+    ]);
+    expect(msg.item).toBe("itemA");
+    expect(msg.buckets).toHaveLength(2);
+    expect(msg.buckets[1]).toEqual({
+      bucket: "Feb 26",
+      startdate: "c",
+      enddate: "d",
+      forecastoverride: 2,
+    });
   });
 });

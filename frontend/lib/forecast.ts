@@ -127,25 +127,31 @@ export type OverrideMessage = {
   }[];
 };
 
-// Build the ForecastService (/forecast/detail/) message for one cell edit:
+// Build the ForecastService (/forecast/detail/) message for a set of edits:
 // {item, location, customer, buckets:[{startdate, enddate, bucket, forecastoverride}]}.
-export function buildOverrideMessage(
+export function buildBulkOverrideMessage(
   series: ForecastSeries,
-  bucket: ForecastBucketMeta,
-  value: number | null,
+  edits: { bucket: ForecastBucketMeta; value: number | null }[],
 ): OverrideMessage {
   const f = series.fields;
   return {
     item: (f.item as string) ?? null,
     location: (f.location as string) ?? null,
     customer: (f.customer as string) ?? null,
-    buckets: [
-      {
-        bucket: bucket.name,
-        startdate: bucket.startdate,
-        enddate: bucket.enddate,
-        forecastoverride: value,
-      },
-    ],
+    buckets: edits.map((e) => ({
+      bucket: e.bucket.name,
+      startdate: e.bucket.startdate,
+      enddate: e.bucket.enddate,
+      forecastoverride: e.value,
+    })),
   };
+}
+
+// One-cell convenience wrapper.
+export function buildOverrideMessage(
+  series: ForecastSeries,
+  bucket: ForecastBucketMeta,
+  value: number | null,
+): OverrideMessage {
+  return buildBulkOverrideMessage(series, [{ bucket, value }]);
 }

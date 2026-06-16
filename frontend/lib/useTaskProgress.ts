@@ -18,9 +18,11 @@ export type TaskUpdate = {
 export function useTaskProgress(scenario = ""): {
   tasks: TaskUpdate[];
   connected: boolean;
+  authError: boolean;
 } {
   const [tasks, setTasks] = useState<Record<number, TaskUpdate>>({});
   const [connected, setConnected] = useState(false);
+  const [authError, setAuthError] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
@@ -30,6 +32,7 @@ export function useTaskProgress(scenario = ""): {
     async function connect(): Promise<void> {
       try {
         const ws = await openAuthedSocket(`${scenarioPrefix(scenario)}/ws/tasks/`);
+        setAuthError(false);
         wsRef.current = ws;
         ws.onopen = () => setConnected(true);
         ws.onmessage = (e: MessageEvent) => {
@@ -40,7 +43,13 @@ export function useTaskProgress(scenario = ""): {
           setConnected(false);
           if (!closed) retry = setTimeout(connect, 2000);
         };
-      } catch {
+      } catch (e) {
+        // getToken() throws on 401 — no Django session. Surface it instead of
+        // looping invisibly so the screen can prompt the user to sign in.
+        if (e instanceof Error && /\b40[13]\b/.test(e.message)) {
+          setAuthError(true);
+          return;
+        }
         if (!closed) retry = setTimeout(connect, 2000);
       }
     }
@@ -56,5 +65,6 @@ export function useTaskProgress(scenario = ""): {
   return {
     tasks: Object.values(tasks).sort((a, b) => b.id - a.id),
     connected,
+    authError,
   };
 }

@@ -3,66 +3,144 @@
 import { useState } from "react";
 import { getToken } from "@/lib/auth";
 import { csrfToken } from "@/lib/csrf";
+import { loginUrl } from "@/lib/session";
 import { useTaskProgress, type TaskUpdate } from "@/lib/useTaskProgress";
 import { useTaskLog } from "@/lib/useTaskLog";
-import { parseStatus } from "@/lib/ws";
+import { parseStatus, type TaskState } from "@/lib/ws";
+import { useToast } from "@/components/Toast";
 
-// Phase 1A beachhead: the Execute / plan-run screen. Live task progress comes
-// from ws/tasks/ and the log tail from ws/tasks/{id}/log/ - no polling.
+// Execute / plan-run console (Phase 1A). Live task progress streams over
+// ws/tasks/ and the log tail over ws/tasks/{id}/log/ — no polling. Launching a
+// plan POSTs to the Django (WSGI) endpoint; failures (no session, CSRF, server
+// error) now surface as toasts + an inline notice instead of doing nothing.
 export default function ExecutePage() {
-  const { tasks, connected } = useTaskProgress();
+  const { tasks, connected, authError } = useTaskProgress();
   const [selected, setSelected] = useState<number | null>(null);
   const [launching, setLaunching] = useState(false);
+  const toast = useToast();
+
+  const running = tasks.filter(
+    (t) => parseStatus(t.status).state === "running",
+  ).length;
 
   async function launchPlan() {
     setLaunching(true);
     try {
       const token = await getToken();
-      // Launch via the Django execute endpoint (WSGI); the new task then streams
-      // its progress over the already-open websocket. This is a plain Django
-      // view behind CsrfViewMiddleware, so send the double-submit CSRF header
-      // alongside the JWT (the csrftoken cookie rides along via credentials).
       const headers: Record<string, string> = {
         Authorization: `Bearer ${token}`,
       };
       const csrf = csrfToken();
       if (csrf) headers["X-CSRFToken"] = csrf;
-      await fetch("/execute/launch/runplan/", {
+      const res = await fetch("/execute/launch/runplan/", {
         method: "POST",
         headers,
         credentials: "include",
       });
+      // The launch view 302-redirects to /execute/ on success; a redirect back
+      // to the login page means the session/CSRF was rejected.
+      if (res.url.includes("/login") || res.status === 401 || res.status === 403) {
+        toast("error", "Sign-in required", "Your session expired — sign in again.");
+      } else if (!res.ok && !res.redirected) {
+        toast("error", "Launch failed", `Server returned ${res.status}.`);
+      } else {
+        toast("ok", "Plan launched", "Watch live progress below.");
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      if (/\b40[13]\b/.test(msg)) {
+        toast("error", "Sign-in required", "Sign in to launch a plan.");
+      } else {
+        toast("error", "Launch failed", msg);
+      }
     } finally {
       setLaunching(false);
     }
   }
 
   return (
-    <main style={{ maxWidth: 980, margin: "0 auto", padding: 24 }}>
-      <header
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
-        <h1 style={{ fontSize: 20, margin: 0 }}>Execute</h1>
-        <span style={{ display: "flex", gap: 12, alignItems: "center" }}>
-          <ConnDot connected={connected} />
-          <button onClick={launchPlan} disabled={launching} style={btn}>
+    <main>
+      <div className="pagehead">
+        <div>
+          <div className="eyebrow">Planning engine</div>
+          <h1 className="h1">Execute</h1>
+          <p className="subtle">
+            Run the C++ planning engine and watch each task stream to completion
+            over the live websocket.
+          </p>
+        </div>
+        <ConnDot connected={connected} />
+      </div>
+
+      {authError && (
+        <div className="notice notice--auth" style={{ marginBottom: 18 }}>
+          <span className="dot dot--fail" aria-hidden />
+          <span>
+            No active session — the live feed can&apos;t connect.{" "}
+            <a href={loginUrl("/execute")}>Sign in</a> to continue.
+          </span>
+        </div>
+      )}
+
+      <section className="console" aria-label="Launch console">
+        <div className="console-cell">
+          <div className="eyebrow" style={{ color: "var(--faint)" }}>
+            System status
+          </div>
+          <div className="metric-row">
+            <div className="metric-block">
+              <div className="metric">{tasks.length}</div>
+              <div className="eyebrow">Tasks</div>
+            </div>
+            <div className="metric-block">
+              <div className="metric" style={{ color: "var(--signal)" }}>
+                {running}
+              </div>
+              <div className="eyebrow">Running</div>
+            </div>
+            <div className="metric-block">
+              <div
+                className="metric"
+                style={{ color: connected ? "var(--ok)" : "var(--faint)" }}
+              >
+                {connected ? "LIVE" : "—"}
+              </div>
+              <div className="eyebrow">Feed</div>
+            </div>
+          </div>
+        </div>
+        <div className="console-cell is-action">
+          <div className="eyebrow" style={{ color: "var(--faint)" }}>
+            Primary action
+          </div>
+          <button
+            onClick={launchPlan}
+            disabled={launching}
+            className={`btn btn-primary${launching ? " is-armed" : ""}`}
+            style={{ justifyContent: "center", fontSize: 13, padding: "12px 18px" }}
+          >
             {launching ? "Launching…" : "Run plan"}
           </button>
-        </span>
-      </header>
+          <span style={{ color: "var(--faint)", fontSize: 12 }}>
+            Computes demand &amp; supply for the default scenario.
+          </span>
+        </div>
+      </section>
 
-      <section style={{ marginTop: 20, display: "grid", gap: 8 }}>
+      <div className="panel-title" style={{ marginBottom: 12 }}>
+        Task feed
+      </div>
+      <section className="feed">
         {tasks.length === 0 && (
-          <p style={{ color: "var(--muted)" }}>No tasks yet.</p>
+          <div className="empty">
+            {connected ? "NO TASKS YET — RUN A PLAN TO BEGIN" : "AWAITING FEED…"}
+          </div>
         )}
-        {tasks.map((t) => (
+        {tasks.map((t, i) => (
           <TaskRow
             key={t.id}
             task={t}
+            index={i}
             selected={selected === t.id}
             onSelect={() => setSelected(selected === t.id ? null : t.id)}
           />
@@ -74,63 +152,49 @@ export default function ExecutePage() {
   );
 }
 
+const STATE_TAG: Record<TaskState, { cls: string; label: string }> = {
+  waiting: { cls: "", label: "Queued" },
+  running: { cls: "tag--run", label: "Running" },
+  done: { cls: "tag--done", label: "Done" },
+  failed: { cls: "tag--fail", label: "Failed" },
+  canceled: { cls: "tag--fail", label: "Canceled" },
+};
+
 function TaskRow({
   task,
+  index,
   selected,
   onSelect,
 }: {
   task: TaskUpdate;
+  index: number;
   selected: boolean;
   onSelect: () => void;
 }) {
   const { percent, state } = parseStatus(task.status);
-  const color =
+  const tag = STATE_TAG[state];
+  const fillCls =
     state === "failed"
-      ? "var(--fail)"
-      : state === "done"
-        ? "var(--ok)"
-        : "var(--accent)";
+      ? "bar-fill bar-fill--fail"
+      : state === "running"
+        ? "bar-fill bar-fill--run"
+        : "bar-fill";
   return (
     <button
       onClick={onSelect}
-      style={{
-        ...panel,
-        textAlign: "left",
-        cursor: "pointer",
-        outline: selected ? "1px solid var(--accent)" : "none",
-      }}
+      className={`task${selected ? " is-selected" : ""}`}
+      style={{ animationDelay: `${Math.min(index, 8) * 40}ms` }}
     >
-      <div
-        style={{ display: "flex", justifyContent: "space-between", gap: 12 }}
-      >
-        <strong>
-          #{task.id} {task.name}
-        </strong>
-        <span style={{ color: "var(--muted)" }}>{task.status ?? "—"}</span>
+      <div className="task-top">
+        <span className="task-name">
+          <span className="task-id">#{task.id}</span> {task.name}
+        </span>
+        <span className={`tag ${tag.cls}`}>{task.status ?? tag.label}</span>
       </div>
-      <div
-        style={{
-          height: 6,
-          marginTop: 8,
-          borderRadius: 3,
-          background: "var(--border)",
-        }}
-      >
-        <div
-          style={{
-            width: `${percent}%`,
-            height: "100%",
-            borderRadius: 3,
-            background: color,
-            transition: "width .3s ease",
-          }}
-        />
+      <div className="bar">
+        <div className={fillCls} style={{ width: `${percent}%` }} />
       </div>
-      {task.message && (
-        <div style={{ marginTop: 6, color: "var(--muted)", fontSize: 12 }}>
-          {task.message}
-        </div>
-      )}
+      {task.message && <div className="task-msg">{task.message}</div>}
     </button>
   );
 }
@@ -138,63 +202,27 @@ function TaskRow({
 function LogPanel({ taskId }: { taskId: number }) {
   const { log, done, connected } = useTaskLog(taskId);
   return (
-    <section style={{ ...panel, marginTop: 16 }}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          marginBottom: 8,
-        }}
-      >
-        <strong>Log — task #{taskId}</strong>
-        <span style={{ color: "var(--muted)", fontSize: 12 }}>
-          {done ? "finished" : connected ? "streaming…" : "connecting…"}
+    <section className="panel" style={{ marginTop: 18 }}>
+      <div className="panel-head">
+        <span className="panel-title">Log — task #{taskId}</span>
+        <span className="stat">
+          <span
+            className={`dot${done ? "" : connected ? " dot--run" : ""}`}
+            aria-hidden
+          />
+          {done ? "finished" : connected ? "streaming" : "connecting"}
         </span>
       </div>
-      <pre
-        style={{
-          margin: 0,
-          maxHeight: 320,
-          overflow: "auto",
-          fontSize: 12,
-          whiteSpace: "pre-wrap",
-        }}
-      >
-        {log || "(no output yet)"}
-      </pre>
+      <pre className="log">{log || "(no output yet)"}</pre>
     </section>
   );
 }
 
 function ConnDot({ connected }: { connected: boolean }) {
   return (
-    <span
-      title={connected ? "live" : "disconnected"}
-      style={{
-        width: 8,
-        height: 8,
-        borderRadius: "50%",
-        background: connected ? "var(--ok)" : "var(--muted)",
-        display: "inline-block",
-      }}
-    />
+    <span className="stat" title={connected ? "live" : "disconnected"}>
+      <span className={`dot${connected ? " dot--live" : ""}`} aria-hidden />
+      {connected ? "live" : "offline"}
+    </span>
   );
 }
-
-const panel: React.CSSProperties = {
-  background: "var(--panel)",
-  border: "1px solid var(--border)",
-  borderRadius: 8,
-  padding: 12,
-  color: "var(--text)",
-  width: "100%",
-};
-
-const btn: React.CSSProperties = {
-  background: "var(--accent)",
-  color: "white",
-  border: "none",
-  borderRadius: 6,
-  padding: "6px 14px",
-  cursor: "pointer",
-};

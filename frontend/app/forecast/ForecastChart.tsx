@@ -22,25 +22,59 @@ export function ForecastChart({
 }) {
   const data = toChartRows(series, buckets);
   return (
-    <div style={{ height: 280, marginTop: 16 }} aria-label="forecast chart">
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data} margin={{ top: 8, right: 16, bottom: 8, left: 0 }}>
-          <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
-          <XAxis dataKey="bucket" stroke="var(--muted)" fontSize={11} />
-          <YAxis stroke="var(--muted)" fontSize={11} />
-          <Tooltip
-            contentStyle={{
-              background: "var(--panel)",
-              border: "1px solid var(--border)",
-              color: "var(--text)",
-            }}
-          />
-          <Legend />
-          <Line type="monotone" dataKey="orders" stroke="#9aa0aa" dot={false} />
-          <Line type="monotone" dataKey="baseline" stroke="#3b82f6" dot={false} />
-          <Line type="monotone" dataKey="net" stroke="#22c55e" dot={false} />
-        </LineChart>
-      </ResponsiveContainer>
+    <div className="panel" style={{ marginTop: 18, padding: "18px 18px 8px" }}>
+      <div className="panel-title" style={{ marginBottom: 10 }}>
+        Series chart — orders · baseline · net
+      </div>
+      <div style={{ height: 280 }} aria-label="forecast chart">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart
+            data={data}
+            margin={{ top: 8, right: 16, bottom: 8, left: 0 }}
+          >
+            <CartesianGrid stroke="var(--line)" strokeDasharray="2 4" />
+            <XAxis
+              dataKey="bucket"
+              stroke="var(--faint)"
+              fontSize={11}
+              tickLine={false}
+            />
+            <YAxis stroke="var(--faint)" fontSize={11} tickLine={false} />
+            <Tooltip
+              contentStyle={{
+                background: "var(--raise)",
+                border: "1px solid var(--line-bright)",
+                borderRadius: 6,
+                color: "var(--text)",
+                fontSize: 12,
+              }}
+              cursor={{ stroke: "var(--line-bright)" }}
+            />
+            <Legend wrapperStyle={{ fontSize: 11 }} />
+            <Line
+              type="monotone"
+              dataKey="orders"
+              stroke="var(--muted)"
+              strokeWidth={1.5}
+              dot={false}
+            />
+            <Line
+              type="monotone"
+              dataKey="baseline"
+              stroke="var(--signal)"
+              strokeWidth={2}
+              dot={false}
+            />
+            <Line
+              type="monotone"
+              dataKey="net"
+              stroke="var(--ok)"
+              strokeWidth={2}
+              dot={false}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 }

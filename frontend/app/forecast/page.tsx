@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useForecast } from "@/lib/useForecast";
 import { saveBulkOverrides } from "@/lib/forecastSave";
 import { applyFill, applyPercent, detectOutliers } from "@/lib/forecastEdit";
+import { loginUrl } from "@/lib/session";
 import {
   type ForecastSeries,
   type ForecastBucketMeta,
@@ -13,7 +14,7 @@ import { ForecastChart } from "./ForecastChart";
 
 // Phase 1B Forecast Editor: a pivot of series x time buckets showing orders /
 // baseline / override (editable) / net. Override edits persist to the engine
-// (/forecast/detail/) which re-nets. Bulk fill / +-% across a row, and outlier
+// (/forecast/detail/) which re-nets. Bulk fill / +-% across a row, outlier
 // highlighting on the orders row. No top-300 cap.
 const SHOWN: { measure: Measure; label: string; editable?: boolean }[] = [
   { measure: "orderstotal", label: "Orders" },
@@ -22,6 +23,9 @@ const SHOWN: { measure: Measure; label: string; editable?: boolean }[] = [
   { measure: "forecastnet", label: "Net" },
 ];
 
+const fmt = (v: number | null | undefined) =>
+  v == null ? "" : Number.isInteger(v) ? String(v) : v.toFixed(1);
+
 export default function ForecastPage() {
   const { series, buckets, loading, error, reload } = useForecast();
   const [draft, setDraft] = useState<Record<string, string>>({});
@@ -29,6 +33,7 @@ export default function ForecastPage() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [charted, setCharted] = useState<string | null>(null);
   const chartedSeries = series.find((s) => s.key === charted) ?? null;
+  const authError = !!error && /\b40[13]\b/.test(error);
 
   const key = (s: string, b: string) => `${s} ${b}`;
 
@@ -82,39 +87,60 @@ export default function ForecastPage() {
   }
 
   return (
-    <main style={{ padding: 24 }}>
-      <h1 style={{ fontSize: 20 }}>
-        Forecast{" "}
+    <main>
+      <div className="pagehead">
+        <div>
+          <div className="eyebrow">Demand planning</div>
+          <h1 className="h1">Forecast</h1>
+          <p className="subtle">
+            Item / location / customer demand across time buckets. Edit the
+            override row; the engine re-nets the forecast.
+          </p>
+        </div>
         {saving && (
-          <span style={{ color: "var(--muted)", fontSize: 13 }}>saving…</span>
+          <span className="stat">
+            <span className="dot dot--run" aria-hidden /> saving
+          </span>
         )}
-      </h1>
-      {loading && <p style={{ color: "var(--muted)" }}>Loading…</p>}
-      {error && <p style={{ color: "var(--fail)" }}>{error}</p>}
-      {saveError && <p style={{ color: "var(--fail)" }}>{saveError}</p>}
-      {!loading && !error && series.length === 0 && (
-        <p style={{ color: "var(--muted)" }}>No forecast series.</p>
+      </div>
+
+      {authError && (
+        <div className="notice notice--auth" style={{ marginBottom: 18 }}>
+          <span className="dot dot--fail" aria-hidden />
+          <span>
+            No active session. <a href={loginUrl("/forecast")}>Sign in</a> to
+            load forecast data.
+          </span>
+        </div>
       )}
+      {loading && <div className="empty">LOADING FORECAST…</div>}
+      {error && !authError && (
+        <div className="notice notice--error" style={{ marginBottom: 18 }}>
+          {error}
+        </div>
+      )}
+      {saveError && (
+        <div className="notice notice--error" style={{ marginBottom: 18 }}>
+          {saveError}
+        </div>
+      )}
+      {!loading && !error && series.length === 0 && (
+        <div className="empty">No forecast series.</div>
+      )}
+
       {series.length > 0 && (
-        <div style={{ overflow: "auto" }}>
-          <table style={{ borderCollapse: "collapse", fontSize: 13 }}>
-            <caption style={{ textAlign: "left", padding: "0 0 8px" }}>
-              Forecast by item / location / customer over time buckets
+        <div className="tablewrap">
+          <table className="grid">
+            <caption>
+              Forecast by item / location / customer over {buckets.length} time
+              buckets
             </caption>
             <thead>
               <tr>
-                <th scope="col" style={th}>
-                  Series
-                </th>
-                <th scope="col" style={th}>
-                  Measure
-                </th>
+                <th scope="col">Series</th>
+                <th scope="col">Measure</th>
                 {buckets.map((b) => (
-                  <th
-                    key={b.name}
-                    scope="col"
-                    style={{ ...th, textAlign: "right" }}
-                  >
+                  <th key={b.name} scope="col" className="num">
                     {b.name}
                   </th>
                 ))}
@@ -134,9 +160,7 @@ export default function ForecastPage() {
                     setRowDraft(s, applyPercent(currentOverrides(s), p))
                   }
                   onSaveRow={() => saveRow(s)}
-                  onChart={() =>
-                    setCharted((c) => (c === s.key ? null : s.key))
-                  }
+                  onChart={() => setCharted((c) => (c === s.key ? null : s.key))}
                   charted={charted === s.key}
                 />
               ))}
@@ -144,9 +168,7 @@ export default function ForecastPage() {
           </table>
         </div>
       )}
-      {chartedSeries && (
-        <ForecastChart series={chartedSeries} buckets={buckets} />
-      )}
+      {chartedSeries && <ForecastChart series={chartedSeries} buckets={buckets} />}
     </main>
   );
 }
@@ -181,9 +203,9 @@ function SeriesRows({
         .join(" / "),
     [s],
   );
-  // Outliers on the orders history, for highlighting.
   const outliers = useMemo(
-    () => detectOutliers(buckets.map((b) => s.buckets[b.name]?.orderstotal ?? null)),
+    () =>
+      detectOutliers(buckets.map((b) => s.buckets[b.name]?.orderstotal ?? null)),
     [s, buckets],
   );
   const [bulk, setBulk] = useState("");
@@ -193,17 +215,18 @@ function SeriesRows({
       {SHOWN.map((row, ri) => (
         <tr key={row.measure}>
           {ri === 0 && (
-            <th scope="rowgroup" style={{ ...td, fontWeight: 600 }} rowSpan={SHOWN.length}>
-              <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+            <th scope="rowgroup" className="series-cell" rowSpan={SHOWN.length}>
+              <div className="series-name">
                 <span>{title}</span>
                 <button
                   type="button"
                   onClick={onChart}
                   aria-pressed={charted}
                   aria-label={`chart ${title}`}
-                  style={{ ...miniBtn, padding: "0 6px" }}
+                  className="btn btn-mini"
+                  style={{ padding: "1px 7px" }}
                 >
-                  📈
+                  {charted ? "▣" : "▷"} chart
                 </button>
               </div>
               <BulkControls
@@ -215,7 +238,9 @@ function SeriesRows({
               />
             </th>
           )}
-          <td style={{ ...td, color: "var(--muted)" }}>{row.label}</td>
+          <td className={`measure${row.editable ? " measure--override" : ""}`}>
+            {row.label}
+          </td>
           {buckets.map((b, bi) => {
             const v = s.buckets[b.name]?.[row.measure];
             const flagged = row.measure === "orderstotal" && outliers[bi];
@@ -223,18 +248,18 @@ function SeriesRows({
               const k = cellKey(s.key, b.name);
               const shown = k in draft ? draft[k] : v == null ? "" : String(v);
               return (
-                <td key={b.name} style={{ ...td, textAlign: "right" }}>
+                <td key={b.name} className="num">
                   <input
                     value={shown}
                     inputMode="decimal"
                     aria-label={`${title} ${row.label} ${b.name}`}
+                    className="cell-input"
                     onChange={(e) =>
                       setDraft((d) => ({ ...d, [k]: e.target.value }))
                     }
                     onKeyDown={(e) => {
                       if (e.key === "Enter") onSaveRow();
                     }}
-                    style={input}
                   />
                 </td>
               );
@@ -243,15 +268,9 @@ function SeriesRows({
               <td
                 key={b.name}
                 title={flagged ? "outlier" : undefined}
-                style={{
-                  ...td,
-                  textAlign: "right",
-                  ...(flagged
-                    ? { background: "rgba(239,68,68,0.18)", fontWeight: 600 }
-                    : null),
-                }}
+                className={`num${flagged ? " cell--outlier" : ""}`}
               >
-                {v == null ? "" : v}
+                {fmt(v)}
               </td>
             );
           })}
@@ -275,61 +294,33 @@ function BulkControls({
   onSave: () => void;
 }) {
   return (
-    <div style={{ display: "flex", gap: 4, marginTop: 6, flexWrap: "wrap" }}>
+    <div className="bulk">
       <input
         value={value}
         onChange={(e) => setValue(e.target.value)}
         inputMode="decimal"
         aria-label="bulk value or percent"
         placeholder="value / %"
-        style={{ ...input, width: 70 }}
       />
-      <button type="button" onClick={onFill} style={miniBtn} title="Fill row">
+      <button
+        type="button"
+        onClick={onFill}
+        className="btn btn-mini"
+        title="Fill row"
+      >
         Fill
       </button>
-      <button type="button" onClick={onPercent} style={miniBtn} title="Apply percent">
+      <button
+        type="button"
+        onClick={onPercent}
+        className="btn btn-mini"
+        title="Apply percent"
+      >
         ±%
       </button>
-      <button type="button" onClick={onSave} style={{ ...miniBtn, ...saveBtn }}>
+      <button type="button" onClick={onSave} className="btn btn-primary btn-mini">
         Save
       </button>
     </div>
   );
 }
-
-const th: React.CSSProperties = {
-  border: "1px solid var(--border)",
-  padding: "4px 8px",
-  position: "sticky",
-  top: 0,
-  background: "var(--panel)",
-  whiteSpace: "nowrap",
-};
-const td: React.CSSProperties = {
-  border: "1px solid var(--border)",
-  padding: "2px 8px",
-  whiteSpace: "nowrap",
-};
-const input: React.CSSProperties = {
-  width: 64,
-  textAlign: "right",
-  background: "var(--bg)",
-  color: "var(--text)",
-  border: "1px solid var(--border)",
-  borderRadius: 4,
-  padding: "2px 4px",
-};
-const miniBtn: React.CSSProperties = {
-  background: "var(--bg)",
-  color: "var(--text)",
-  border: "1px solid var(--border)",
-  borderRadius: 4,
-  padding: "2px 6px",
-  cursor: "pointer",
-  fontSize: 12,
-};
-const saveBtn: React.CSSProperties = {
-  background: "var(--accent)",
-  color: "white",
-  border: "none",
-};

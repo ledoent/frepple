@@ -1,0 +1,26 @@
+{
+  "name": "frepple-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "frePPLe modern UI (Next.js). Phase 1A: Execute screen with live task progress + log tail.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "gen:api": "openapi-typescript ../generated/openapi.yaml -o lib/api-types.ts"
+  },
+  "dependencies": {
+    "next": "14.2.35",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "20.14.10",
+    "@types/react": "18.3.3",
+    "@types/react-dom": "18.3.0",
+    "openapi-typescript": "7.0.0",
+    "typescript": "5.5.3"
+  }
+}

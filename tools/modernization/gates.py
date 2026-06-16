@@ -162,6 +162,17 @@ GATES = [
         "pending",
         None,
     ),
+    (
+        "Phase 1A",
+        "spa-execute",
+        "Next.js /frontend builds in CI; Execute screen consumes ws/tasks/ (live E2E gate pending a running stack)",
+        "active",
+        lambda: has_dir("frontend", "app", "execute")
+        and file_contains(("frontend", "app", "execute", "page.tsx"), "useTaskProgress")
+        and file_contains(
+            (".github", "workflows", "modernization.yml"), "Build Next.js frontend"
+        ),
+    ),
     # ---- Phase 1B — Forecast Editor ----
     (
         "Phase 1B",

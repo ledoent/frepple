@@ -45,3 +45,17 @@ jobs:
         run: pip install "black==26.3.1"
       - name: Check formatting of modernization tooling
         run: black --check --diff tools/modernization/
+
+  frontend:
+    name: Build Next.js frontend
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install + build (next build also typechecks)
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build

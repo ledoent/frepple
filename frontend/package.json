@@ -9,6 +9,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "gen:api": "openapi-typescript ../generated/openapi.yaml -o lib/api-types.ts"
   },
   "dependencies": {
@@ -21,6 +22,7 @@
     "@types/react": "18.3.3",
     "@types/react-dom": "18.3.0",
     "openapi-typescript": "7.0.0",
-    "typescript": "5.5.3"
+    "typescript": "5.5.3",
+    "vitest": "2.0.5"
   }
 }

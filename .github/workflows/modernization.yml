@@ -54,8 +54,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Install + build (next build also typechecks)
+      - name: Install + test + build (next build also typechecks)
         working-directory: frontend
         run: |
           npm ci
+          npm test
           npm run build

@@ -197,9 +197,10 @@ GATES = [
     (
         "Phase 1B",
         "fc-no-truncation",
-        "Renders >300 series without truncation",
-        "pending",
-        None,
+        "Forecast pivot returns all series (no top-300 cap); unit-tested with 500",
+        "active",
+        lambda: file_contains(("frontend", "lib", "forecast.ts"), "pivotForecast")
+        and file_contains(("frontend", "lib", "forecast.test.ts"), "fc-no-truncation"),
     ),
     ("Phase 1B", "fc-a11y", "Grid a11y scan: 0 critical", "pending", None),
     # ---- Phase 2 — Odoo rework ----

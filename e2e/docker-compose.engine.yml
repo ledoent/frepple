@@ -1,0 +1,18 @@
+# Engine-backed overlay: swaps the web roles to the frePPLe engine image so real
+# planning works (runplan -> live task progress). Use together with the base:
+#   docker compose -f e2e/docker-compose.yml -f e2e/docker-compose.engine.yml up --build
+#
+# web-wsgi launches runplan (the worker shells out to the `frepple` executable);
+# progress is broadcast via Redis and relayed by web-asgi to the browser.
+services:
+  web-wsgi:
+    image: frepple-e2e-engine
+    build:
+      context: ..
+      dockerfile: e2e/Dockerfile.engine
+
+  web-asgi:
+    image: frepple-e2e-engine
+    build:
+      context: ..
+      dockerfile: e2e/Dockerfile.engine

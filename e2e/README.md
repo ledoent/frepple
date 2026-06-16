@@ -44,3 +44,16 @@ Covered: auth (`/api/token/`), the Execute websocket (token → subprotocol JWT 
 Out of scope (needs the compiled engine): launching a real plan and the override
 re-net. Add an engine-backed service later to extend `fc-edit-parity` /
 live-progress coverage.
+
+## Engine overlay (live planning)
+
+The lean stack omits the C++ engine. To verify real planning flows (runplan ->
+live task progress), add the engine overlay and run with E2E_ENGINE=1:
+
+```sh
+docker compose -f e2e/docker-compose.yml -f e2e/docker-compose.engine.yml up --build -d
+cd e2e/playwright && E2E_ENGINE=1 npx playwright test
+```
+
+Note: forecast override re-net (ForecastService) needs the asgi to run inside the
+frepple interpreter (frepplectl runwebservice); not yet wired here.

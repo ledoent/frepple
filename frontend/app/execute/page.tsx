@@ -19,7 +19,9 @@ export default function ExecutePage() {
       const token = await getToken();
       // The runplan launch endpoint accepts the same JWT; the new task then
       // streams its progress over the already-open websocket.
-      await fetch("/api/execute/launch/runplan/", {
+      // Launch via the Django execute endpoint (WSGI); the new task then streams
+      // its progress over the already-open websocket.
+      await fetch("/execute/launch/runplan/", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         credentials: "include",

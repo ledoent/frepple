@@ -177,15 +177,17 @@ GATES = [
     (
         "Phase 1A",
         "spa-execute",
-        "Execute screen E2E-verified: auth->token->ws/tasks/ live (compose+Playwright)",
+        "Execute screen E2E-verified: auth->ws/tasks/ + real runplan -> live progress (engine compose)",
         "active",
         lambda: has_dir("frontend", "app", "execute")
         and file_contains(("frontend", "app", "execute", "page.tsx"), "useTaskProgress")
         and file_contains(
             (".github", "workflows", "modernization.yml"), "Build Next.js frontend"
         )
-        and has_file("e2e", "docker-compose.yml")
-        and file_contains(("e2e", "playwright", "tests", "smoke.spec.ts"), "ws/tasks"),
+        and has_file("e2e", "docker-compose.engine.yml")
+        and file_contains(
+            ("e2e", "playwright", "tests", "live-progress.spec.ts"), "Run plan"
+        ),
     ),
     # ---- Phase 1B — Forecast Editor ----
     (

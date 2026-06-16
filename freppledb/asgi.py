@@ -21,6 +21,7 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
+import asyncio
 import base64
 from importlib import import_module
 import json
@@ -29,6 +30,7 @@ import os
 import sys
 from urllib.parse import parse_qs
 
+from asgiref.sync import sync_to_async
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.db import DEFAULT_DB_ALIAS
@@ -159,6 +161,119 @@ class TaskProgressConsumer(AsyncWebsocketConsumer):
     async def task_update(self, event):
         # Handler for {"type": "task.update", "task": {...}} group messages.
         await self.send(text_data=json.dumps(event["task"]))
+
+
+def _read_since(path, pos):
+    """Read bytes appended to `path` since byte offset `pos`. Returns
+    (text, new_pos). Tolerates the file not existing yet and truncation/rotation
+    (offset reset). Decodes lossily - a log read mid-line must not raise."""
+    try:
+        with open(path, "rb") as f:
+            f.seek(0, os.SEEK_END)
+            size = f.tell()
+            if size < pos:
+                pos = 0  # file was truncated or rotated
+            f.seek(pos)
+            data = f.read()
+            return data.decode("utf-8", "ignore"), f.tell()
+    except FileNotFoundError:
+        return "", pos
+
+
+async def stream_logfile(path, is_finished, send_json, poll=0.5):
+    """
+    Tail a log file: call send_json({"log": <new text>}) for each appended chunk,
+    and send_json({"done": True}) once is_finished() is true and nothing more is
+    left to read. ``is_finished`` and ``send_json`` are async callables. The file
+    read runs off the event loop so a large/slow log can't block other sockets.
+
+    Pure (no DB, no channels) so it is unit-testable on its own; the consumer
+    wires it to the task's logfile path and status.
+    """
+    pos = 0
+    while True:
+        chunk, pos = await sync_to_async(_read_since, thread_sensitive=False)(path, pos)
+        if chunk:
+            await send_json({"log": chunk})
+        if not chunk and await is_finished():
+            await send_json({"done": True})
+            return
+        await asyncio.sleep(poll)
+
+
+class TaskLogConsumer(AsyncWebsocketConsumer):
+    """
+    Live log tail for the Execute screen (Phase 1A-2).
+
+    Streams a task's logfile (Task.logfile under FREPPLE_LOGDIR) over
+    ws/tasks/<id>/log/ as the worker appends to it, finishing when the task's
+    status becomes terminal. The worker writes the file on a filesystem shared
+    with the web pods (a deployment concern, like Redis is for progress).
+    """
+
+    POLL = 0.5  # seconds; the live-tail gate requires sub-1s latency
+
+    async def connect(self):
+        user = self.scope.get("user")
+        if not user or not getattr(user, "is_active", False):
+            await self.close(code=4401)
+            return
+        try:
+            self.taskid = int(self.scope["url_route"]["kwargs"]["taskid"])
+        except (KeyError, ValueError, TypeError):
+            await self.close(code=4400)
+            return
+        self.database = self.scope.get("database", DEFAULT_DB_ALIAS)
+        # Test seam: an injected path/poll lets the tailing be exercised without
+        # a database round-trip (see test_api_phase1a).
+        path = self.scope.get("logpath_override") or await self._logpath()
+        if not path:
+            await self.close(code=4404)
+            return
+        await self.accept(subprotocol=self.scope.get("jwt_subprotocol"))
+        self._tailer = asyncio.create_task(
+            stream_logfile(
+                path,
+                self._is_finished,
+                self._send_json,
+                poll=self.scope.get("logpoll_override", self.POLL),
+            )
+        )
+
+    async def disconnect(self, close_code):
+        tailer = getattr(self, "_tailer", None)
+        if tailer:
+            tailer.cancel()
+
+    async def _send_json(self, payload):
+        await self.send(text_data=json.dumps(payload))
+
+    @database_sync_to_async
+    def _logpath(self):
+        from freppledb.execute.models import Task
+
+        try:
+            fn = Task.objects.using(self.database).get(id=self.taskid).logfile
+        except Exception:
+            return None
+        if not fn or not str(fn).lower().endswith(".log"):
+            return None
+        return os.path.join(settings.FREPPLE_LOGDIR, fn)
+
+    @database_sync_to_async
+    def _finished_in_db(self):
+        from freppledb.execute.models import Task
+
+        try:
+            status = Task.objects.using(self.database).get(id=self.taskid).status
+        except Exception:
+            return True  # task vanished: stop streaming
+        return (status or "").strip().lower() in ("done", "failed", "canceled")
+
+    async def _is_finished(self):
+        if "finished_override" in self.scope:
+            return self.scope["finished_override"]
+        return await self._finished_in_db()
 
 
 class HTTPNotFound(AsyncHttpConsumer):
@@ -413,6 +528,10 @@ application = ProtocolTypeRouter(
                                     re_path(
                                         r"^ws/tasks/$",
                                         TaskProgressConsumer.as_asgi(),
+                                    ),
+                                    re_path(
+                                        r"^ws/tasks/(?P<taskid>[0-9]+)/log/$",
+                                        TaskLogConsumer.as_asgi(),
                                     ),
                                     re_path(r"^ws/$", WebsocketService.as_asgi()),
                                 ]

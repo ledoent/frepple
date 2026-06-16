@@ -129,3 +129,106 @@ class Phase1ATaskProgressTest(TransactionTestCase):
         msg = async_to_sync(run)()
         self.assertEqual(msg["type"], "task.update")
         self.assertEqual(msg["task"]["status"], "33%")
+
+
+class Phase1ALogTailTest(TransactionTestCase):
+    """The ws/tasks/<id>/log/ live log-tail consumer (asgi.py)."""
+
+    def test_stream_logfile_tails_and_finishes(self):
+        # Pure tailing logic: no DB, no channels - deterministic.
+        import tempfile
+
+        from asgiref.sync import async_to_sync
+        from freppledb.asgi import stream_logfile
+
+        f = tempfile.NamedTemporaryFile(suffix=".log", delete=False, mode="w")
+        f.write("first line\n")
+        f.flush()
+        f.close()
+
+        async def run():
+            out = []
+
+            async def send_json(m):
+                out.append(m)
+
+            async def is_finished():
+                return True
+
+            await asyncio.wait_for(
+                stream_logfile(f.name, is_finished, send_json, poll=0.01), timeout=3
+            )
+            return out
+
+        try:
+            out = async_to_sync(run)()
+        finally:
+            os.unlink(f.name)
+        self.assertEqual(out[0], {"log": "first line\n"}, out)
+        self.assertIn({"done": True}, out)
+
+    def test_ws_log_streams_injected_path(self):
+        import tempfile
+        from types import SimpleNamespace
+
+        from asgiref.sync import async_to_sync
+        from channels.testing import WebsocketCommunicator
+        from freppledb.asgi import TaskLogConsumer
+
+        f = tempfile.NamedTemporaryFile(suffix=".log", delete=False, mode="w")
+        f.write("hello from worker\n")
+        f.flush()
+        f.close()
+
+        active_user = SimpleNamespace(
+            is_active=True, is_authenticated=True, username="admin"
+        )
+        consumer_app = TaskLogConsumer.as_asgi()
+
+        async def auth_app(scope, receive, send):
+            scope = dict(scope)
+            scope["user"] = active_user
+            scope["database"] = "default"
+            scope["url_route"] = {"kwargs": {"taskid": "1"}}
+            scope["logpath_override"] = f.name
+            scope["finished_override"] = True
+            scope["logpoll_override"] = 0.01
+            return await consumer_app(scope, receive, send)
+
+        async def run():
+            c = WebsocketCommunicator(auth_app, "/ws/tasks/1/log/")
+            connected, detail = await c.connect()
+            msgs = []
+            if connected:
+                for _ in range(5):
+                    try:
+                        msgs.append(json.loads(await c.receive_from(timeout=3)))
+                    except Exception:
+                        break
+                    if msgs[-1].get("done"):
+                        break
+            await c.disconnect()
+            return connected, detail, msgs
+
+        try:
+            connected, detail, msgs = async_to_sync(run)()
+        finally:
+            os.unlink(f.name)
+        self.assertTrue(connected, detail)
+        self.assertEqual(msgs[0].get("log"), "hello from worker\n", msgs)
+        self.assertTrue(any(m.get("done") for m in msgs), msgs)
+
+    def test_ws_log_rejects_unauthenticated(self):
+        from asgiref.sync import async_to_sync
+        from channels.testing import WebsocketCommunicator
+        from freppledb.asgi import application
+
+        async def run():
+            c = WebsocketCommunicator(application, "/ws/tasks/1/log/")
+            connected, detail = await c.connect()
+            await c.disconnect()
+            return connected, detail
+
+        connected, detail = async_to_sync(run)()
+        self.assertFalse(connected)
+        self.assertEqual(detail, 4401)

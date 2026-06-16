@@ -154,7 +154,19 @@ GATES = [
         )
         and file_contains(("requirements.txt",), "channels-redis"),
     ),
-    ("Phase 1A", "ws-log-tail", "Live log tail streams <1s", "pending", None),
+    (
+        "Phase 1A",
+        "ws-log-tail",
+        "Live log tail over ws/tasks/<id>/log/ (poll<1s); pure stream_logfile + consumer",
+        "active",
+        lambda: file_contains(
+            ("freppledb", "asgi.py"), "TaskLogConsumer", "stream_logfile", "/log/"
+        )
+        and file_contains(
+            ("freppledb", "common", "tests", "test_api_phase1a.py"),
+            "test_stream_logfile_tails_and_finishes",
+        ),
+    ),
     (
         "Phase 1A",
         "ws-fanout",

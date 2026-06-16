@@ -74,7 +74,7 @@ jobs:
           ./frepplectl.py test freppledb --verbosity=2
 
       - name: Generate typed API client (Phase 0 ts-client gate)
-        if: contains(github.ref, 'modernization')
+        if: contains(github.ref_name, 'modernization') || contains(github.head_ref, 'modernization')
         working-directory: ${{github.workspace}}
         run: |
           export POSTGRES_HOST=localhost
@@ -84,7 +84,7 @@ jobs:
           ./tools/modernization/gen_api_client.sh generated
 
       - name: Upload generated API client
-        if: contains(github.ref, 'modernization')
+        if: contains(github.ref_name, 'modernization') || contains(github.head_ref, 'modernization')
         uses: actions/upload-artifact@v6
         with:
           name: api-client

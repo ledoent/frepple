@@ -47,7 +47,21 @@ void SolverCreate::checkOperationCapacity(OperationPlan* opplan,
   Date orig_q_date_max = data.state->q_date_max;
   bool first_iteration = true;
   bool delayed_reply = false;
+  // Snapshot the incoming cost and penalty. The capacity loop below may re-solve
+  // the same loadplans on every recheck pass (when moving the operationplan for
+  // one load forces re-checking the others). The resource solver only ever adds
+  // to a_cost/a_penalty, so without resetting to this baseline each pass the
+  // additions accumulate across passes - inflating the penalty/cost and
+  // corrupting cost-based alternate selection. This brackets them around the
+  // loop, the same way the alternate-search path does (see beforeCost/
+  // beforePenalty further down).
+  double beforePenalty = data.state->a_penalty;
+  double beforeCost = data.state->a_cost;
   do {
+    // Each recheck pass recomputes capacity from scratch, so discard whatever
+    // the previous (now superseded) pass added and re-accumulate from baseline.
+    data.state->a_penalty = beforePenalty;
+    data.state->a_cost = beforeCost;
     if (getLogLevel() > 1) {
       if (!first_iteration)
         logger << indentlevel << "  Rechecking capacity\n";
@@ -120,7 +134,8 @@ void SolverCreate::checkOperationCapacity(OperationPlan* opplan,
          data.constrainedPlanning &&
          ((data.state->a_qty == 0.0 && data.state->a_date < orig_q_date_max) ||
           recheck));
-  // TODO doesn't this loop increment a_penalty incorrectly???
+  // (Previously this loop double-counted a_penalty/a_cost across recheck passes;
+  // fixed by resetting them to beforePenalty/beforeCost at the top of each pass.)
 
   // Restore original flags
   data.logConstraints = backuplogconstraints;  // restore the original value

@@ -34,3 +34,16 @@ test("Forecast editor loads without error", async ({ page }) => {
       .or(page.locator("text=No forecast series.")),
   ).toBeVisible();
 });
+
+test("Inventory report loads without error", async ({ page }) => {
+  await page.goto("/inventory");
+  await expect(page.getByRole("heading", { name: "Inventory" })).toBeVisible();
+  // Either buffers render (a measure label) or the empty-state shows; both mean
+  // the enriched /api/output/inventory/ read + generic pivot parse worked.
+  await expect(
+    page
+      .getByText("Start OH")
+      .first()
+      .or(page.getByText("No inventory buffers.")),
+  ).toBeVisible();
+});

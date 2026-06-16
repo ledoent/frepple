@@ -23,3 +23,10 @@ test("Execute screen: 0 critical a11y violations", async ({ page }) => {
   const critical = await criticalViolations(page);
   expect(critical, JSON.stringify(critical.map((v) => v.id))).toEqual([]);
 });
+
+test("Inventory report: 0 critical a11y violations", async ({ page }) => {
+  await page.goto("/inventory");
+  await expect(page.getByRole("heading", { name: "Inventory" })).toBeVisible();
+  const critical = await criticalViolations(page);
+  expect(critical, JSON.stringify(critical.map((v) => v.id))).toEqual([]);
+});

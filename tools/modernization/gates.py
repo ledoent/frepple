@@ -270,9 +270,21 @@ GATES = [
     (
         "Phase 3",
         "inventory-report",
-        "Inventory/Buffer report (parity + perf)",
-        "pending",
-        None,
+        "Inventory/Buffer screen on /api/output/inventory/ (enriched pivot); E2E smoke + a11y",
+        "active",
+        lambda: has_dir("frontend", "app", "inventory")
+        and file_contains(("frontend", "app", "inventory", "page.tsx"), "useInventory")
+        and file_contains(
+            ("freppledb", "common", "api", "output.py"), "PivotJSONStreamView"
+        )
+        and file_contains(("freppledb", "output", "urls.py"), "PivotJSONStreamView")
+        and file_contains(("frontend", "lib", "pivot.test.ts"), "parsePivot")
+        and file_contains(
+            ("e2e", "playwright", "tests", "smoke.spec.ts"), "Inventory report loads"
+        )
+        and file_contains(
+            ("e2e", "playwright", "tests", "a11y.spec.ts"), "Inventory report"
+        ),
     ),
     (
         "Phase 3",

@@ -40,14 +40,15 @@ if mode == "ASGI":
 else:
     from . import views
     from . import serializers
-    from freppledb.common.api.output import JSONStreamView
+    from freppledb.common.api.output import ForecastJSONStreamView
 
     urlpatterns = [
-        # JSON output API (Phase 0 modernization): reuses the report's raw-SQL
-        # ?format=json path. See freppledb/common/api/output.py.
+        # JSON output API: the forecast endpoint is enriched (Phase 1B) with the
+        # measure order + bucket dates the editor needs; the report data is still
+        # the raw-SQL ?format=json path, wrapped under "data".
         re_path(
             r"^api/output/forecast/$",
-            JSONStreamView.as_view(report_class=views.OverviewReport),
+            ForecastJSONStreamView.as_view(report_class=views.OverviewReport),
             name="api_output_forecast",
         ),
         # Forecast editor screen

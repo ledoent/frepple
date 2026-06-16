@@ -63,11 +63,12 @@ class Phase0OutputEndpointTest(TestCase):
     # Each output endpoint must be byte-identical to the legacy report's
     # ?format=json response, because JSONStreamView delegates to the same
     # report view (reusing the raw-SQL streaming path, no DRF serializer).
+    # The forecast endpoint is intentionally enriched (Phase 1B) and so is not
+    # byte-identical to the legacy report; it is covered separately below.
     PARITY = [
         ("/buffer/?format=json", "/api/output/inventory/"),
         ("/demand/?format=json", "/api/output/demand/"),
         ("/resource/?format=json", "/api/output/resource/"),
-        ("/forecast/?format=json", "/api/output/forecast/"),
     ]
 
     def setUp(self):
@@ -103,6 +104,14 @@ class Phase0OutputEndpointTest(TestCase):
                     old.split(b'"records":')[0],
                     "%s envelope differs from legacy %s" % (new, legacy),
                 )
+
+    def test_forecast_output_enriched(self):
+        # The forecast endpoint (Phase 1B) wraps the report's pivot object under
+        # "data" and prepends the measure order + bucket dates the editor needs.
+        body = _body(self.client.get("/api/output/forecast/"))
+        self.assertTrue(body.startswith(b'{"measures":'), body[:48])
+        self.assertIn(b'"buckets":', body)
+        self.assertIn(b'"data":', body)
 
 
 class Phase0JwtUtilTest(TestCase):

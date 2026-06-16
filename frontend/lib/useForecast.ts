@@ -3,10 +3,9 @@
 import { useEffect, useState } from "react";
 import { getToken } from "./auth";
 import {
-  pivotForecast,
-  bucketNames,
-  MEASURES,
+  parseForecast,
   type ForecastSeries,
+  type ForecastBucketMeta,
 } from "./forecast";
 
 // Read the forecast OUTPUT report for a scenario (optionally filtered to one
@@ -17,13 +16,13 @@ export function useForecast(
   name?: string,
 ): {
   series: ForecastSeries[];
-  buckets: string[];
+  buckets: ForecastBucketMeta[];
   loading: boolean;
   error: string | null;
   reload: () => void;
 } {
   const [series, setSeries] = useState<ForecastSeries[]>([]);
-  const [buckets, setBuckets] = useState<string[]>([]);
+  const [buckets, setBuckets] = useState<ForecastBucketMeta[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [nonce, setNonce] = useState(0);
@@ -43,11 +42,11 @@ export function useForecast(
           credentials: "include",
         });
         if (!res.ok) throw new Error(`forecast fetch failed: ${res.status}`);
-        const data = await res.json();
+        const json = await res.json();
         if (cancelled) return;
-        const s = pivotForecast(data, MEASURES);
-        setSeries(s);
-        setBuckets(bucketNames(s));
+        const parsed = parseForecast(json);
+        setSeries(parsed.series);
+        setBuckets(parsed.buckets);
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : String(e));
       } finally {

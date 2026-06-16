@@ -82,3 +82,70 @@ export function bucketNames(series: ForecastSeries[]): string[] {
   }
   return order;
 }
+
+// The enriched forecast response (Phase 1B): the report's pivot object under
+// `data`, plus the measure order and bucket dates the editor needs.
+export type ForecastBucketMeta = {
+  name: string;
+  startdate: string | null;
+  enddate: string | null;
+};
+
+export type ForecastResponse = {
+  measures?: Measure[];
+  buckets?: ForecastBucketMeta[];
+  data: ForecastPivotResponse;
+};
+
+export function parseForecast(resp: ForecastResponse): {
+  measures: readonly Measure[];
+  buckets: ForecastBucketMeta[];
+  series: ForecastSeries[];
+} {
+  const measures = resp.measures?.length ? resp.measures : MEASURES;
+  const series = pivotForecast(resp.data, measures);
+  const buckets =
+    resp.buckets && resp.buckets.length
+      ? resp.buckets
+      : bucketNames(series).map((name) => ({
+          name,
+          startdate: null,
+          enddate: null,
+        }));
+  return { measures, buckets, series };
+}
+
+export type OverrideMessage = {
+  item: string | null;
+  location: string | null;
+  customer: string | null;
+  buckets: {
+    bucket: string;
+    startdate: string | null;
+    enddate: string | null;
+    forecastoverride: number | null;
+  }[];
+};
+
+// Build the ForecastService (/forecast/detail/) message for one cell edit:
+// {item, location, customer, buckets:[{startdate, enddate, bucket, forecastoverride}]}.
+export function buildOverrideMessage(
+  series: ForecastSeries,
+  bucket: ForecastBucketMeta,
+  value: number | null,
+): OverrideMessage {
+  const f = series.fields;
+  return {
+    item: (f.item as string) ?? null,
+    location: (f.location as string) ?? null,
+    customer: (f.customer as string) ?? null,
+    buckets: [
+      {
+        bucket: bucket.name,
+        startdate: bucket.startdate,
+        enddate: bucket.enddate,
+        forecastoverride: value,
+      },
+    ],
+  };
+}

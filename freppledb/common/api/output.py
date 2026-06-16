@@ -41,6 +41,9 @@ Wire a report as a JSON endpoint with, e.g.:
     JSONStreamView.as_view(report_class=InventoryReport)
 """
 
+import json
+
+from django.http import StreamingHttpResponse
 from django.views import View
 
 
@@ -69,3 +72,73 @@ class JSONStreamView(View):
             request.GET = request.GET.copy()
             request.GET["format"] = "json"
         return self.report_class.as_view()(request, *args, **kwargs)
+
+
+class ForecastJSONStreamView(JSONStreamView):
+    """
+    Forecast OUTPUT enriched for the editor (Phase 1B).
+
+    The bare pivot stream's per-bucket arrays are not self-describing: the editor
+    needs the measure (crosses) order to map array slots to named measures, and
+    each bucket's start/end dates to build override-save messages. Those come from
+    the report's ``crosses`` and ``getBuckets()`` - so this wraps the report's own
+    ``{total,page,records,rows}`` object unchanged under ``data`` and prepends a
+    ``measures`` + ``buckets`` header. The legacy ``?format=json`` path is
+    untouched, so the byte-parity contract for the other output endpoints holds.
+    """
+
+    def dispatch(self, request, *args, **kwargs):
+        if self.report_class is None:
+            raise ValueError("ForecastJSONStreamView requires a report_class")
+        rc = self.report_class
+
+        # Metadata extraction must never break the data stream: on any failure we
+        # fall back to empty measures/buckets (the client then uses its defaults).
+        measures = []
+        try:
+            crosses = (
+                rc.crosses(request, *args, **kwargs)
+                if callable(rc.crosses)
+                else rc.crosses
+            )
+            measures = [
+                c[0] for c in crosses if len(c) < 2 or (c[1] or {}).get("visible", True)
+            ]
+        except Exception:
+            measures = []
+
+        buckets = []
+        try:
+            rc.getBuckets(request, *args, **kwargs)
+            for b in getattr(request, "report_bucketlist", []) or []:
+                buckets.append(
+                    {
+                        "name": b["name"],
+                        "startdate": (
+                            b["startdate"].isoformat() if b["startdate"] else None
+                        ),
+                        "enddate": b["enddate"].isoformat() if b["enddate"] else None,
+                    }
+                )
+        except Exception:
+            buckets = []
+
+        if request.GET.get("format") != "json":
+            request.GET = request.GET.copy()
+            request.GET["format"] = "json"
+        inner = rc.as_view()(request, *args, **kwargs)
+        if not getattr(inner, "streaming", False):
+            return inner  # e.g. a permission denial - pass through unchanged
+
+        header = ('{"measures":%s,"buckets":%s,"data":') % (
+            json.dumps(measures),
+            json.dumps(buckets),
+        )
+
+        def stream():
+            yield header.encode("utf-8")
+            for chunk in inner.streaming_content:
+                yield chunk if isinstance(chunk, bytes) else str(chunk).encode("utf-8")
+            yield b"}"
+
+        return StreamingHttpResponse(stream(), content_type="application/json")

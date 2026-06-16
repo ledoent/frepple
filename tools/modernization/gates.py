@@ -177,13 +177,15 @@ GATES = [
     (
         "Phase 1A",
         "spa-execute",
-        "Next.js /frontend builds in CI; Execute screen consumes ws/tasks/ (live E2E gate pending a running stack)",
+        "Execute screen E2E-verified: auth->token->ws/tasks/ live (compose+Playwright)",
         "active",
         lambda: has_dir("frontend", "app", "execute")
         and file_contains(("frontend", "app", "execute", "page.tsx"), "useTaskProgress")
         and file_contains(
             (".github", "workflows", "modernization.yml"), "Build Next.js frontend"
-        ),
+        )
+        and has_file("e2e", "docker-compose.yml")
+        and file_contains(("e2e", "playwright", "tests", "smoke.spec.ts"), "ws/tasks"),
     ),
     # ---- Phase 1B — Forecast Editor ----
     (

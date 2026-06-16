@@ -42,9 +42,19 @@ export function useForecast(
           credentials: "include",
         });
         if (!res.ok) throw new Error(`forecast fetch failed: ${res.status}`);
-        const json = await res.json();
+        const text = await res.text();
         if (cancelled) return;
-        const parsed = parseForecast(json);
+        let json: unknown;
+        try {
+          json = JSON.parse(text);
+        } catch {
+          // An uncomputed/empty forecast: frePPLe's empty-grid report emits
+          // non-strict JSON. Treat it as no series rather than an error.
+          setSeries([]);
+          setBuckets([]);
+          return;
+        }
+        const parsed = parseForecast(json as Parameters<typeof parseForecast>[0]);
         setSeries(parsed.series);
         setBuckets(parsed.buckets);
       } catch (e) {

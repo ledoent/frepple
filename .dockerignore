@@ -1,0 +1,13 @@
+# Keep the E2E build context lean and host-artifact-free.
+.git
+venv
+build
+logs
+node_modules
+frontend/node_modules
+frontend/.next
+**/__pycache__
+*.pyc
+bin/frepple
+bin/libfrepple.*
+.DS_Store

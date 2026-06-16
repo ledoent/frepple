@@ -1,0 +1,71 @@
+# E2E stack for the modernized screens (Phase 1A/1B). Lean: no C++ engine build
+# - Django + daphne run engine-free, so this comes up in minutes. nginx is the
+# single same-origin proxy. Bring it up from the repo root:
+#   docker compose -f e2e/docker-compose.yml up --build
+name: frepple-e2e
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: frepple
+      POSTGRES_PASSWORD: frepple
+      POSTGRES_DB: frepple
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U frepple"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7
+
+  web-wsgi:
+    build:
+      context: ..
+      dockerfile: e2e/Dockerfile.web
+    command: ["wsgi"]
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      FREPPLE_DATE_STYLE: day-month-year
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  web-asgi:
+    build:
+      context: ..
+      dockerfile: e2e/Dockerfile.web
+    command: ["asgi"]
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      FREPPLE_DATE_STYLE: day-month-year
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: e2e/Dockerfile.frontend
+
+  nginx:
+    image: nginx:1.27
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "18080:80"
+    depends_on:
+      - web-wsgi
+      - web-asgi
+      - frontend

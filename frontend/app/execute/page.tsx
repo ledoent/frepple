@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { getToken } from "@/lib/auth";
+import { csrfToken } from "@/lib/csrf";
 import { useTaskProgress, type TaskUpdate } from "@/lib/useTaskProgress";
 import { useTaskLog } from "@/lib/useTaskLog";
 import { parseStatus } from "@/lib/ws";
@@ -17,13 +18,18 @@ export default function ExecutePage() {
     setLaunching(true);
     try {
       const token = await getToken();
-      // The runplan launch endpoint accepts the same JWT; the new task then
-      // streams its progress over the already-open websocket.
       // Launch via the Django execute endpoint (WSGI); the new task then streams
-      // its progress over the already-open websocket.
+      // its progress over the already-open websocket. This is a plain Django
+      // view behind CsrfViewMiddleware, so send the double-submit CSRF header
+      // alongside the JWT (the csrftoken cookie rides along via credentials).
+      const headers: Record<string, string> = {
+        Authorization: `Bearer ${token}`,
+      };
+      const csrf = csrfToken();
+      if (csrf) headers["X-CSRFToken"] = csrf;
       await fetch("/execute/launch/runplan/", {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        headers,
         credentials: "include",
       });
     } finally {

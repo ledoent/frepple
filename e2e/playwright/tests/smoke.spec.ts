@@ -23,9 +23,14 @@ test("Execute screen connects the task websocket", async ({ page }) => {
 test("Forecast editor loads without error", async ({ page }) => {
   await page.goto("/forecast");
   await expect(page.getByRole("heading", { name: /Forecast/ })).toBeVisible();
-  // Either the grid renders (an "Override" row) or the empty-state shows; both
-  // mean the enriched /api/output/forecast/ read + pivot worked (no error).
+  // Either the grid renders (one or more "Override" rows) or the empty-state
+  // shows; both mean the enriched /api/output/forecast/ read + pivot worked
+  // (no error). With real plan data the grid has many Override cells, so match
+  // the first to stay out of strict-mode.
   await expect(
-    page.locator("text=Override").or(page.locator("text=No forecast series.")),
+    page
+      .locator("text=Override")
+      .first()
+      .or(page.locator("text=No forecast series.")),
   ).toBeVisible();
 });

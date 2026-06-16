@@ -132,6 +132,33 @@ class ApiTokenTest(TestCase):
         self.assertIn("exp", data)
         self.assertEqual(decode_jwt(data["token"], "default").get("user"), "admin")
 
+    def test_token_does_not_exempt_xframe(self):
+        # Replaying the SPA token through MultiDBMiddleware must NOT clear the
+        # session's X-Frame-Options (the middleware defaults that flag to True for
+        # legacy webtokens), so the minted token pins it to False.
+        from freppledb.common.jwtauth import decode_jwt
+
+        self.client.login(username="admin", password="admin")
+        token = self.client.get("/api/token/").json()["token"]
+        self.assertIs(decode_jwt(token, "default").get("xframe_options_exempt"), False)
+
+
+class Phase0InactiveUserTest(TestCase):
+    """A still-valid webtoken for a deactivated account must be rejected by the
+    HTTP MultiDBMiddleware bearer path (security regression guard)."""
+
+    fixtures = ["demo"]
+
+    def test_webtoken_rejects_inactive_user(self):
+        from freppledb.common.models import User
+        from freppledb.common.auth import getWebserviceAuthorization
+
+        User.objects.create_user(username="ghost", password="x", is_active=False)
+        token = getWebserviceAuthorization(user="ghost", database="default")
+        response = self.client.get("/", HTTP_AUTHORIZATION="Bearer %s" % token)
+        self.assertEqual(response.status_code, 403)
+        self.assertIn(b"inactive", response.content.lower())
+
 
 class Phase0JwtUtilTest(TestCase):
     """The shared JWT/scenario helpers (common/jwtauth.py) used by REST + WS."""

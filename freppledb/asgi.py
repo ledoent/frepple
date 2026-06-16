@@ -61,8 +61,6 @@ logger = logging.getLogger(__name__)
 
 serviceRegistry = {}
 
-connected = set()
-
 
 def registerService(key):
     def inner(func):
@@ -108,11 +106,7 @@ class WebsocketService(AsyncWebsocketConsumer):
         if not user or not getattr(user, "is_active", False):
             await self.close(code=4401)
             return
-        connected.add(self)
         await self.accept(subprotocol=self.scope.get("jwt_subprotocol"))
-
-    async def disconnect(self, close_code):
-        connected.discard(self)
 
     async def receive(self, text_data=None, bytes_data=None):
         try:
@@ -414,7 +408,7 @@ class AuthAndPermissionMiddleware(AuthMiddleware):
     async def __call__(self, scope, receive, send):
         usr = scope.get("user", None)
         if not usr:
-            scope["user"] = AnonymousUser
+            scope["user"] = AnonymousUser()
         elif usr.is_authenticated and not usr.is_superuser:
             await database_sync_to_async(usr.get_all_permissions)()
         return await super().__call__(scope, receive, send)
@@ -479,8 +473,8 @@ class AuthenticatedMiddleware(BaseMiddleware):
             )
         try:
             return await super().__call__(scope, receive, send)
-        except Exception as e:
-            print("Error:", e)
+        except Exception:
+            logger.exception("ASGI request failed")
             scope["response_headers"].append((b"Content-Type", b"text/plain"))
             await send(
                 {

@@ -26,9 +26,15 @@ Shared JWT + scenario helpers (Phase 0 modernization).
 
 The HTTP middleware (common/middleware.py), the ASGI middleware (asgi.py) and
 the token-minting helper (common/auth.py) each duplicated the same secret
-resolution and JWT decode logic. This module is the single source of truth so
-that REST and websocket auth never diverge, and so the ASGI layer can pick the
+resolution and JWT decode logic. This module centralises the *decode* side
+(secret order + verification) and lets the ASGI/websocket layer pick the
 scenario database from the URL/header (instead of the FREPPLE_DATABASE env var).
+
+Scope note: the legacy HTTP MultiDBMiddleware still hand-rolls its own decode
+(it needs the expired-token -> login-redirect behaviour) and minting still lives
+in common/auth.getWebserviceAuthorization. Migrating those onto
+resolve_jwt_secrets/decode_jwt/encode_jwt is a follow-up; until then this is the
+single source of truth for the ASGI path only.
 """
 
 import re

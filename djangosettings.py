@@ -25,6 +25,7 @@
 r"""
 Main Django configuration file.
 """
+
 import os
 import sys
 import pathlib
@@ -488,7 +489,17 @@ CSRF_COOKIE_SECURE = (
 # CSRF_TRUSTED_ORIGINS = ["https://yourserver", "https://*.yourdomain.com"]
 # SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 CSRF_TRUSTED_ORIGINS = os.environ.get("FREPPLE_CSRF_TRUSTED_ORIGINS", "").split()
-SECURE_PROXY_SSL_HEADER = os.environ.get("FREPPLE_SECURE_PROXY_SSL_HEADER", "").split()
+# Django unpacks this as `header, value = SECURE_PROXY_SSL_HEADER`, so it must be
+# a 2-tuple (e.g. "HTTP_X_FORWARDED_PROTO https") or left unset. Only assign it
+# when exactly two words are given, so a misconfigured value fails loudly here
+# instead of raising ImproperlyConfigured on every request.
+_proxy_ssl = os.environ.get("FREPPLE_SECURE_PROXY_SSL_HEADER", "").split()
+if _proxy_ssl:
+    if len(_proxy_ssl) != 2:
+        raise ValueError(
+            "FREPPLE_SECURE_PROXY_SSL_HEADER must be two words ('HEADER value')"
+        )
+    SECURE_PROXY_SSL_HEADER = tuple(_proxy_ssl)
 
 # Configuration of the ftp/sftp/ftps server where to upload reports
 # Note that for SFTP protocol, the host needs to be defined

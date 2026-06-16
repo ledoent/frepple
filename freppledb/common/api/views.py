@@ -50,8 +50,15 @@ def APITokenView(request):
     if not request.user.is_authenticated:
         return JsonResponse({"detail": "authentication required"}, status=401)
     ttl = 86400  # 1 day
+    # xframe_options_exempt=False so replaying this token through MultiDBMiddleware
+    # does NOT clear the session's X-Frame-Options (the middleware defaults that
+    # flag to True for legacy embedded webtokens). The same-origin SPA never
+    # embeds frepple in a frame, so it must not weaken clickjacking protection.
     token = getWebserviceAuthorization(
-        user=request.user.username, exp=ttl, database=request.database
+        user=request.user.username,
+        exp=ttl,
+        database=request.database,
+        xframe_options_exempt=False,
     )
     return JsonResponse({"token": token, "exp": round(time.time()) + ttl})
 

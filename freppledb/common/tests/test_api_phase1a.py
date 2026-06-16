@@ -100,6 +100,37 @@ class Phase1ATaskProgressTest(TransactionTestCase):
         self.assertFalse(connected)
         self.assertEqual(detail, 4401)
 
+    def test_ws_tasks_rejects_inactive_user(self):
+        # An authenticated-but-deactivated user must be refused (the consumer
+        # gates on user.is_active). Inject the user into scope to focus on the
+        # is_active gate, like the relay test above.
+        from types import SimpleNamespace
+
+        from asgiref.sync import async_to_sync
+        from channels.testing import WebsocketCommunicator
+        from freppledb.asgi import TaskProgressConsumer
+
+        inactive_user = SimpleNamespace(
+            is_active=False, is_authenticated=True, username="ghost"
+        )
+        consumer_app = TaskProgressConsumer.as_asgi()
+
+        async def auth_app(scope, receive, send):
+            scope = dict(scope)
+            scope["user"] = inactive_user
+            scope["database"] = "default"
+            return await consumer_app(scope, receive, send)
+
+        async def run():
+            c = WebsocketCommunicator(auth_app, "/ws/tasks/")
+            connected, detail = await c.connect()
+            await c.disconnect()
+            return connected, detail
+
+        connected, detail = async_to_sync(run)()
+        self.assertFalse(connected)
+        self.assertEqual(detail, 4401)
+
     def test_task_save_broadcasts_progress(self):
         # The post_save -> group_send path runs through database_sync_to_async on
         # a separate thread, which only reaches a subscriber over a cross-process

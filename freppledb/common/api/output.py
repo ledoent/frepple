@@ -92,6 +92,16 @@ class ForecastJSONStreamView(JSONStreamView):
             raise ValueError("ForecastJSONStreamView requires a report_class")
         rc = self.report_class
 
+        # Run the report view FIRST — it carries the auth/permission gate. Only a
+        # streaming (authorized) response gets the metadata wrapper; a denial is
+        # passed through untouched, before we spend any query on measures/buckets.
+        if request.GET.get("format") != "json":
+            request.GET = request.GET.copy()
+            request.GET["format"] = "json"
+        inner = rc.as_view()(request, *args, **kwargs)
+        if not getattr(inner, "streaming", False):
+            return inner  # e.g. a permission denial - pass through unchanged
+
         # Metadata extraction must never break the data stream: on any failure we
         # fall back to empty measures/buckets (the client then uses its defaults).
         measures = []
@@ -122,13 +132,6 @@ class ForecastJSONStreamView(JSONStreamView):
                 )
         except Exception:
             buckets = []
-
-        if request.GET.get("format") != "json":
-            request.GET = request.GET.copy()
-            request.GET["format"] = "json"
-        inner = rc.as_view()(request, *args, **kwargs)
-        if not getattr(inner, "streaming", False):
-            return inner  # e.g. a permission denial - pass through unchanged
 
         header = ('{"measures":%s,"buckets":%s,"data":') % (
             json.dumps(measures),

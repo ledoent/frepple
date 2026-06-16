@@ -24,7 +24,7 @@
 from django.urls import re_path
 
 from freppledb import mode
-from freppledb.common.api.output import JSONStreamView
+from freppledb.common.api.output import JSONStreamView, PivotJSONStreamView
 
 # Automatically add these URLs when the application is installed
 autodiscover = True
@@ -43,7 +43,9 @@ if mode == "WSGI":
         # report's raw-SQL ?format=json streaming path. See common/api/output.py.
         re_path(
             r"^api/output/inventory/$",
-            JSONStreamView.as_view(
+            # Enriched (self-describing measures+buckets) for the SPA inventory
+            # screen; data payload stays byte-identical under "data".
+            PivotJSONStreamView.as_view(
                 report_class=freppledb.output.views.buffer.OverviewReport
             ),
             name="api_output_inventory",

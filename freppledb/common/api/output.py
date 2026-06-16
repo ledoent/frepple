@@ -74,22 +74,23 @@ class JSONStreamView(View):
         return self.report_class.as_view()(request, *args, **kwargs)
 
 
-class ForecastJSONStreamView(JSONStreamView):
+class PivotJSONStreamView(JSONStreamView):
     """
-    Forecast OUTPUT enriched for the editor (Phase 1B).
+    GridPivot OUTPUT enriched for the SPA (Phase 1B forecast, Phase 3 inventory…).
 
-    The bare pivot stream's per-bucket arrays are not self-describing: the editor
+    The bare pivot stream's per-bucket arrays are not self-describing: the client
     needs the measure (crosses) order to map array slots to named measures, and
-    each bucket's start/end dates to build override-save messages. Those come from
-    the report's ``crosses`` and ``getBuckets()`` - so this wraps the report's own
-    ``{total,page,records,rows}`` object unchanged under ``data`` and prepends a
-    ``measures`` + ``buckets`` header. The legacy ``?format=json`` path is
-    untouched, so the byte-parity contract for the other output endpoints holds.
+    each bucket's start/end dates. Those come from the report's ``crosses`` and
+    ``getBuckets()`` - so this wraps the report's own ``{total,page,records,rows}``
+    object unchanged under ``data`` and prepends a ``measures`` + ``buckets``
+    header. The wrapped ``data`` is byte-identical to the legacy ``?format=json``
+    stream, so any report (forecast, inventory, …) can opt in without changing the
+    underlying values.
     """
 
     def dispatch(self, request, *args, **kwargs):
         if self.report_class is None:
-            raise ValueError("ForecastJSONStreamView requires a report_class")
+            raise ValueError("PivotJSONStreamView requires a report_class")
         rc = self.report_class
 
         # Run the report view FIRST — it carries the auth/permission gate. Only a
@@ -145,3 +146,7 @@ class ForecastJSONStreamView(JSONStreamView):
             yield b"}"
 
         return StreamingHttpResponse(stream(), content_type="application/json")
+
+
+# Back-compat alias: the forecast endpoint and tests still import this name.
+ForecastJSONStreamView = PivotJSONStreamView

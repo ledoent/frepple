@@ -1,0 +1,63 @@
+name: Build staging images
+
+# Builds the modernization images on the ledoent x86 ARC runners and pushes them
+# to GHCR, where the Helm chart (deploy/helm/frepple) pulls them for the
+# frepple-staging review env on the hetzner-ledo cluster.
+#
+#   ghcr.io/ledoent/frepple-app:<sha>       (engine + Django; e2e/Dockerfile.engine)
+#   ghcr.io/ledoent/frepple-frontend:<sha>  (Next.js SPA;     e2e/Dockerfile.frontend)
+#
+# The runner is x86 (matching the cluster) and has a docker:dind sidecar, so a
+# plain `docker build` produces native amd64 images without buildx/QEMU emulation.
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "modernization"
+    paths:
+      - "e2e/Dockerfile.engine"
+      - "e2e/Dockerfile.frontend"
+      - "e2e/entrypoint.sh"
+      - "src/**"
+      - "freppledb/**"
+      - "frontend/**"
+      - ".github/workflows/deploy-staging.yml"
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io/ledoent
+
+jobs:
+  build:
+    name: Build & push ${{ matrix.image }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: frepple-app
+            dockerfile: e2e/Dockerfile.engine
+          - image: frepple-frontend
+            dockerfile: e2e/Dockerfile.frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Build & push
+        run: |
+          SHA="${{ github.sha }}"
+          IMG="${REGISTRY}/${{ matrix.image }}"
+          docker build \
+            -f "${{ matrix.dockerfile }}" \
+            -t "${IMG}:${SHA}" \
+            -t "${IMG}:latest" \
+            .
+          docker push "${IMG}:${SHA}"
+          docker push "${IMG}:latest"
+          echo "Pushed ${IMG}:${SHA} and ${IMG}:latest"

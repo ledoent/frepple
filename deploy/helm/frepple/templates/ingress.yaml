@@ -1,0 +1,35 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "frepple.name" . }}
+  labels: {{- include "frepple.labels" . | nindent 4 }}
+  annotations:
+    {{- if .Values.ingress.tls }}
+    cert-manager.io/cluster-issuer: {{ .Values.ingress.clusterIssuer }}
+    {{- end }}
+    # Long-lived websockets (live task progress / log tail).
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-body-size: "64m"
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- if .Values.ingress.tls }}
+  tls:
+    - hosts: [{{ .Values.host | quote }}]
+      secretName: {{ include "frepple.name" . }}-tls
+  {{- end }}
+  rules:
+    - host: {{ .Values.host }}
+      http:
+        paths:
+          # Websockets + engine HTTP services -> asgi (daphne).
+          - { path: /ws, pathType: Prefix, backend: { service: { name: {{ include "frepple.name" . }}-app, port: { name: ws } } } }
+          - { path: /forecast/detail, pathType: Prefix, backend: { service: { name: {{ include "frepple.name" . }}-app, port: { name: ws } } } }
+          - { path: /flush, pathType: Prefix, backend: { service: { name: {{ include "frepple.name" . }}-app, port: { name: ws } } } }
+          # REST API + Django UI/login/static + task launch -> web (WSGI).
+          - { path: /api, pathType: Prefix, backend: { service: { name: {{ include "frepple.name" . }}-app, port: { name: http } } } }
+          - { path: /data, pathType: Prefix, backend: { service: { name: {{ include "frepple.name" . }}-app, port: { name: http } } } }
+          - { path: /static, pathType: Prefix, backend: { service: { name: {{ include "frepple.name" . }}-app, port: { name: http } } } }
+          - { path: /execute/launch, pathType: Prefix, backend: { service: { name: {{ include "frepple.name" . }}-app, port: { name: http } } } }
+          # Everything else -> the SPA.
+          - { path: /, pathType: Prefix, backend: { service: { name: {{ include "frepple.name" . }}-frontend, port: { name: http } } } }

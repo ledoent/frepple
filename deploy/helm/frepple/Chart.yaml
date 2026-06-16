@@ -1,0 +1,6 @@
+apiVersion: v2
+name: frepple
+description: Modernized frePPLe (Django + C++ engine + Next.js SPA) - staging/review deploy
+type: application
+version: 0.1.0
+appVersion: "modernization"

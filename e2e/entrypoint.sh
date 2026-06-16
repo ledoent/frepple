@@ -24,8 +24,16 @@ case "${1:-wsgi}" in
     ${FREPPLECTL} loaddata demo --verbosity=0 || true
     # Marker so the asgi role can wait for init to finish.
     ${FREPPLECTL} dbshell <<<"CREATE TABLE IF NOT EXISTS e2e_ready(ok int);" || true
+    # Optional: compute an initial plan so the screens have data (set by the Helm
+    # chart; --background returns immediately so it doesn't delay readiness).
+    if [ -n "${FREPPLE_INIT_RUNPLAN:-}" ]; then
+      echo ">> launching initial runplan"
+      ${FREPPLECTL} runplan --env=fcst,supply --background || true
+    fi
     echo ">> starting Django (WSGI) on :8000"
-    exec ${FREPPLECTL} runserver 0.0.0.0:8000
+    # --insecure serves Django static (login/admin CSS) without a separate static
+    # server; production should front this with nginx/whitenoise instead.
+    exec ${FREPPLECTL} runserver --insecure 0.0.0.0:8000
     ;;
   asgi)
     echo ">> waiting for DB init (e2e_ready)"

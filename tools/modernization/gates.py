@@ -214,7 +214,16 @@ GATES = [
         lambda: file_contains(("frontend", "lib", "forecast.ts"), "pivotForecast")
         and file_contains(("frontend", "lib", "forecast.test.ts"), "fc-no-truncation"),
     ),
-    ("Phase 1B", "fc-a11y", "Grid a11y scan: 0 critical", "pending", None),
+    (
+        "Phase 1B",
+        "fc-a11y",
+        "Grid a11y: 0 critical axe violations (E2E scan on forecast + execute)",
+        "active",
+        lambda: file_contains(
+            ("e2e", "playwright", "tests", "a11y.spec.ts"), "AxeBuilder", "critical"
+        )
+        and file_contains(("frontend", "app", "forecast", "page.tsx"), "aria-label"),
+    ),
     # ---- Phase 2 — Odoo rework ----
     (
         "Phase 2",

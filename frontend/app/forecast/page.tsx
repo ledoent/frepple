@@ -9,6 +9,7 @@ import {
   type ForecastBucketMeta,
   type Measure,
 } from "@/lib/forecast";
+import { ForecastChart } from "./ForecastChart";
 
 // Phase 1B Forecast Editor: a pivot of series x time buckets showing orders /
 // baseline / override (editable) / net. Override edits persist to the engine
@@ -26,6 +27,8 @@ export default function ForecastPage() {
   const [draft, setDraft] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [charted, setCharted] = useState<string | null>(null);
+  const chartedSeries = series.find((s) => s.key === charted) ?? null;
 
   const key = (s: string, b: string) => `${s} ${b}`;
 
@@ -131,11 +134,18 @@ export default function ForecastPage() {
                     setRowDraft(s, applyPercent(currentOverrides(s), p))
                   }
                   onSaveRow={() => saveRow(s)}
+                  onChart={() =>
+                    setCharted((c) => (c === s.key ? null : s.key))
+                  }
+                  charted={charted === s.key}
                 />
               ))}
             </tbody>
           </table>
         </div>
+      )}
+      {chartedSeries && (
+        <ForecastChart series={chartedSeries} buckets={buckets} />
       )}
     </main>
   );
@@ -150,6 +160,8 @@ function SeriesRows({
   onBulkFill,
   onBulkPercent,
   onSaveRow,
+  onChart,
+  charted,
 }: {
   s: ForecastSeries;
   buckets: ForecastBucketMeta[];
@@ -159,6 +171,8 @@ function SeriesRows({
   onBulkFill: (v: number | null) => void;
   onBulkPercent: (pct: number) => void;
   onSaveRow: () => void;
+  onChart: () => void;
+  charted: boolean;
 }) {
   const title = useMemo(
     () =>
@@ -180,7 +194,18 @@ function SeriesRows({
         <tr key={row.measure}>
           {ri === 0 && (
             <th scope="rowgroup" style={{ ...td, fontWeight: 600 }} rowSpan={SHOWN.length}>
-              <div>{title}</div>
+              <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                <span>{title}</span>
+                <button
+                  type="button"
+                  onClick={onChart}
+                  aria-pressed={charted}
+                  aria-label={`chart ${title}`}
+                  style={{ ...miniBtn, padding: "0 6px" }}
+                >
+                  📈
+                </button>
+              </div>
               <BulkControls
                 value={bulk}
                 setValue={setBulk}

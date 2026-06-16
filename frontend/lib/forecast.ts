@@ -83,6 +83,30 @@ export function bucketNames(series: ForecastSeries[]): string[] {
   return order;
 }
 
+// Flatten one series into chart rows (one point per bucket) for plotting
+// orders / baseline / net over time. Pure, unit-tested.
+export type ForecastChartRow = {
+  bucket: string;
+  orders: number | null;
+  baseline: number | null;
+  net: number | null;
+};
+
+export function toChartRows(
+  series: ForecastSeries,
+  buckets: { name: string }[],
+): ForecastChartRow[] {
+  return buckets.map((b) => {
+    const cell = series.buckets[b.name] ?? {};
+    return {
+      bucket: b.name,
+      orders: cell.orderstotal ?? null,
+      baseline: cell.forecastbaseline ?? null,
+      net: cell.forecastnet ?? null,
+    };
+  });
+}
+
 // The enriched forecast response (Phase 1B): the report's pivot object under
 // `data`, plus the measure order and bucket dates the editor needs.
 export type ForecastBucketMeta = {

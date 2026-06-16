@@ -5,6 +5,7 @@ import {
   parseForecast,
   buildOverrideMessage,
   buildBulkOverrideMessage,
+  toChartRows,
   MEASURES,
 } from "./forecast";
 
@@ -71,6 +72,17 @@ describe("pivotForecast", () => {
 describe("bucketNames", () => {
   it("returns the ordered union of bucket names", () => {
     expect(bucketNames(pivotForecast(resp))).toEqual(["Jan 26", "Feb 26"]);
+  });
+});
+
+describe("toChartRows", () => {
+  it("flattens a series into orders/baseline/net points per bucket", () => {
+    const s = pivotForecast(resp)[0];
+    const rows = toChartRows(s, [{ name: "Jan 26" }, { name: "Feb 26" }]);
+    expect(rows).toEqual([
+      { bucket: "Jan 26", orders: 10, baseline: 8, net: 10 },
+      { bucket: "Feb 26", orders: 12, baseline: 9, net: 9 },
+    ]);
   });
 });
 

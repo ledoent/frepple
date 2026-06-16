@@ -48,4 +48,12 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
   value: "6379"
 - name: FREPPLE_DATE_STYLE
   value: day-month-year
+{{- if .Values.ingress.tls }}
+# TLS is terminated at the ingress; tell Django the request is secure (via the
+# forwarded-proto header) and trust the https origin so login POST passes CSRF.
+- name: FREPPLE_SECURE_PROXY_SSL_HEADER
+  value: "HTTP_X_FORWARDED_PROTO https"
+- name: FREPPLE_CSRF_TRUSTED_ORIGINS
+  value: {{ printf "https://%s" .Values.host | quote }}
+{{- end }}
 {{- end -}}

@@ -114,6 +114,25 @@ class Phase0OutputEndpointTest(TestCase):
         self.assertIn(b'"data":', body)
 
 
+class ApiTokenTest(TestCase):
+    """/api/token/ mints a JWT for the session user (the SPA's auth source)."""
+
+    fixtures = ["demo"]
+
+    def test_token_requires_auth(self):
+        self.assertEqual(self.client.get("/api/token/").status_code, 401)
+
+    def test_token_mints_jwt_for_session_user(self):
+        from freppledb.common.jwtauth import decode_jwt
+
+        self.client.login(username="admin", password="admin")
+        response = self.client.get("/api/token/")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn("exp", data)
+        self.assertEqual(decode_jwt(data["token"], "default").get("user"), "admin")
+
+
 class Phase0JwtUtilTest(TestCase):
     """The shared JWT/scenario helpers (common/jwtauth.py) used by REST + WS."""
 

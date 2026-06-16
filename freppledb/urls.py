@@ -34,6 +34,7 @@ from drf_spectacular.views import (
 )
 
 from freppledb.admin import data_site
+from freppledb.common.api.views import APITokenView
 
 urlpatterns = [
     # Redirect admin index page /data/ to /
@@ -76,6 +77,8 @@ urlpatterns += [
     ),
     re_path(r"^data/", data_site.urls),
     re_path(r"^api-auth/", include("rest_framework.urls", namespace="rest_framework")),
+    # Short-lived JWT for the same-origin SPA (session -> token).
+    re_path(r"^api/token/$", APITokenView, name="api_token"),
     # OpenAPI schema + interactive docs (Phase 0 modernization API).
     re_path(r"^api/schema/$", SpectacularAPIView.as_view(), name="schema"),
     re_path(

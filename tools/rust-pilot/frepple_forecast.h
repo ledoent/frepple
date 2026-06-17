@@ -34,11 +34,20 @@ int frepple_croston(FREPPLE_FORECAST_SCALAR_SIG);
 int frepple_double_exponential(FREPPLE_FORECAST_SCALAR_SIG, double *out_constant,
                                double *out_trend);
 
+/* Seasonal (Holt-Winters). Unlike the scalar methods it has NO outlier indices,
+ * but DOES return the level/trend/cycle apply-state (out_l_i, out_t_i,
+ * out_cycleindex) the engine extrapolates from per bucket
+ * (`L_i += T_i; fcst = L_i * S_i[cycleindex]`, cycleindex wrapping at period).
+ * `p` order: [init_alfa, min_alfa, max_alfa, init_beta, min_beta, max_beta,
+ *  gamma, min_period, max_period, min_autocorr, max_autocorr, smape_alfa, skip,
+ *  iters]. `out_s_i` takes up to `s_i_cap` factors; `out_s_i_len` is the true
+ * count (== period). cycleindex = count % period. */
 int frepple_seasonal(const double *history, size_t count, const double *p,
                      size_t np, double *out_smape, double *out_stddev,
                      double *out_forecast, uint32_t *out_period,
                      int32_t *out_force, double *out_s_i, size_t s_i_cap,
-                     size_t *out_s_i_len);
+                     size_t *out_s_i_len, double *out_l_i, double *out_t_i,
+                     uint32_t *out_cycleindex);
 
 #ifdef __cplusplus
 }

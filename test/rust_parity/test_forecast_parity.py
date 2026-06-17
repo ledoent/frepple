@@ -109,12 +109,20 @@ def test_forecast_parity(case, cxx_ref):
         forecast, ref["forecast"]
     ), f"[{method}] forecast rust={forecast} cxx={ref['forecast']}"
     if method == "seasonal":
-        _, _, _, period, force, s_i = out
+        # Rust returns (...s_i, l_i, t_i, cycleindex). The l_i/t_i/cycleindex are
+        # the per-bucket apply-state (phase 7): the one-step `forecast` only pins
+        # l_i + t_i/period, so these are checked independently here.
+        _, _, _, period, force, s_i, l_i, t_i, cycleindex = out
         assert period == ref["period"], f"period rust={period} cxx={ref['period']}"
         assert force == ref["force"], f"force rust={force} cxx={ref['force']}"
         assert len(s_i) == len(ref["s_i"]), f"s_i len rust={len(s_i)} cxx={len(ref['s_i'])}"
         for k, (a, b) in enumerate(zip(s_i, ref["s_i"])):
             assert _approx(a, b), f"s_i[{k}] rust={a} cxx={b}"
+        assert _approx(l_i, ref["l_i"]), f"l_i rust={l_i} cxx={ref['l_i']}"
+        assert _approx(t_i, ref["t_i"]), f"t_i rust={t_i} cxx={ref['t_i']}"
+        assert cycleindex == ref["cycleindex"], (
+            f"cycleindex rust={cycleindex} cxx={ref['cycleindex']}"
+        )
     else:
         outliers = out[3]
         assert set(outliers) == set(ref["outliers"]), (

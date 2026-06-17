@@ -22,6 +22,14 @@ pub struct SeasonalResult {
     pub period: u32,
     pub force: bool,
     pub s_i: Vec<f64>,
+    // Apply-state (phase 7): the engine's Seasonal::applyForecast extrapolates per
+    // bucket as `L_i += T_i; T_i *= damp; fcst = L_i * S_i[cycleindex]` with
+    // `cycleindex` wrapping at `period`. So it needs the level/trend + the cycle
+    // position, not just the one-step `forecast`. cycleindex starts at count%period
+    // (the slot the C++ uses for the first forecast bucket).
+    pub l_i: f64,
+    pub t_i: f64,
+    pub cycleindex: u32,
 }
 
 /// Autocorrelation cycle detection (timeseries.cpp:942-1002). Returns
@@ -124,6 +132,9 @@ pub fn seasonal(
             period: 0,
             force: false,
             s_i: Vec::new(),
+            l_i: 0.0,
+            t_i: 0.0,
+            cycleindex: 0,
         };
     }
 
@@ -344,6 +355,11 @@ pub fn seasonal(
         period: period as u32,
         force: autocorrelation > max_autocorrelation,
         s_i: best_s_i,
+        // applyForecast resumes from here: the C++ leaves cycleindex at count%period
+        // (incremented from 0 each smoothing pass), and L_i/T_i = the best snapshot.
+        l_i,
+        t_i,
+        cycleindex: (count % period) as u32,
     }
 }
 

@@ -108,10 +108,13 @@ pub unsafe extern "C" fn frepple_double_exponential(
     0
 }
 
-/// Seasonal has extra outputs (period, force, seasonal factors).
+/// Seasonal has extra outputs (period, force, seasonal factors) and the
+/// level/trend/cycle apply-state (l_i, t_i, cycleindex) the engine extrapolates
+/// from. It has NO outlier detection (unlike MA/SingleExp/Croston), so there are
+/// no outlier indices to return — the engine creates no ProblemOutlier for it.
 /// # Safety
 /// Valid `history`/`count`; writable scalar out-params; `out_s_i` writable for
-/// `s_i_cap` f64s.
+/// `s_i_cap` f64s; `out_l_i`/`out_t_i`/`out_cycleindex` non-null + writable.
 #[no_mangle]
 #[allow(clippy::too_many_arguments)]
 pub unsafe extern "C" fn frepple_seasonal(
@@ -127,6 +130,10 @@ pub unsafe extern "C" fn frepple_seasonal(
     out_s_i: *mut f64,
     s_i_cap: usize,
     out_s_i_len: *mut usize,
+    // apply-state for the engine's per-bucket extrapolation (phase 7).
+    out_l_i: *mut f64,
+    out_t_i: *mut f64,
+    out_cycleindex: *mut u32,
 ) -> i32 {
     let h = std::slice::from_raw_parts(history, count);
     let pr = std::slice::from_raw_parts(p, np);
@@ -143,5 +150,8 @@ pub unsafe extern "C" fn frepple_seasonal(
     for (k, &s) in r.s_i.iter().take(s_i_cap).enumerate() {
         *out_s_i.add(k) = s;
     }
+    *out_l_i = r.l_i;
+    *out_t_i = r.t_i;
+    *out_cycleindex = r.cycleindex;
     0
 }

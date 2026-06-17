@@ -198,6 +198,22 @@ fix the confirmed N+1s with set-based prefetch; split into (a) scheduled master-
 - [ ] Core workflow completes (e.g., Gantt: reschedule an MO, see it persist + downstream update).
 - [ ] a11y scan clean; legacy screen flagged for retirement.
 
+**Delivered — Inventory / Demand / Resource (read pivots):** the three reporting
+screens ship as `PivotScreen` over enriched `/api/output/{inventory,demand,resource}/`.
+
+**Delivered — Demand Pegging Gantt, slice D1 (read-only):** pick a sales order →
+trace its supply chain on a dated Gantt. Backend `PeggingJSONView`
+(`freppledb/common/api/output.py`) enriches the pegging report with a `window`
+header (horizon + due/current markers) the bare stream drops; data stays
+byte-identical under `data` (Django data-parity test). Frontend `app/pegging/`
++ `lib/pegging.ts` (parse + geometry, unit-tested) render an HTML/CSS positioned-bar
+Gantt — *not* SVG, so the drag-reschedule slice drops in without re-plumbing
+geometry. Covered by Playwright smoke + a11y (0 critical) + an engine-backed
+render spec. Sequenced **read-only first**; the ambitious parts are split out:
+- **D2 — reschedule write-path:** drag a bar → `PATCH /api/input/<ordertype>/<ref>/`.
+- **D3 — downstream preview + re-plan loop** (pegging is engine-computed/read-only,
+  so a reschedule persists dates but only a re-plan recomputes the peg).
+
 ### Phase 3.5 — Deployment: Helm chart + load-balanced images
 **Context — data/state model (from code audit):**
 - **PostgreSQL is the single source of truth.** Multi-DB router for scenarios. *No Redis today;

@@ -10,6 +10,7 @@ const NAV = [
   { href: "/execute", label: "Execute", hint: "Plan runs" },
   { href: "/forecast", label: "Forecast", hint: "Demand editor" },
   { href: "/demand", label: "Demand", hint: "Sales orders" },
+  { href: "/pegging", label: "Pegging", hint: "Supply trace" },
   { href: "/inventory", label: "Inventory", hint: "On-hand & supply" },
   { href: "/resource", label: "Resource", hint: "Capacity & load" },
 ];

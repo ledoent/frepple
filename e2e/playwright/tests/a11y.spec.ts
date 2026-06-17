@@ -44,3 +44,10 @@ test("Resource report: 0 critical a11y violations", async ({ page }) => {
   const critical = await criticalViolations(page);
   expect(critical, JSON.stringify(critical.map((v) => v.id))).toEqual([]);
 });
+
+test("Pegging screen: 0 critical a11y violations", async ({ page }) => {
+  await page.goto("/pegging");
+  await expect(page.getByRole("heading", { name: "Demand pegging" })).toBeVisible();
+  const critical = await criticalViolations(page);
+  expect(critical, JSON.stringify(critical.map((v) => v.id))).toEqual([]);
+});

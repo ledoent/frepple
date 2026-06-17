@@ -105,6 +105,34 @@ class Phase0OutputEndpointTest(TestCase):
         self.assertIn(b'"buckets":', body)
         self.assertIn(b'"data":', body)
 
+    def test_pegging_output_enriched(self):
+        # The pegging Gantt endpoint (Phase 3-D) wraps the demand-pegging report's
+        # tree object under "data" and prepends an absolute time "window" (the
+        # report's hidden horizon + due/current markers) the Gantt axis needs.
+        # The wrapped data stays byte-identical to the legacy report envelope.
+        new = "/api/output/pegging/Demand%2001/"
+        legacy = "/demandpegging/Demand%2001/?format=json"
+        response = self.client.get(new)
+        self.assertEqual(response.status_code, 200, new)
+        api = _body(response)
+        self.assertTrue(api.startswith(b'{"window":'), api[:48])
+        self.assertIn(b'"data":', api)
+        # The window header carries the horizon bounds. Reconstruct just the
+        # header object: everything before ,"data": plus a closing brace.
+        header = json.loads(api.split(b',"data":', 1)[0] + b"}")
+        self.assertIn("window", header)
+        self.assertIn("start", header["window"])
+        self.assertIn("end", header["window"])
+        # Data-parity: the wrapped "data" matches the legacy envelope up to the
+        # horizon-dependent "records" field (same raw-SQL path, no serializer).
+        old = _body(self.client.get(legacy))
+        inner = api.split(b'"data":', 1)[1]
+        self.assertEqual(
+            inner.split(b'"records":')[0],
+            old.split(b'"records":')[0],
+            "%s data differs from legacy %s" % (new, legacy),
+        )
+
 
 class ApiTokenTest(TestCase):
     """/api/token/ mints a JWT for the session user (the SPA's auth source)."""

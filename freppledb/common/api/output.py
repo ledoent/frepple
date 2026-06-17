@@ -63,15 +63,34 @@ class JSONStreamView(View):
     # Reuse the report's HTTP method support.
     http_method_names = ["get", "head", "options"]
 
-    def dispatch(self, request, *args, **kwargs):
+    def _run_report(self, request, *args, **kwargs):
+        """Force JSON output and run the report's own view. That view carries the
+        permission gate and streams the raw-SQL result itself, so this is the one
+        place subclasses go through to get the (auth-checked) inner response."""
         if self.report_class is None:
-            raise ValueError("JSONStreamView requires a report_class")
-        # Force JSON output, then hand off to the report's own view. The report
-        # performs permission checks and streams the raw-SQL result itself.
+            raise ValueError("%s requires a report_class" % type(self).__name__)
         if request.GET.get("format") != "json":
             request.GET = request.GET.copy()
             request.GET["format"] = "json"
         return self.report_class.as_view()(request, *args, **kwargs)
+
+    @staticmethod
+    def _wrap(inner, header):
+        """Prefix the report's streamed JSON object with ``header`` (which opens a
+        new object and ends with the wrapped key, e.g. ``{"window":…,"data":``)
+        and append the closing brace - so the report's body stays byte-identical
+        under that key. Shared by the enriched subclasses."""
+
+        def stream():
+            yield header.encode("utf-8")
+            for chunk in inner.streaming_content:
+                yield chunk if isinstance(chunk, bytes) else str(chunk).encode("utf-8")
+            yield b"}"
+
+        return StreamingHttpResponse(stream(), content_type="application/json")
+
+    def dispatch(self, request, *args, **kwargs):
+        return self._run_report(request, *args, **kwargs)
 
 
 class PivotJSONStreamView(JSONStreamView):
@@ -89,17 +108,11 @@ class PivotJSONStreamView(JSONStreamView):
     """
 
     def dispatch(self, request, *args, **kwargs):
-        if self.report_class is None:
-            raise ValueError("PivotJSONStreamView requires a report_class")
         rc = self.report_class
-
         # Run the report view FIRST — it carries the auth/permission gate. Only a
         # streaming (authorized) response gets the metadata wrapper; a denial is
         # passed through untouched, before we spend any query on measures/buckets.
-        if request.GET.get("format") != "json":
-            request.GET = request.GET.copy()
-            request.GET["format"] = "json"
-        inner = rc.as_view()(request, *args, **kwargs)
+        inner = self._run_report(request, *args, **kwargs)
         if not getattr(inner, "streaming", False):
             return inner  # e.g. a permission denial - pass through unchanged
 
@@ -138,15 +151,71 @@ class PivotJSONStreamView(JSONStreamView):
             json.dumps(measures),
             json.dumps(buckets),
         )
-
-        def stream():
-            yield header.encode("utf-8")
-            for chunk in inner.streaming_content:
-                yield chunk if isinstance(chunk, bytes) else str(chunk).encode("utf-8")
-            yield b"}"
-
-        return StreamingHttpResponse(stream(), content_type="application/json")
+        return self._wrap(inner, header)
 
 
 # Back-compat alias: the forecast endpoint and tests still import this name.
 ForecastJSONStreamView = PivotJSONStreamView
+
+
+class PeggingJSONView(JSONStreamView):
+    """
+    Demand-pegging GANTT output enriched for the SPA (Phase 3-D).
+
+    The pegging report (``output.views.pegging.ReportByDemand``) already streams
+    the supply-chain tree as ``{total,page,records,rows}`` - each row a tree node
+    with an ``operationplans`` array of bars carrying raw ``startdate``/``enddate``.
+    But the bare stream drops the report's *hidden* columns, so the absolute time
+    window and the due/current marker dates never reach the client. This wraps the
+    report's own JSON unchanged under ``data`` and prepends a ``window`` header
+    (start/end of the horizon + the demand due date + the current/plan date, all
+    ISO) so the client can draw a real dated axis and the due/now markers.
+
+    The wrapped ``data`` is byte-identical to the legacy ``?format=json`` stream.
+    """
+
+    def dispatch(self, request, *args, **kwargs):
+        rc = self.report_class
+        # Run the report view FIRST - it carries the auth/permission gate. Only a
+        # streaming (authorized) response gets the window header; a denial passes
+        # through untouched, before we spend any query computing the window.
+        inner = self._run_report(request, *args, **kwargs)
+        if not getattr(inner, "streaming", False):
+            return inner  # e.g. a permission denial - pass through unchanged
+
+        # Window extraction must never break the data stream: on any failure we
+        # fall back to an empty window (the client then derives bounds from bars).
+        window = {}
+        try:
+            from freppledb.input.models import Demand
+            from freppledb.common.report import getCurrentDate
+
+            # The report's own get() already ran getBuckets while building the
+            # response, so the horizon is on the request - reuse it. Only re-run
+            # (the heavy recursive pegging CTE) if it somehow isn't set yet.
+            start = getattr(request, "report_startdate", None)
+            end = getattr(request, "report_enddate", None)
+            if start is None or end is None:
+                rc.getBuckets(request, *args, **kwargs)
+                start = getattr(request, "report_startdate", None)
+                end = getattr(request, "report_enddate", None)
+            demand = (
+                Demand.objects.using(request.database)
+                .filter(name=args[0])
+                .only("due")
+                .first()
+                if args and args[0]
+                else None
+            )
+            current = getCurrentDate(request.database, lastplan=True)
+            window = {
+                "start": start.isoformat() if start else None,
+                "end": end.isoformat() if end else None,
+                "due": demand.due.isoformat() if demand and demand.due else None,
+                "current": current.isoformat() if current else None,
+            }
+        except Exception:
+            window = {}
+
+        header = ('{"window":%s,"data":') % json.dumps(window)
+        return self._wrap(inner, header)

@@ -24,7 +24,10 @@
 from django.urls import re_path
 
 from freppledb import mode
-from freppledb.common.api.output import JSONStreamView, PivotJSONStreamView
+from freppledb.common.api.output import (
+    PivotJSONStreamView,
+    PeggingJSONView,
+)
 
 # Automatically add these URLs when the application is installed
 autodiscover = True
@@ -69,7 +72,9 @@ if mode == "WSGI":
         ),
         re_path(
             r"^api/output/pegging/(.+)/$",
-            JSONStreamView.as_view(
+            # Enriched (absolute time window + due/current markers) for the SPA
+            # pegging Gantt; the tree/bar data stays byte-identical under "data".
+            PeggingJSONView.as_view(
                 report_class=freppledb.output.views.pegging.ReportByDemand
             ),
             name="api_output_pegging",

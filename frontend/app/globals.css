@@ -794,6 +794,179 @@ table.grid thead th {
   }
 }
 
+/* ── demand pegging: picker + gantt ─────────────────────────────────────── */
+.picker {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+.picker-item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  text-align: left;
+  padding: 7px 10px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+}
+.picker-item:hover {
+  background: var(--raise);
+  border-color: var(--line);
+}
+.picker-item.is-selected {
+  background: var(--signal-dim);
+  border-color: var(--signal);
+}
+.picker-name {
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+.picker-meta {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--faint);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.gantt {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--panel);
+}
+.gantt-head,
+.gantt-row {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  align-items: stretch;
+}
+.gantt-row {
+  border-top: 1px solid var(--line);
+}
+.gantt-row:hover {
+  background: var(--bg-2);
+}
+.gantt-head {
+  background: var(--panel-2);
+}
+.gantt-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-right: 1px solid var(--line);
+  min-width: 0;
+}
+.gantt-label--head,
+.gantt-lane--head {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.gantt-op {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.gantt-type {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 2px 5px;
+  border-radius: 4px;
+  color: var(--muted);
+  background: var(--raise);
+  border: 1px solid var(--line-bright);
+}
+.gantt-type--dlvr {
+  color: var(--signal);
+  background: var(--signal-dim);
+  border-color: var(--signal);
+}
+.gantt-lane {
+  position: relative;
+  height: 30px;
+  margin: 6px 0;
+}
+.gantt-lane--head {
+  height: 22px;
+  margin: 0;
+}
+.gantt-tick {
+  position: absolute;
+  top: 4px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+.gantt-tick::before {
+  content: "";
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  width: 1px;
+  height: 9999px;
+  background: var(--line);
+  opacity: 0.5;
+}
+.gantt-bar {
+  position: absolute;
+  top: 4px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 5px;
+  border-radius: 4px;
+  box-sizing: border-box;
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+.gantt-bar-q {
+  color: var(--text);
+  opacity: 0.85;
+}
+.gantt-bar--proposed {
+  background: var(--signal-dim);
+  border: 1px solid var(--signal);
+}
+.gantt-bar--firm {
+  background: var(--ok-dim);
+  border: 1px solid var(--ok);
+}
+.gantt-bar--done {
+  background: var(--raise);
+  border: 1px solid var(--line-bright);
+}
+.gantt-marker {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  z-index: 2;
+}
+.gantt-marker--due {
+  background: var(--signal);
+  box-shadow: 0 0 6px var(--signal);
+}
+.gantt-marker--now {
+  background: var(--line-bright);
+}
+
 /* ── responsive ─────────────────────────────────────────────────────────── */
 @media (max-width: 860px) {
   .shell {

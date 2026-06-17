@@ -39,7 +39,9 @@ docker compose -f e2e/docker-compose.yml down -v
 ## Scope
 
 Covered: auth (`/api/token/`), the Execute websocket (token → subprotocol JWT →
-`ws/tasks/` consumer), the enriched forecast read + pivot grid.
+`ws/tasks/` consumer), the enriched forecast read + pivot grid, and the
+read-only **Demand Pegging Gantt** (picker + the enriched `/api/output/pegging/`
+read; the engine-backed Gantt-render spec is gated on `E2E_ENGINE`).
 
 Out of scope (needs the compiled engine): launching a real plan and the override
 re-net. Add an engine-backed service later to extend `fc-edit-parity` /

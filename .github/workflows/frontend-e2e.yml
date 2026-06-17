@@ -110,7 +110,7 @@ jobs:
           npm ci
           npx playwright install --with-deps chromium
 
-      - name: Playwright (12 specs, all 5 screens + live-progress)
+      - name: Playwright (all screens + live-progress + pegging)
         working-directory: e2e/playwright
         env:
           E2E_BASE_URL: http://127.0.0.1:18080

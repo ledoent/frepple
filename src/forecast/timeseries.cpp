@@ -1118,6 +1118,8 @@ ForecastSolver::Metrics
   // applyForecast (L_i/T_i/cycleindex/S_i), so the Rust returns it - byte-parity
   // verified against the C++ reference (test_forecast_parity). No outlier
   // detection in this method, so nothing model-mutating to recreate here.
+  // No seasonality (period 0) comes back as smape=DBL_MAX, so the dispatch loop
+  // never selects Seasonal and applyForecast is never reached with period 0.
   double params[14] = {initial_alfa,
                       min_alfa,
                       max_alfa,

@@ -98,25 +98,26 @@ flag-gated dispatch + `forecast_*` golden run:
 - `option(FREPPLE_RUST_FORECAST OFF)` in the root `CMakeLists.txt`; when ON, `src/CMakeLists.txt`
   cargo-builds `libfrepple_forecast.a`, links it into the `forecast` lib, defines
   `FREPPLE_RUST_FORECAST=1`, and compiles the forecast TU with `-ffp-contract=off` (match rustc, no FMA).
-- `src/forecast/timeseries.cpp`: **MovingAverage, SingleExponential and Croston** `generateForecast` now
-  dispatch to their `extern "C"` Rust functions behind the flag. The engine passes `timeseries.data(),
-  count` — verified to be the same `[0..count-1]` data points (trailing-0 placeholder at `[count]`) the
-  parity reference + Rust port consume. The model mutation (`ProblemOutlier` creation, `applyForecast`)
-  stays in C++; the Rust returns only the numbers + outlier indices. These three write a **constant**
-  forecast (`avg`/`f_i`), so the scalar C-ABI's single `forecast` value is all `applyForecast` needs.
+- `src/forecast/timeseries.cpp`: **MovingAverage, SingleExponential, Croston and DoubleExponential**
+  `generateForecast` now dispatch to their `extern "C"` Rust functions behind the flag (**4/5**). The
+  engine passes `timeseries.data(), count` — verified to be the same `[0..count-1]` data points (trailing-0
+  placeholder at `[count]`) the parity reference + Rust port consume. The model mutation (`ProblemOutlier`
+  creation, `applyForecast`) stays in C++; the Rust returns the numbers + outlier indices. MA/SE/Croston
+  write a **constant** forecast (`avg`/`f_i`) — the scalar C-ABI suffices. **DoubleExp** needed a C-ABI
+  extension: its `applyForecast` extrapolates per bucket (`constant_i += trend_i; trend_i *= damp`), so
+  `frepple_double_exponential` returns the **decomposed** `constant`/`trend` via `double_exponential_state`
+  (the `double_exponential` wrapper stays for the PyO3/parity path).
 - **Golden gate CI:** `.github/workflows/forecast-phase7.yml` builds `-DFREPPLE_RUST_FORECAST=ON` and runs
-  `runtest.py` over `test/forecast_1..11` (byte-exact vs `.expect`). **First verdict: GREEN** with
-  MovingAverage wired — in-engine byte-exact golden parity holds with `-ffp-contract=off`, settling the
-  FP-contraction question positively. The gate now also covers SingleExponential + Croston.
+  `runtest.py` over `test/forecast_1..11` (byte-exact vs `.expect`). **GREEN at 4/5** — in-engine
+  byte-exact golden parity holds with `-ffp-contract=off`, settling the FP-contraction question positively.
 
-**Remaining for full coverage — DoubleExponential + Seasonal need a C-ABI extension (a real finding).**
-The current C-ABI was built for the *parity harness*, which only checks the single one-step `forecast`
-value. But these two methods' `applyForecast` **extrapolate per bucket** and so need the *decomposed*
-state, which the scalar ABI doesn't expose: DoubleExp needs `constant_i` **and** `trend_i` separately
-(not their sum); Seasonal needs `L_i` + `T_i` + the `S_i[]` factors + `cycleindex` (the ABI returns
-`period`/`force`/`s_i` but not the level/trend/cycle state). Completing them = extend `capi.rs` (+ the
-header) to return that state, then wire + re-run the gate. Until then they run the (unchanged) C++ path
-under the flag, so the gate stays meaningful and green.
+**Remaining — Seasonal (its own PR + a new parity check).** Seasonal's `applyForecast` extrapolates with
+`L_i`/`T_i`/`cycleindex`/`S_i[]`, but the existing parity test only pins smape/stddev/forecast/period/s_i —
+it constrains `l_i + t_i/period` (via the verified one-step `forecast`) but **not** `l_i`/`t_i`
+individually, and never checked `cycleindex`. So finishing Seasonal safely needs a **dedicated apply-state
+parity check first** (extend the verbatim C++ reference + Rust to emit `L_i`/`T_i`/`cycleindex`, assert they
+match), *then* wire + gate. If that check fails, Seasonal stays C++ (the mismatch is the recorded finding)
+rather than forcing a red golden gate. Tracked as a follow-on PR.
 
 The e2e engine image is intentionally left flag-OFF (no `rustup` added there — it would only bloat an
 image that runs the C++ path). Validation is CI-only (the engine build is Linux-only on this dev box);

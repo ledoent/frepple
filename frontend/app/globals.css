@@ -1122,6 +1122,31 @@ table.grid thead th {
   background: var(--raise);
   border: 1px solid var(--line-bright);
 }
+/* D2 reschedule states */
+.gantt-bar--editable {
+  cursor: grab;
+  touch-action: none; /* let pointer-drag own horizontal gestures */
+}
+.gantt-bar--editable:hover {
+  filter: brightness(1.15);
+}
+.gantt-bar--dragging {
+  cursor: grabbing;
+  z-index: 3;
+  box-shadow: 0 0 0 1px var(--signal), 0 6px 16px -6px rgba(0, 0, 0, 0.8);
+}
+.gantt-bar--pending {
+  animation: barpending 0.9s ease-in-out infinite;
+}
+@keyframes barpending {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
 .gantt-marker {
   position: absolute;
   top: -3px;

@@ -202,12 +202,15 @@ fix the confirmed N+1s with set-based prefetch; split into (a) scheduled master-
 screens ship as `PivotScreen` over enriched `/api/output/{inventory,demand,resource}/`.
 
 **Delivered — Problems / Constraints + Orders (flat lists):** the violation-list and
-order-summary screens ship as a reusable `RecordTable` + `useRecordList` (flat records,
-not pivots). Problems/Constraints toggle over new `/api/output/{problem,constraint}/`
+order-summary screens ship as a reusable `TabListScreen` + `RecordTable` + `useRecordList`
+(flat records, not pivots). Problems/Constraints toggle over new `/api/output/{problem,constraint}/`
 (`JSONStreamView`, Django-tested); Orders toggle MO/PO/DO over the input DRF lists
-(`/api/input/{manufacturingorder,purchaseorder,distributionorder}/`). Read-only — inline
-CRUD editing is a follow-on (the pegging Gantt already covers date edits). Covered by
-Playwright smoke + a11y (0 critical).
+(`/api/input/{manufacturingorder,purchaseorder,distributionorder}/`). The **Orders grid is
+inline-editable** (Phase 3 CRUD): status pills, per-row edit of status/dates/quantity →
+`PATCH`, delete with inline confirm → `DELETE`, optimistic + toast + reload; executed orders
+(completed/closed) are locked. *Create* needs an operation/item picker — the one documented
+follow-on. Covered by Playwright smoke + a11y (0 critical) + engine-backed CRUD specs
+(edit-persist, delete).
 
 **Delivered — Demand Pegging Gantt, slice D1 (read-only):** pick a sales order →
 trace its supply chain on a dated Gantt. Backend `PeggingJSONView`

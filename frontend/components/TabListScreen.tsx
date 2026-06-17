@@ -1,10 +1,21 @@
 "use client";
 
 import { useId, useState } from "react";
+import { isAuthError } from "@/lib/errors";
 import { loginUrl } from "@/lib/session";
 import { useRecordList } from "@/lib/useRecordList";
-import type { Column } from "@/lib/records";
+import { useToast } from "@/components/Toast";
+import type { Column, RecordRow } from "@/lib/records";
 import RecordTable from "@/components/RecordTable";
+
+// Inline-edit wiring for an editable list (orders): persist a change / a delete
+// against the active tab's endpoint. The screen adds toast + reload around it.
+export type EditableConfig = {
+  rowKey: string;
+  canEdit?: (row: RecordRow) => boolean;
+  save: (endpoint: string, row: RecordRow, changes: Record<string, unknown>) => Promise<void>;
+  remove: (endpoint: string, row: RecordRow) => Promise<void>;
+};
 
 export type ListTab = {
   key: string;
@@ -26,6 +37,7 @@ export default function TabListScreen({
   tabs,
   columns,
   filterKeys,
+  editable,
   emptyText,
 }: {
   eyebrow: string;
@@ -35,14 +47,50 @@ export default function TabListScreen({
   tabs: ListTab[];
   columns?: Column[]; // default columns when a tab doesn't carry its own
   filterKeys?: string[];
+  editable?: EditableConfig; // present => inline edit/delete
   emptyText?: string;
 }) {
   const [tabKey, setTabKey] = useState(tabs[0].key);
   const tab = tabs.find((t) => t.key === tabKey) ?? tabs[0];
   const cols = tab.columns ?? columns ?? [];
   const baseId = useId();
+  const toast = useToast();
 
-  const { records, loading, error, authError } = useRecordList(tab.endpoint);
+  const { records, loading, error, authError, reload } = useRecordList(tab.endpoint);
+
+  // Wrap the page's persist functions with toast + reload. Rethrow so the table
+  // keeps the row open for a retry on failure.
+  const edit = editable
+    ? {
+        rowKey: editable.rowKey,
+        canEdit: editable.canEdit,
+        onSave: async (row: RecordRow, changes: Record<string, unknown>) => {
+          try {
+            await editable.save(tab.endpoint, row, changes);
+            toast("ok", "Saved", `${row[editable.rowKey]} updated.`);
+            reload();
+          } catch (e) {
+            errToast(e);
+            throw e;
+          }
+        },
+        onDelete: async (row: RecordRow) => {
+          try {
+            await editable.remove(tab.endpoint, row);
+            toast("ok", "Deleted", `${row[editable.rowKey]} removed.`);
+            reload();
+          } catch (e) {
+            errToast(e);
+            throw e;
+          }
+        },
+      }
+    : undefined;
+
+  function errToast(e: unknown) {
+    if (isAuthError(e)) toast("error", "Sign-in required", "Sign in to edit.");
+    else toast("error", "Save failed", e instanceof Error ? e.message : String(e));
+  }
 
   // Arrow-key tab navigation (the ARIA tabs pattern).
   function onKey(e: React.KeyboardEvent, i: number) {
@@ -106,6 +154,7 @@ export default function TabListScreen({
             columns={cols}
             records={records}
             filterKeys={filterKeys}
+            edit={edit}
             emptyText={emptyText}
           />
         )}

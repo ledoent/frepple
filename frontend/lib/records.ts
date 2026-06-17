@@ -6,11 +6,16 @@
 export type RecordRow = Record<string, unknown>;
 
 // A displayed column. `format` maps the raw cell to text; `align` defaults left.
+// `pill` renders a status pill; `edit` (with `options` for selects) declares the
+// cell editable in an editable table — the table supplies the persistence.
 export type Column = {
   key: string;
   label: string;
   align?: "left" | "right" | "center";
   format?: (value: unknown, row: RecordRow) => string;
+  pill?: boolean;
+  edit?: "number" | "date" | "select";
+  options?: string[];
 };
 
 type RawList = RecordRow[] | { rows?: RecordRow[]; data?: { rows?: RecordRow[] } };

@@ -839,6 +839,113 @@ a:hover {
   border-color: rgba(245, 183, 51, 0.3);
 }
 
+/* ── record toolbar + status pills + editable grid (orders) ─────────────── */
+.record-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+/* status pill: a scannable chip — amber proposed, lime firm, muted done */
+.pill {
+  display: inline-block;
+  font-family: var(--font-mono), monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+  color: var(--faint);
+  background: var(--raise);
+  border: 1px solid var(--line-bright);
+}
+.pill--run {
+  color: var(--signal);
+  background: var(--signal-dim);
+  border-color: rgba(245, 183, 51, 0.35);
+}
+.pill--ok {
+  color: var(--ok);
+  background: var(--ok-dim);
+  border-color: rgba(116, 224, 138, 0.35);
+}
+.pill--done {
+  color: var(--muted);
+}
+
+/* editable grid: a row in edit mode gets a live amber rail; saving pulses. */
+.grid-row--editing td {
+  background: var(--signal-dim);
+  box-shadow: inset 3px 0 0 var(--signal);
+}
+.grid-row--busy {
+  animation: barpending 0.9s ease-in-out infinite;
+}
+.row-actions {
+  white-space: nowrap;
+  text-align: right;
+}
+/* actions reveal on row hover (always shown for the row being edited) */
+.grid tbody tr:not(.grid-row--editing) .row-actions .rowbtn {
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+.grid tbody tr:hover .row-actions .rowbtn,
+.grid tbody tr:focus-within .row-actions .rowbtn {
+  opacity: 1;
+}
+.rowbtn {
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 3px 8px;
+  margin-left: 4px;
+  border-radius: var(--radius);
+  border: 1px solid var(--line-bright);
+  background: var(--panel-2);
+  color: var(--muted);
+  cursor: pointer;
+}
+.rowbtn:hover:not(:disabled) {
+  color: var(--text);
+  background: var(--raise);
+}
+.rowbtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.rowbtn--ok {
+  color: var(--signal-ink);
+  background: var(--signal);
+  border-color: rgba(245, 183, 51, 0.5);
+  font-weight: 700;
+}
+.rowbtn--ok:hover:not(:disabled) {
+  background: #ffc649;
+  color: var(--signal-ink);
+}
+.rowbtn--danger:hover:not(:disabled) {
+  color: var(--fail);
+  border-color: var(--fail);
+}
+.row-confirm {
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--fail);
+  margin-right: 4px;
+}
+.row-locked {
+  font-family: var(--font-mono), monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--faint);
+}
+
 .tablewrap {
   overflow: auto;
   border: 1px solid var(--line);

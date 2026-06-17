@@ -4,12 +4,15 @@ import { useEffect, useState } from "react";
 import { authedFetch } from "./api";
 import { HttpError, isAuthError } from "./errors";
 import { parsePivot, type PivotSeries, type BucketMeta } from "./pivot";
-import { INVENTORY_KEY_FIELD } from "./inventory";
 
-// Read the inventory/buffer OUTPUT report for a scenario and pivot it into
-// series. Same shape/handling as useForecast (authedFetch + parse, tolerant of
-// an empty/non-strict-JSON body when no plan exists yet).
-export function useInventory(scenario = ""): {
+// Read any enriched GridPivot OUTPUT report (inventory / demand / resource / …)
+// for a scenario and pivot it into series. Tolerant of an empty/non-strict-JSON
+// body when no plan has been computed yet (the empty-grid report).
+export function usePivotReport(
+  endpoint: string,
+  keyField: string,
+  scenario = "",
+): {
   series: PivotSeries[];
   buckets: BucketMeta[];
   measures: string[];
@@ -35,23 +38,22 @@ export function useInventory(scenario = ""): {
     async function load() {
       try {
         const prefix = scenario ? `/${scenario}` : "";
-        const res = await authedFetch(`${prefix}/api/output/inventory/`);
+        const res = await authedFetch(`${prefix}${endpoint}`);
         if (!res.ok)
-          throw new HttpError(res.status, `inventory fetch failed: ${res.status}`);
+          throw new HttpError(res.status, `${endpoint} fetch failed: ${res.status}`);
         const text = await res.text();
         if (cancelled) return;
         let json: unknown;
         try {
           json = JSON.parse(text);
         } catch {
-          // No plan computed yet: the empty-grid report emits non-strict JSON.
           setSeries([]);
           setBuckets([]);
           setMeasures([]);
           return;
         }
         const parsed = parsePivot(json as Parameters<typeof parsePivot>[0], {
-          keyField: INVENTORY_KEY_FIELD,
+          keyField,
         });
         setSeries(parsed.series);
         setBuckets(parsed.buckets);
@@ -69,7 +71,7 @@ export function useInventory(scenario = ""): {
     return () => {
       cancelled = true;
     };
-  }, [scenario, nonce]);
+  }, [endpoint, keyField, scenario, nonce]);
 
   return {
     series,

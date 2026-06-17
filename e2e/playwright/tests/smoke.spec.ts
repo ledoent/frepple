@@ -47,3 +47,21 @@ test("Inventory report loads without error", async ({ page }) => {
       .or(page.getByText("No inventory buffers.")),
   ).toBeVisible();
 });
+
+test("Demand report loads without error", async ({ page }) => {
+  await page.goto("/demand");
+  await expect(page.getByRole("heading", { name: "Demand" })).toBeVisible();
+  // The grid caption (unique) or the empty state - both mean the enriched
+  // /api/output/demand/ read + generic pivot parse worked.
+  await expect(
+    page.getByText(/Demand by series over/).or(page.getByText("No demand series.")),
+  ).toBeVisible();
+});
+
+test("Resource report loads without error", async ({ page }) => {
+  await page.goto("/resource");
+  await expect(page.getByRole("heading", { name: "Resource" })).toBeVisible();
+  await expect(
+    page.getByText(/Resource by series over/).or(page.getByText("No resources.")),
+  ).toBeVisible();
+});

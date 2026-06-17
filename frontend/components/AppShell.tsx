@@ -9,7 +9,9 @@ import { loginUrl, logoutUrl } from "@/lib/session";
 const NAV = [
   { href: "/execute", label: "Execute", hint: "Plan runs" },
   { href: "/forecast", label: "Forecast", hint: "Demand editor" },
+  { href: "/demand", label: "Demand", hint: "Sales orders" },
   { href: "/inventory", label: "Inventory", hint: "On-hand & supply" },
+  { href: "/resource", label: "Resource", hint: "Capacity & load" },
 ];
 
 // The persistent console chrome: a left rail (brand + nav + session) and a top

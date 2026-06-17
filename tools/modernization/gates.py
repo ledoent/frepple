@@ -273,7 +273,7 @@ GATES = [
         "Inventory/Buffer screen on /api/output/inventory/ (enriched pivot); E2E smoke + a11y",
         "active",
         lambda: has_dir("frontend", "app", "inventory")
-        and file_contains(("frontend", "app", "inventory", "page.tsx"), "useInventory")
+        and file_contains(("frontend", "app", "inventory", "page.tsx"), "PivotScreen")
         and file_contains(
             ("freppledb", "common", "api", "output.py"), "PivotJSONStreamView"
         )
@@ -296,9 +296,18 @@ GATES = [
     (
         "Phase 3",
         "resource-capacity",
-        "Resource/capacity + timeline Gantt",
-        "pending",
-        None,
+        "Resource utilization report on /api/output/resource/ (enriched pivot); E2E smoke + a11y (timeline Gantt deferred)",
+        "active",
+        lambda: has_dir("frontend", "app", "resource")
+        and file_contains(("frontend", "app", "resource", "page.tsx"), "PivotScreen")
+        and file_contains(("frontend", "lib", "resource.ts"), "/api/output/resource/")
+        and file_contains(("freppledb", "output", "urls.py"), "PivotJSONStreamView")
+        and file_contains(
+            ("e2e", "playwright", "tests", "smoke.spec.ts"), "Resource report loads"
+        )
+        and file_contains(
+            ("e2e", "playwright", "tests", "a11y.spec.ts"), "Resource report"
+        ),
     ),
     ("Phase 3", "constraint-problem", "Constraint/problem views", "pending", None),
     ("Phase 3", "crud-grids", "Remaining CRUD grids migrated", "pending", None),

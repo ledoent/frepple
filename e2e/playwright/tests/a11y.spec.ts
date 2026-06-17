@@ -30,3 +30,17 @@ test("Inventory report: 0 critical a11y violations", async ({ page }) => {
   const critical = await criticalViolations(page);
   expect(critical, JSON.stringify(critical.map((v) => v.id))).toEqual([]);
 });
+
+test("Demand report: 0 critical a11y violations", async ({ page }) => {
+  await page.goto("/demand");
+  await expect(page.getByRole("heading", { name: "Demand" })).toBeVisible();
+  const critical = await criticalViolations(page);
+  expect(critical, JSON.stringify(critical.map((v) => v.id))).toEqual([]);
+});
+
+test("Resource report: 0 critical a11y violations", async ({ page }) => {
+  await page.goto("/resource");
+  await expect(page.getByRole("heading", { name: "Resource" })).toBeVisible();
+  const critical = await criticalViolations(page);
+  expect(critical, JSON.stringify(critical.map((v) => v.id))).toEqual([]);
+});

@@ -490,10 +490,254 @@ static int croston(int argc, char** argv) {
   return 0;
 }
 
+// ---- Seasonal (timeseries.cpp:942-1262) ----
+static void detect_cycle(const std::vector<double>& ts, unsigned int count,
+                         unsigned int min_period, unsigned int max_period,
+                         double min_autocorrelation, unsigned short& period,
+                         double& autocorrelation) {
+  period = 0;
+  autocorrelation = min_autocorrelation;
+  if (count < min_period * 2) return;
+  double average = 0.0;
+  for (unsigned int i = 0; i < count; ++i) average += ts[i];
+  average /= count;
+  double variance = 0.0;
+  for (unsigned int i = 0; i < count; ++i)
+    variance += (ts[i] - average) * (ts[i] - average);
+  variance /= count;
+  unsigned short best_period = 0;
+  double best_autocorrelation = min_autocorrelation;
+  double correlations[7] = {10, 10, 10, 10, 10, 10, 10};
+  for (auto p = min_period; p <= max_period && p < count / 2; ++p) {
+    for (short i = 6; i > 0; --i) correlations[i] = correlations[i - 1];
+    correlations[0] = 0.0;
+    for (unsigned int i = p; i < count; ++i)
+      correlations[0] += (ts[i - p] - average) * (ts[i] - average);
+    correlations[0] /= count - p;
+    correlations[0] /= variance;
+    if (p > min_period + 1 && correlations[1] > correlations[2] * 1.1 &&
+        correlations[1] > correlations[0] * 1.1 &&
+        correlations[1] > best_autocorrelation) {
+      best_autocorrelation = correlations[1];
+      best_period = p - 1;
+    }
+    if (p > min_period + 4 && correlations[2] > best_autocorrelation &&
+        correlations[2] > (correlations[0] + correlations[1]) / 2 &&
+        correlations[2] > (correlations[3] + correlations[4]) / 2) {
+      best_autocorrelation = correlations[2];
+      best_period = p - 2;
+    }
+    if (p > min_period + 6 && correlations[3] > best_autocorrelation &&
+        correlations[3] > (correlations[0] + correlations[1] + correlations[2]) / 3 &&
+        correlations[3] > (correlations[4] + correlations[5] + correlations[6]) / 3) {
+      best_autocorrelation = correlations[3];
+      best_period = p - 3;
+    }
+  }
+  autocorrelation = best_autocorrelation;
+  period = best_period;
+}
+
+static int seasonal(int argc, char** argv) {
+  if (argc < 16) return 2;
+  double alfa = atof(argv[2]);
+  const double min_alfa = atof(argv[3]);
+  const double max_alfa = atof(argv[4]);
+  double beta = atof(argv[5]);
+  const double min_beta = atof(argv[6]);
+  const double max_beta = atof(argv[7]);
+  const double gamma = atof(argv[8]);
+  const unsigned int min_period = static_cast<unsigned int>(atol(argv[9]));
+  const unsigned int max_period = static_cast<unsigned int>(atol(argv[10]));
+  const double min_autocorrelation = atof(argv[11]);
+  const double max_autocorrelation = atof(argv[12]);
+  const double Forecast_SmapeAlfa = atof(argv[13]);
+  const unsigned long skip = static_cast<unsigned long>(atol(argv[14]));
+  const unsigned long iters = static_cast<unsigned long>(atol(argv[15]));
+  init_weights(Forecast_SmapeAlfa);
+
+  std::vector<double> timeseries = read_history();
+  const unsigned int count = static_cast<unsigned int>(timeseries.size());
+  timeseries.push_back(0.0);
+
+  unsigned short period;
+  double autocorrelation;
+  detect_cycle(timeseries, count, min_period, max_period, min_autocorrelation,
+               period, autocorrelation);
+  if (!period) {
+    printf("{\"smape\":%.17g,\"standarddeviation\":%.17g,\"forecast\":0,"
+           "\"period\":0,\"force\":false,\"s_i\":[]}\n",
+           DBL_MAX, DBL_MAX);
+    return 0;
+  }
+
+  double error = 0.0, error_smape = 0.0, error_smape_weights = 0.0, determinant,
+         delta_alfa, delta_beta;
+  double forecast_i, d_forecast_d_alfa, d_forecast_d_beta;
+  double d_L_d_alfa, d_L_d_beta, d_T_d_alfa, d_T_d_beta;
+  double d_S_d_alfa[80], d_S_d_beta[80];
+  double d_L_d_alfa_prev, d_L_d_beta_prev, d_T_d_alfa_prev, d_T_d_beta_prev,
+      d_S_d_alfa_prev, d_S_d_beta_prev;
+  double sum11, sum12, sum13, sum22, sum23;
+  double best_error = DBL_MAX, best_smape = 0, best_standarddeviation = 0.0;
+  double initial_S_i[80], best_S_i[80], S_i[80];
+  double L_i, T_i;
+
+  double L_i_initial = 0.0, T_i_initial = 0.0;
+  for (unsigned short i = 0; i < period; ++i) {
+    L_i_initial += timeseries[i];
+    T_i_initial += timeseries[i + period] - timeseries[i];
+    initial_S_i[i] = 0.0;
+  }
+  T_i_initial /= period;
+  L_i_initial = L_i_initial / period;
+  double best_L_i = L_i_initial, best_T_i = T_i_initial;
+  unsigned short cyclecount = 0;
+  for (unsigned int i = 0; i + period <= count; i += period) {
+    ++cyclecount;
+    double cyclesum = 0.0;
+    for (unsigned short j = 0; j < period; ++j) cyclesum += timeseries[i + j];
+    if (cyclesum)
+      for (unsigned short j = 0; j < period; ++j)
+        initial_S_i[j] += timeseries[i + j] / cyclesum * period;
+  }
+  for (unsigned long i = 0; i < period; ++i) initial_S_i[i] /= cyclecount;
+
+  double L_i_prev, cyclesum, standarddeviation = 0.0;
+  unsigned int iteration = 1, boundarytested = 0;
+  for (; iteration <= iters; ++iteration) {
+    error = error_smape = error_smape_weights = sum11 = sum12 = sum13 = sum22 =
+        sum23 = standarddeviation = 0.0;
+    d_L_d_alfa = d_L_d_beta = d_T_d_alfa = d_T_d_beta = 0.0;
+    L_i = L_i_initial;
+    T_i = T_i_initial;
+    cyclesum = 0.0;
+    for (unsigned short i = 0; i < period; ++i) {
+      S_i[i] = initial_S_i[i];
+      d_S_d_alfa[i] = 0.0;
+      d_S_d_beta[i] = 0.0;
+      if (i) cyclesum += timeseries[i - 1];
+    }
+    unsigned int prevcycleindex = period - 1, cycleindex = 0;
+    for (unsigned int i = period; i <= count; ++i) {
+      L_i_prev = L_i;
+      double actual = (i == count) ? 0 : timeseries[i];
+      cyclesum += timeseries[i - 1];
+      if (i > period) cyclesum -= timeseries[i - period - 1];
+      L_i = alfa * cyclesum / period + (1 - alfa) * (L_i + T_i);
+      if (L_i < 0) L_i = 0.0;
+      T_i = beta * (L_i - L_i_prev) + (1 - beta) * T_i;
+      double factor = -S_i[prevcycleindex];
+      if (L_i)
+        S_i[prevcycleindex] =
+            gamma * timeseries[i - 1] / L_i + (1 - gamma) * S_i[prevcycleindex];
+      if (S_i[prevcycleindex] < 0.0) S_i[prevcycleindex] = 0.0;
+      factor = period / (period + factor + S_i[prevcycleindex]);
+      for (unsigned short i2 = 0; i2 < period; ++i2) S_i[i2] *= factor;
+      if (i == count) break;
+      d_L_d_alfa_prev = d_L_d_alfa;
+      d_L_d_beta_prev = d_L_d_beta;
+      d_T_d_alfa_prev = d_T_d_alfa;
+      d_T_d_beta_prev = d_T_d_beta;
+      d_S_d_alfa_prev = d_S_d_alfa[prevcycleindex];
+      d_S_d_beta_prev = d_S_d_beta[prevcycleindex];
+      d_L_d_alfa = cyclesum / period - (L_i + T_i) +
+                   (1 - alfa) * (d_L_d_alfa_prev + d_T_d_alfa_prev);
+      d_L_d_beta = (1 - alfa) * (d_L_d_beta_prev + d_T_d_beta_prev);
+      if (L_i > ROUNDING_ERROR) {
+        d_S_d_alfa[prevcycleindex] =
+            -gamma * timeseries[i - 1] / L_i / L_i * d_L_d_alfa_prev +
+            (1 - gamma) * d_S_d_alfa_prev;
+        d_S_d_beta[prevcycleindex] =
+            -gamma * timeseries[i - 1] / L_i / L_i * d_L_d_beta_prev +
+            (1 - gamma) * d_S_d_beta_prev;
+      } else {
+        d_S_d_alfa[prevcycleindex] = (1 - gamma) * d_S_d_alfa_prev;
+        d_S_d_beta[prevcycleindex] = (1 - gamma) * d_S_d_beta_prev;
+      }
+      d_T_d_alfa = beta * (d_L_d_alfa - d_L_d_alfa_prev) + (1 - beta) * d_T_d_alfa_prev;
+      d_T_d_beta = (L_i - L_i_prev) + beta * (d_L_d_beta - d_L_d_beta_prev) - T_i +
+                   (1 - beta) * d_T_d_beta_prev;
+      d_forecast_d_alfa = (d_L_d_alfa + d_T_d_alfa) * S_i[cycleindex] +
+                          (L_i + T_i) * d_S_d_alfa[cycleindex];
+      d_forecast_d_beta = (d_L_d_beta + d_T_d_beta) * S_i[cycleindex] +
+                          (L_i + T_i) * d_S_d_beta[cycleindex];
+      forecast_i = (L_i + T_i) * S_i[cycleindex];
+      sum11 += smapeWeight(count - i) * d_forecast_d_alfa * d_forecast_d_alfa;
+      sum12 += smapeWeight(count - i) * d_forecast_d_alfa * d_forecast_d_beta;
+      sum22 += smapeWeight(count - i) * d_forecast_d_beta * d_forecast_d_beta;
+      sum13 += smapeWeight(count - i) * d_forecast_d_alfa * (actual - forecast_i);
+      sum23 += smapeWeight(count - i) * d_forecast_d_beta * (actual - forecast_i);
+      if (i >= skip) {
+        double fcst = (L_i + T_i) * S_i[cycleindex];
+        error += (fcst - actual) * (fcst - actual) * smapeWeight(count - i);
+        if (fabs(fcst + actual) > ROUNDING_ERROR) {
+          error_smape += fabs(fcst - actual) / fabs(fcst + actual) * smapeWeight(count - i);
+          error_smape_weights += smapeWeight(count - i);
+          standarddeviation += (fcst - actual) * (fcst - actual);
+        }
+      }
+      if (++cycleindex >= period) cycleindex = 0;
+      if (++prevcycleindex >= period) prevcycleindex = 0;
+    }
+    if (error < best_error) {
+      best_error = error;
+      best_smape = error_smape_weights ? error_smape / error_smape_weights : 0.0;
+      best_L_i = L_i;
+      best_T_i = T_i;
+      best_standarddeviation = sqrt(standarddeviation / (count - period - 1));
+      for (unsigned short i = 0; i < period; ++i) best_S_i[i] = S_i[i];
+    }
+    sum11 += error / iteration;
+    sum22 += error / iteration;
+    determinant = sum11 * sum22 - sum12 * sum12;
+    if (fabs(determinant) < ROUNDING_ERROR) {
+      sum11 -= error / iteration;
+      sum22 -= error / iteration;
+      determinant = sum11 * sum22 - sum12 * sum12;
+      if (fabs(determinant) < ROUNDING_ERROR) break;
+    }
+    delta_alfa = (sum13 * sum22 - sum23 * sum12) / determinant;
+    delta_beta = (sum23 * sum11 - sum13 * sum12) / determinant;
+    if ((fabs(delta_alfa) + fabs(delta_beta)) < 3 * ACCURACY && iteration > 3) break;
+    alfa += delta_alfa;
+    beta += delta_beta;
+    if (alfa > max_alfa)
+      alfa = max_alfa;
+    else if (alfa < min_alfa)
+      alfa = min_alfa;
+    if (beta > max_beta)
+      beta = max_beta;
+    else if (beta < min_beta)
+      beta = min_beta;
+    if ((beta == min_beta || beta == max_beta) && (alfa == min_alfa || alfa == max_alfa)) {
+      if (boundarytested++ > 5) break;
+    }
+  }
+  if (period > skip) {
+    best_smape *= (count - skip);
+    best_smape /= (count - period);
+  }
+  L_i = best_L_i;
+  T_i = best_T_i;
+  for (unsigned short i = 0; i < period; ++i) S_i[i] = best_S_i[i];
+  double forecast = (L_i + T_i / period) * S_i[count % period];
+
+  printf("{\"smape\":%.17g,\"standarddeviation\":%.17g,\"forecast\":%.17g,"
+         "\"period\":%u,\"force\":%s,\"s_i\":[",
+         best_smape, best_standarddeviation, forecast, period,
+         (autocorrelation > max_autocorrelation) ? "true" : "false");
+  for (unsigned short i = 0; i < period; ++i)
+    printf("%s%.17g", i ? "," : "", best_S_i[i]);
+  printf("]}\n");
+  return 0;
+}
+
 int main(int argc, char** argv) {
   if (argc < 2) {
     fprintf(stderr,
-            "usage: %s <moving_average|single_exp|double_exp|croston> <params...>\n",
+            "usage: %s <moving_average|single_exp|double_exp|croston|seasonal> "
+            "<params...>\n",
             argv[0]);
     return 2;
   }
@@ -502,6 +746,7 @@ int main(int argc, char** argv) {
   if (method == "single_exp") return single_exp(argc, argv);
   if (method == "double_exp") return double_exp(argc, argv);
   if (method == "croston") return croston(argc, argv);
+  if (method == "seasonal") return seasonal(argc, argv);
   fprintf(stderr, "unknown method: %s\n", method.c_str());
   return 2;
 }

@@ -9,11 +9,13 @@ pub mod common;
 pub mod croston; // Croston (phase 5)
 pub mod double_exp; // DoubleExponential (phase 4)
 pub mod forecast; // MovingAverage (slice 2)
+pub mod seasonal; // Seasonal / Holt-Winters (phase 6)
 pub mod single_exp; // SingleExponential (phase 3)
 
 #[cfg(feature = "extension-module")]
 mod bindings {
     use crate::croston as croston_mod;
+    use crate::seasonal as seasonal_mod;
     use crate::{double_exp, forecast, single_exp};
     use pyo3::prelude::*;
 
@@ -113,12 +115,47 @@ mod bindings {
         (r.smape, r.standarddeviation, r.forecast, r.outliers)
     }
 
+    /// Seasonal -> (smape, standarddeviation, forecast, period, force, s_i[]).
+    #[pyfunction]
+    #[pyo3(signature = (
+        history, initial_alfa=0.2, min_alfa=0.02, max_alfa=1.0,
+        initial_beta=0.2, min_beta=0.2, max_beta=1.0, gamma=0.05,
+        min_period=2, max_period=14, min_autocorrelation=0.5, max_autocorrelation=0.8,
+        smape_alfa=0.95, skip=5, iterations=15
+    ))]
+    #[allow(clippy::too_many_arguments)]
+    fn seasonal(
+        history: Vec<f64>,
+        initial_alfa: f64,
+        min_alfa: f64,
+        max_alfa: f64,
+        initial_beta: f64,
+        min_beta: f64,
+        max_beta: f64,
+        gamma: f64,
+        min_period: usize,
+        max_period: usize,
+        min_autocorrelation: f64,
+        max_autocorrelation: f64,
+        smape_alfa: f64,
+        skip: u64,
+        iterations: u64,
+    ) -> (f64, f64, f64, u32, bool, Vec<f64>) {
+        let r = seasonal_mod::seasonal(
+            &history, initial_alfa, min_alfa, max_alfa, initial_beta, min_beta,
+            max_beta, gamma, min_period, max_period, min_autocorrelation,
+            max_autocorrelation, smape_alfa, skip, iterations,
+        );
+        (r.smape, r.standarddeviation, r.forecast, r.period, r.force, r.s_i)
+    }
+
     #[pymodule]
     fn frepple_forecast(m: &Bound<'_, PyModule>) -> PyResult<()> {
         m.add_function(wrap_pyfunction!(moving_average, m)?)?;
         m.add_function(wrap_pyfunction!(single_exponential, m)?)?;
         m.add_function(wrap_pyfunction!(double_exponential, m)?)?;
         m.add_function(wrap_pyfunction!(croston, m)?)?;
+        m.add_function(wrap_pyfunction!(seasonal, m)?)?;
         Ok(())
     }
 }

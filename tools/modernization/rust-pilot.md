@@ -68,10 +68,14 @@ Porting `src/forecast/` method-by-method (each a CI-only parity slice). Status:
 | SingleExponential | `single_exp.rs` | ✅ | 1D Levenberg-Marquardt; shared `common.rs` extracted |
 | DoubleExponential | `double_exp.rs` | ✅ | 2D Marquardt + 2x2 Hessian (shared `solve_2x2_marquardt`) |
 | Croston | `croston.rs` | ✅ | intermittent demand; alfa grid-search, upper-only outliers |
-| Seasonal | — | — | pending (hardest: seasonal-factor state flow) |
+| Seasonal | `seasonal.rs` | ✅ | Holt-Winters; autocorrelation cycle detection + seasonal-factor state (period/force/S_i all parity-checked) |
 
-Shared helpers in `common.rs` (`smape_weight`, weight table, constants, the `Forecast` result,
-`solve_2x2_marquardt` — bit-for-bit with the C++ damping/singular-retry order).
+**All five forecast methods ported and parity-verified** (57 parity tests; smape/stddev/forecast within
+1e-9, outliers/period/force/seasonal-factors exact). Shared helpers in `common.rs` (`smape_weight`,
+weight table, constants, the `Forecast` result, `solve_2x2_marquardt` — bit-for-bit with the C++
+damping/singular-retry order, used by DoubleExp + Seasonal). Remaining: the flag-gated **engine
+integration** (Phase 7) — link the Rust as a C-ABI staticlib into `libfrepple` and validate with the
+`forecast_*` golden tests.
 
 ## Slice 2 — forecast (MovingAverage), the real algorithm
 

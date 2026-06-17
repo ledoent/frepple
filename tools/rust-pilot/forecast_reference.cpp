@@ -229,14 +229,179 @@ static int single_exp(int argc, char** argv) {
   return 0;
 }
 
+// ---- DoubleExponential (timeseries.cpp:633-892) ----
+static int double_exp(int argc, char** argv) {
+  if (argc < 12) return 2;
+  double alfa = atof(argv[2]);
+  const double min_alfa = atof(argv[3]);
+  const double max_alfa = atof(argv[4]);
+  double gamma = atof(argv[5]);
+  const double min_gamma = atof(argv[6]);
+  const double max_gamma = atof(argv[7]);
+  const double Forecast_maxDeviation = atof(argv[8]);
+  const double Forecast_SmapeAlfa = atof(argv[9]);
+  const unsigned long skip = static_cast<unsigned long>(atol(argv[10]));
+  const unsigned long iters = static_cast<unsigned long>(atol(argv[11]));
+  init_weights(Forecast_SmapeAlfa);
+
+  std::vector<double> timeseries = read_history();
+  const unsigned int count = static_cast<unsigned int>(timeseries.size());
+  timeseries.push_back(0.0);
+  if (count < skip + 5) {
+    emit(DBL_MAX, DBL_MAX, 0.0, {});
+    return 0;
+  }
+
+  std::vector<long> outliers;
+  double error = 0.0, error_smape = 0.0, error_smape_weights = 0.0, delta_alfa,
+         delta_gamma, determinant;
+  double constant_i_prev, trend_i_prev, d_constant_d_gamma_prev,
+      d_constant_d_alfa_prev, d_constant_d_alfa, d_constant_d_gamma,
+      d_trend_d_alfa, d_trend_d_gamma, d_forecast_d_alfa, d_forecast_d_gamma,
+      sum11, sum12, sum22, sum13, sum23;
+  double best_error = DBL_MAX, best_smape = 0, best_constant_i = 0.0,
+         best_trend_i = 0.0, best_standarddeviation = 0.0;
+  double constant_i = 0.0, trend_i = 0.0;
+  unsigned int iteration = 1, boundarytested = 0;
+  for (; iteration <= iters; ++iteration) {
+    double standarddeviation = 0.0, maxdeviation = 0.0;
+    for (short outl = 0; outl <= 1; ++outl) {
+      error = error_smape = error_smape_weights = sum11 = sum12 = sum22 = sum13 =
+          sum23 = 0.0;
+      d_constant_d_alfa = d_constant_d_gamma = d_trend_d_alfa = d_trend_d_gamma =
+          0.0;
+      d_forecast_d_alfa = d_forecast_d_gamma = 0.0;
+      double history_0 = timeseries[0], history_1 = timeseries[1],
+             history_2 = timeseries[2], history_3 = timeseries[3];
+      constant_i = (history_0 + history_1 + history_2) / 3;
+      trend_i = (history_3 - history_0) / 3;
+      if (outl == 1) {
+        double t1 = 0.0;
+        if (history_0 > constant_i + Forecast_maxDeviation * standarddeviation)
+          t1 = constant_i + Forecast_maxDeviation * standarddeviation;
+        else if (history_0 < constant_i - Forecast_maxDeviation * standarddeviation)
+          t1 = constant_i - Forecast_maxDeviation * standarddeviation;
+        else
+          t1 = history_0;
+        double t2 = -t1;
+        if (history_1 > constant_i + trend_i + Forecast_maxDeviation * standarddeviation)
+          t1 += constant_i + trend_i + Forecast_maxDeviation * standarddeviation;
+        else if (history_1 < constant_i + trend_i - Forecast_maxDeviation * standarddeviation)
+          t1 += constant_i + trend_i - Forecast_maxDeviation * standarddeviation;
+        else
+          t1 += history_1;
+        if (history_2 > constant_i + 2 * trend_i + Forecast_maxDeviation * standarddeviation) {
+          t1 += constant_i + 2 * trend_i + Forecast_maxDeviation * standarddeviation;
+          t2 += constant_i + 2 * trend_i + Forecast_maxDeviation * standarddeviation;
+        } else if (history_2 < constant_i + 2 * trend_i - Forecast_maxDeviation * standarddeviation) {
+          t1 += constant_i + 2 * trend_i - Forecast_maxDeviation * standarddeviation;
+          t2 += constant_i + 2 * trend_i - Forecast_maxDeviation * standarddeviation;
+        } else {
+          t1 += history_2;
+          t2 += history_2;
+        }
+        constant_i = t1 / 3;
+        trend_i = t2 / 3;
+      }
+      double history_i = history_0;
+      for (unsigned long i = 1; i <= count; ++i) {
+        double history_i_min_1 = history_i;
+        history_i = timeseries[i];
+        constant_i_prev = constant_i;
+        trend_i_prev = trend_i;
+        constant_i = history_i_min_1 * alfa + (1 - alfa) * (constant_i_prev + trend_i_prev);
+        trend_i = gamma * (constant_i - constant_i_prev) + (1 - gamma) * trend_i_prev;
+        if (i == count) break;
+        if (outl == 0) {
+          standarddeviation += (constant_i + trend_i - history_i) * (constant_i + trend_i - history_i);
+          if (fabs(constant_i + trend_i - history_i) > maxdeviation)
+            maxdeviation = fabs(constant_i + trend_i - history_i);
+        } else {
+          if (history_i > constant_i + trend_i + Forecast_maxDeviation * standarddeviation) {
+            history_i = constant_i + trend_i + Forecast_maxDeviation * standarddeviation;
+            if (iteration == 1) outliers.push_back(i);
+          } else if (history_i < constant_i + trend_i - Forecast_maxDeviation * standarddeviation) {
+            history_i = constant_i + trend_i - Forecast_maxDeviation * standarddeviation;
+            if (iteration == 1) outliers.push_back(i);
+          }
+        }
+        d_constant_d_gamma_prev = d_constant_d_gamma;
+        d_constant_d_alfa_prev = d_constant_d_alfa;
+        d_constant_d_alfa = history_i_min_1 - constant_i_prev - trend_i_prev + (1 - alfa) * d_forecast_d_alfa;
+        d_constant_d_gamma = (1 - alfa) * d_forecast_d_gamma;
+        d_trend_d_alfa = gamma * (d_constant_d_alfa - d_constant_d_alfa_prev) + (1 - gamma) * d_trend_d_alfa;
+        d_trend_d_gamma = constant_i - constant_i_prev - trend_i_prev +
+                          gamma * (d_constant_d_gamma - d_constant_d_gamma_prev) +
+                          (1 - gamma) * d_trend_d_gamma;
+        d_forecast_d_alfa = d_constant_d_alfa + d_trend_d_alfa;
+        d_forecast_d_gamma = d_constant_d_gamma + d_trend_d_gamma;
+        sum11 += smapeWeight(count - i) * d_forecast_d_alfa * d_forecast_d_alfa;
+        sum12 += smapeWeight(count - i) * d_forecast_d_alfa * d_forecast_d_gamma;
+        sum22 += smapeWeight(count - i) * d_forecast_d_gamma * d_forecast_d_gamma;
+        sum13 += smapeWeight(count - i) * d_forecast_d_alfa * (history_i - constant_i - trend_i);
+        sum23 += smapeWeight(count - i) * d_forecast_d_gamma * (history_i - constant_i - trend_i);
+        if (i >= skip) {
+          error += (constant_i + trend_i - history_i) * (constant_i + trend_i - history_i) * smapeWeight(count - i);
+          if (fabs(constant_i + trend_i + history_i) > ROUNDING_ERROR) {
+            error_smape += fabs(constant_i + trend_i - history_i) /
+                           fabs(constant_i + trend_i + history_i) * smapeWeight(count - i);
+            error_smape_weights += smapeWeight(count - i);
+          }
+        }
+      }
+      if (outl == 0) {
+        standarddeviation = sqrt(standarddeviation / (count - 1));
+        maxdeviation /= standarddeviation;
+        if (maxdeviation < Forecast_maxDeviation) break;
+      }
+    }
+    if (error < best_error) {
+      best_error = error;
+      best_smape = error_smape_weights ? error_smape / error_smape_weights : 0.0;
+      best_constant_i = constant_i;
+      best_trend_i = trend_i;
+      best_standarddeviation = standarddeviation;
+    }
+    sum11 += error / iteration;
+    sum22 += error / iteration;
+    determinant = sum11 * sum22 - sum12 * sum12;
+    if (fabs(determinant) < ROUNDING_ERROR) {
+      sum11 -= error / iteration;
+      sum22 -= error / iteration;
+      determinant = sum11 * sum22 - sum12 * sum12;
+      if (fabs(determinant) < ROUNDING_ERROR) break;
+    }
+    delta_alfa = (sum13 * sum22 - sum23 * sum12) / determinant;
+    delta_gamma = (sum23 * sum11 - sum13 * sum12) / determinant;
+    if (fabs(delta_alfa) + fabs(delta_gamma) < 2 * ACCURACY && iteration > 3) break;
+    alfa += delta_alfa;
+    gamma += delta_gamma;
+    if (alfa > max_alfa)
+      alfa = max_alfa;
+    else if (alfa < min_alfa)
+      alfa = min_alfa;
+    if (gamma > max_gamma)
+      gamma = max_gamma;
+    else if (gamma < min_gamma)
+      gamma = min_gamma;
+    if ((gamma == min_gamma || gamma == max_gamma) && (alfa == min_alfa || alfa == max_alfa)) {
+      if (boundarytested++ > 5) break;
+    }
+  }
+  emit(best_smape, best_standarddeviation, best_constant_i + best_trend_i, outliers);
+  return 0;
+}
+
 int main(int argc, char** argv) {
   if (argc < 2) {
-    fprintf(stderr, "usage: %s <moving_average|single_exp> <params...>\n", argv[0]);
+    fprintf(stderr, "usage: %s <moving_average|single_exp|double_exp> <params...>\n",
+            argv[0]);
     return 2;
   }
   const std::string method = argv[1];
   if (method == "moving_average") return moving_average(argc, argv);
   if (method == "single_exp") return single_exp(argc, argv);
+  if (method == "double_exp") return double_exp(argc, argv);
   fprintf(stderr, "unknown method: %s\n", method.c_str());
   return 2;
 }

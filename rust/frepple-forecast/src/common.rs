@@ -36,3 +36,34 @@ pub fn smape_weight(weight: &[f64; MAXBUCKETS], idx: i64) -> f64 {
     let i = idx.clamp(0, (MAXBUCKETS - 1) as i64) as usize;
     weight[i]
 }
+
+/// One 2D Levenberg-Marquardt step for the two-parameter methods (DoubleExp,
+/// Seasonal): solve the 2x2 system [sum11 sum12; sum12 sum22] * delta = [sum13;
+/// sum23] via Cramer's rule, with the `damping` added to the diagonal. Mirrors
+/// timeseries.cpp:824-844: if the damped matrix is near-singular, retry undamped;
+/// if still singular, return None (the caller stops iterating).
+pub fn solve_2x2_marquardt(
+    sum11: f64,
+    sum12: f64,
+    sum22: f64,
+    sum13: f64,
+    sum23: f64,
+    damping: f64,
+) -> Option<(f64, f64)> {
+    // Match the C++ bit-for-bit: it adds the damping then SUBTRACTS it on the
+    // singular retry ((x+d)-d), which is not always exactly x in f64.
+    let mut a11 = sum11 + damping;
+    let mut a22 = sum22 + damping;
+    let mut det = a11 * a22 - sum12 * sum12;
+    if det.abs() < ROUNDING_ERROR {
+        a11 -= damping; // try without the damping factor
+        a22 -= damping;
+        det = a11 * a22 - sum12 * sum12;
+        if det.abs() < ROUNDING_ERROR {
+            return None; // still singular
+        }
+    }
+    let delta1 = (sum13 * a22 - sum23 * sum12) / det;
+    let delta2 = (sum23 * a11 - sum13 * sum12) / det;
+    Some((delta1, delta2))
+}

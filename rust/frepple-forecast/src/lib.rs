@@ -6,12 +6,13 @@
 //! the parity tests can diff them against the verbatim C++ references.
 
 pub mod common;
+pub mod double_exp; // DoubleExponential (phase 4)
 pub mod forecast; // MovingAverage (slice 2)
 pub mod single_exp; // SingleExponential (phase 3)
 
 #[cfg(feature = "extension-module")]
 mod bindings {
-    use crate::{forecast, single_exp};
+    use crate::{double_exp, forecast, single_exp};
     use pyo3::prelude::*;
 
     /// MovingAverage -> (smape, standarddeviation, forecast, outlier_indices).
@@ -58,10 +59,39 @@ mod bindings {
         (r.smape, r.standarddeviation, r.forecast, r.outliers)
     }
 
+    /// DoubleExponential -> (smape, standarddeviation, forecast, outlier_indices).
+    #[pyfunction]
+    #[pyo3(signature = (
+        history, initial_alfa=0.2, min_alfa=0.02, max_alfa=1.0,
+        initial_gamma=0.2, min_gamma=0.05, max_gamma=1.0,
+        max_deviation=4.0, smape_alfa=0.95, skip=5, iterations=15
+    ))]
+    #[allow(clippy::too_many_arguments)]
+    fn double_exponential(
+        history: Vec<f64>,
+        initial_alfa: f64,
+        min_alfa: f64,
+        max_alfa: f64,
+        initial_gamma: f64,
+        min_gamma: f64,
+        max_gamma: f64,
+        max_deviation: f64,
+        smape_alfa: f64,
+        skip: u64,
+        iterations: u64,
+    ) -> (f64, f64, f64, Vec<usize>) {
+        let r = double_exp::double_exponential(
+            &history, initial_alfa, min_alfa, max_alfa, initial_gamma, min_gamma,
+            max_gamma, max_deviation, smape_alfa, skip, iterations,
+        );
+        (r.smape, r.standarddeviation, r.forecast, r.outliers)
+    }
+
     #[pymodule]
     fn frepple_forecast(m: &Bound<'_, PyModule>) -> PyResult<()> {
         m.add_function(wrap_pyfunction!(moving_average, m)?)?;
         m.add_function(wrap_pyfunction!(single_exponential, m)?)?;
+        m.add_function(wrap_pyfunction!(double_exponential, m)?)?;
         Ok(())
     }
 }

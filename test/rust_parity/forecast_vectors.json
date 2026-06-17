@@ -15,5 +15,12 @@
   { "name": "se_outlier", "method": "single_exp", "history": [10, 11, 9, 10, 12, 8, 10, 11, 9, 10, 500, 11, 9, 10, 12, 8, 10, 11, 9, 10] },
   { "name": "se_noisy", "method": "single_exp", "history": [23, 19, 27, 31, 18, 22, 29, 17, 25, 30, 21, 16, 28, 24, 20, 26, 33, 15, 22, 27] },
   { "name": "se_too_short", "method": "single_exp", "history": [4, 5, 6, 7, 8, 9, 10] },
-  { "name": "se_long_over_maxbuckets", "method": "single_exp", "generate": { "n": 800, "base": 100, "mod": 7 } }
+  { "name": "se_long_over_maxbuckets", "method": "single_exp", "generate": { "n": 800, "base": 100, "mod": 7 } },
+
+  { "name": "de_constant", "method": "double_exp", "history": [10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10] },
+  { "name": "de_linear_trend", "method": "double_exp", "history": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25] },
+  { "name": "de_outlier", "method": "double_exp", "history": [10, 13, 16, 19, 22, 25, 28, 31, 34, 37, 500, 43, 46, 49, 52, 55, 58, 61, 64, 67] },
+  { "name": "de_noisy_trend", "method": "double_exp", "history": [5, 9, 8, 14, 13, 19, 17, 24, 22, 29, 26, 34, 31, 39, 36, 44, 41, 49, 46, 54] },
+  { "name": "de_too_short", "method": "double_exp", "history": [4, 5, 6, 7, 8, 9, 10] },
+  { "name": "de_long_over_maxbuckets", "method": "double_exp", "generate": { "n": 800, "base": 100, "mod": 9 } }
 ]

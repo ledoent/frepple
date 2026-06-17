@@ -25,6 +25,8 @@ CXX_SRC = REPO / "tools" / "rust-pilot" / "forecast_reference.cpp"
 # Engine defaults (timeseries.cpp:32-36, 416-418).
 MA_PARAMS = (5, 4.0, 0.95, 5)  # order, max_deviation, smape_alfa, skip
 SE_PARAMS = (0.2, 0.03, 1.0, 4.0, 0.95, 5, 15)  # init/min/max alfa, maxdev, smape_alfa, skip, iters
+# init/min/max alfa, init/min/max gamma, maxdev, smape_alfa, skip, iters
+DE_PARAMS = (0.2, 0.02, 1.0, 0.2, 0.05, 1.0, 4.0, 0.95, 5, 15)
 
 
 @pytest.fixture(scope="session")
@@ -47,12 +49,16 @@ def _history(case):
 def _rust(method, history):
     if method == "single_exp":
         return frepple_forecast.single_exponential(history, *SE_PARAMS)
+    if method == "double_exp":
+        return frepple_forecast.double_exponential(history, *DE_PARAMS)
     return frepple_forecast.moving_average(history, *MA_PARAMS)
 
 
 def _cxx_argv(method):
     if method == "single_exp":
         return ["single_exp", *[str(x) for x in SE_PARAMS]]
+    if method == "double_exp":
+        return ["double_exp", *[str(x) for x in DE_PARAMS]]
     return ["moving_average", *[str(x) for x in MA_PARAMS]]
 
 

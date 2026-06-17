@@ -67,7 +67,7 @@ Porting `src/forecast/` method-by-method (each a CI-only parity slice). Status:
 | MovingAverage | `forecast.rs` | ✅ | the `weight[]` OOB site |
 | SingleExponential | `single_exp.rs` | ✅ | 1D Levenberg-Marquardt; shared `common.rs` extracted |
 | DoubleExponential | `double_exp.rs` | ✅ | 2D Marquardt + 2x2 Hessian (shared `solve_2x2_marquardt`) |
-| Croston | — | — | pending |
+| Croston | `croston.rs` | ✅ | intermittent demand; alfa grid-search, upper-only outliers |
 | Seasonal | — | — | pending (hardest: seasonal-factor state flow) |
 
 Shared helpers in `common.rs` (`smape_weight`, weight table, constants, the `Forecast` result,

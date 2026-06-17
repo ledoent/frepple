@@ -6,12 +6,14 @@
 //! the parity tests can diff them against the verbatim C++ references.
 
 pub mod common;
+pub mod croston; // Croston (phase 5)
 pub mod double_exp; // DoubleExponential (phase 4)
 pub mod forecast; // MovingAverage (slice 2)
 pub mod single_exp; // SingleExponential (phase 3)
 
 #[cfg(feature = "extension-module")]
 mod bindings {
+    use crate::croston as croston_mod;
     use crate::{double_exp, forecast, single_exp};
     use pyo3::prelude::*;
 
@@ -87,11 +89,36 @@ mod bindings {
         (r.smape, r.standarddeviation, r.forecast, r.outliers)
     }
 
+    /// Croston -> (smape, standarddeviation, forecast, outlier_indices).
+    #[pyfunction]
+    #[pyo3(signature = (
+        history, min_alfa=0.03, max_alfa=0.8, decay_rate=0.1,
+        max_deviation=4.0, smape_alfa=0.95, skip=5, iterations=15
+    ))]
+    #[allow(clippy::too_many_arguments)]
+    fn croston(
+        history: Vec<f64>,
+        min_alfa: f64,
+        max_alfa: f64,
+        decay_rate: f64,
+        max_deviation: f64,
+        smape_alfa: f64,
+        skip: u64,
+        iterations: u64,
+    ) -> (f64, f64, f64, Vec<usize>) {
+        let r = croston_mod::croston(
+            &history, min_alfa, max_alfa, decay_rate, max_deviation, smape_alfa, skip,
+            iterations,
+        );
+        (r.smape, r.standarddeviation, r.forecast, r.outliers)
+    }
+
     #[pymodule]
     fn frepple_forecast(m: &Bound<'_, PyModule>) -> PyResult<()> {
         m.add_function(wrap_pyfunction!(moving_average, m)?)?;
         m.add_function(wrap_pyfunction!(single_exponential, m)?)?;
         m.add_function(wrap_pyfunction!(double_exponential, m)?)?;
+        m.add_function(wrap_pyfunction!(croston, m)?)?;
         Ok(())
     }
 }

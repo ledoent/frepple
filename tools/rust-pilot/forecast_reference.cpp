@@ -392,9 +392,108 @@ static int double_exp(int argc, char** argv) {
   return 0;
 }
 
+// ---- Croston (timeseries.cpp:1307-1463) ----
+static int croston(int argc, char** argv) {
+  if (argc < 9) return 2;
+  const double min_alfa = atof(argv[2]);
+  const double max_alfa = atof(argv[3]);
+  const double decay_rate = atof(argv[4]);
+  const double Forecast_maxDeviation = atof(argv[5]);
+  const double Forecast_SmapeAlfa = atof(argv[6]);
+  const unsigned long skip = static_cast<unsigned long>(atol(argv[7]));
+  const unsigned long niter = static_cast<unsigned long>(atol(argv[8]));
+  init_weights(Forecast_SmapeAlfa);
+
+  std::vector<double> timeseries = read_history();
+  const unsigned int count = static_cast<unsigned int>(timeseries.size());
+  timeseries.push_back(0.0);
+
+  double nonzero = 0.0, totalsum = 0.0;
+  unsigned long lastnonzero = 0;
+  for (unsigned long i = 0; i < count; ++i) {
+    if (timeseries[i]) {
+      ++nonzero;
+      totalsum += timeseries[i];
+      lastnonzero = i;
+    }
+  }
+  double periods_between_demands = count / nonzero;
+  if (!nonzero) {
+    emit(0, 0, 0, {});
+    return 0;
+  }
+
+  std::vector<long> outliers;
+  unsigned int iteration = 0;
+  double error_smape = 0.0, error_smape_weights = 0.0, best_smape = 0.0;
+  double q_i, p_i, f_i = 0.0;
+  double best_error = DBL_MAX, best_f_i = 0.0, best_standarddeviation = 0.0;
+  unsigned int between_demands = 1;
+  double alfa = min_alfa;
+  double delta = (niter > 1) ? (max_alfa - min_alfa) / (niter - 1) : 0.0;
+  for (; iteration < niter; ++iteration) {
+    double standarddeviation = 0.0, maxdeviation = 0.0;
+    for (short outl = 0; outl <= 1; ++outl) {
+      error_smape = error_smape_weights = 0.0;
+      q_i = totalsum / nonzero;
+      p_i = count / nonzero;
+      f_i = (1 - alfa / 2) * q_i / p_i;
+      double history_i = timeseries[0];
+      for (unsigned long i = 1; i <= count; ++i) {
+        double history_i_min_1 = history_i;
+        history_i = timeseries[i];
+        if (history_i_min_1) {
+          q_i = alfa * history_i_min_1 + (1 - alfa) * q_i;
+          p_i = alfa * between_demands + (1 - alfa) * p_i;
+          f_i = (1 - alfa / 2) * q_i / p_i;
+          between_demands = 1;
+        } else if (i > lastnonzero && between_demands > 2 * periods_between_demands) {
+          f_i = f_i * (1 - decay_rate);
+          p_i = (1 - alfa / 2) * q_i / f_i;
+        } else
+          ++between_demands;
+        if (i == count) break;
+        if (outl == 0) {
+          standarddeviation += (f_i - history_i) * (f_i - history_i);
+          if (fabs(history_i - f_i) > maxdeviation) maxdeviation = fabs(f_i - history_i);
+        } else {
+          if (history_i > f_i + Forecast_maxDeviation * standarddeviation) {
+            history_i = f_i + Forecast_maxDeviation * standarddeviation;
+            if (iteration == 1) outliers.push_back(i);
+          }
+        }
+        if (i >= skip && p_i > 0) {
+          if (fabs(f_i + history_i) > ROUNDING_ERROR) {
+            error_smape += fabs(f_i - history_i) / fabs(f_i + history_i) * smapeWeight(count - i);
+            error_smape_weights += smapeWeight(count - i);
+          }
+        }
+      }
+      if (outl == 0) {
+        standarddeviation = (count > 1) ? sqrt(standarddeviation / (count - 1)) : 0.0;
+        if (standarddeviation > ROUNDING_ERROR) maxdeviation /= standarddeviation;
+        if (maxdeviation < Forecast_maxDeviation) break;
+      }
+    }
+    if (error_smape <= best_error) {
+      best_error = error_smape;
+      best_smape = error_smape_weights ? error_smape / error_smape_weights : 0.0;
+      best_f_i = f_i;
+      best_standarddeviation = standarddeviation;
+    }
+    if (delta)
+      alfa += delta;
+    else
+      break;
+  }
+  emit(best_smape, best_standarddeviation, best_f_i, outliers);
+  return 0;
+}
+
 int main(int argc, char** argv) {
   if (argc < 2) {
-    fprintf(stderr, "usage: %s <moving_average|single_exp|double_exp> <params...>\n",
+    fprintf(stderr,
+            "usage: %s <moving_average|single_exp|double_exp|croston> <params...>\n",
             argv[0]);
     return 2;
   }
@@ -402,6 +501,7 @@ int main(int argc, char** argv) {
   if (method == "moving_average") return moving_average(argc, argv);
   if (method == "single_exp") return single_exp(argc, argv);
   if (method == "double_exp") return double_exp(argc, argv);
+  if (method == "croston") return croston(argc, argv);
   fprintf(stderr, "unknown method: %s\n", method.c_str());
   return 2;
 }

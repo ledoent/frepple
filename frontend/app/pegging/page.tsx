@@ -1,19 +1,26 @@
 "use client";
 
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { isAuthError } from "@/lib/errors";
 import { loginUrl } from "@/lib/session";
 import { useDemandList } from "@/lib/useDemandList";
 import { usePegging } from "@/lib/usePegging";
+import { patchReschedule } from "@/lib/reschedule";
+import { useToast } from "@/components/Toast";
+import type { PeggingBar } from "@/lib/pegging";
 import PeggingGantt from "./PeggingGantt";
 
-// Demand Pegging Gantt screen (Phase 3-D1). Pick a demand; see the supply-chain
-// tree that pegs to it on a dated Gantt. Deep-linkable via ?demand=.
+// Demand Pegging Gantt screen (Phase 3-D1 read / D2 reschedule). Pick a demand;
+// see the supply-chain tree that pegs to it on a dated Gantt; drag a bar to
+// reschedule the operationplan. Deep-linkable via ?demand=.
 function PeggingScreen() {
   const router = useRouter();
   const params = useSearchParams();
   const selected = params.get("demand") ?? "";
   const [q, setQ] = useState("");
+  const [stale, setStale] = useState(false);
+  const toast = useToast();
 
   const { demands, authError: listAuth } = useDemandList();
   const {
@@ -21,8 +28,42 @@ function PeggingScreen() {
     loading,
     error,
     authError: pegAuth,
+    reload,
   } = usePegging(selected);
   const authError = listAuth || pegAuth;
+
+  // A reschedule persists dates but does NOT recompute the peg — only a re-plan
+  // does. Clear the "stale" hint whenever the selected demand changes.
+  useEffect(() => setStale(false), [selected]);
+
+  // Drag-drop reschedule: PATCH the operationplan's dates, then reload so the
+  // Gantt reflects the persisted state (and flag the peg as stale). On failure
+  // reload too, snapping the bar back; rethrow so the bar clears its pending UI.
+  async function handleReschedule(
+    bar: PeggingBar,
+    startdate: string,
+    enddate: string,
+  ) {
+    try {
+      await patchReschedule({
+        type: bar.type,
+        reference: bar.reference,
+        startdate,
+        enddate,
+      });
+      toast("ok", "Rescheduled", `${bar.type} ${bar.reference} → ${startdate.slice(0, 10)}.`);
+      setStale(true);
+      reload();
+    } catch (e) {
+      if (isAuthError(e)) {
+        toast("error", "Sign-in required", "Sign in to reschedule.");
+      } else {
+        toast("error", "Reschedule failed", e instanceof Error ? e.message : String(e));
+      }
+      reload();
+      throw e;
+    }
+  }
 
   const matches = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -115,8 +156,17 @@ function PeggingScreen() {
           <span>Could not load pegging: {error}</span>
         </div>
       )}
+      {stale && (
+        <div className="notice notice--auth" style={{ marginBottom: 14 }}>
+          <span className="dot dot--run" aria-hidden />
+          <span>
+            Dates saved. The peg won&apos;t reflect the move until you{" "}
+            <a href="/execute">run a plan</a>.
+          </span>
+        </div>
+      )}
       {selected && !loading && !error && pegging && (
-        <PeggingGantt pegging={pegging} />
+        <PeggingGantt pegging={pegging} onReschedule={handleReschedule} />
       )}
     </main>
   );

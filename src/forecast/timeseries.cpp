@@ -25,6 +25,19 @@
 
 #include "forecast.h"
 
+#if FREPPLE_RUST_FORECAST
+#include <cstdint>
+// C ABI of the Rust forecast staticlib (rust/frepple-forecast, linked by CMake
+// when -DFREPPLE_RUST_FORECAST=ON). See tools/rust-pilot/frepple_forecast.h.
+// Scalars via out-pointers; outlier indices into a caller buffer up to *_cap
+// with the true count via *_len. Params are a small f64 array (order documented
+// in the header). All return 0 on success.
+extern "C" {
+int frepple_moving_average(const double*, size_t, double*, double*, double*,
+                           size_t*, size_t, size_t*, const double*, size_t);
+}
+#endif
+
 namespace frepple {
 
 #define ACCURACY 0.01
@@ -295,6 +308,30 @@ ForecastSolver::Metrics ForecastSolver::MovingAverage::generateForecast(
     const Forecast* fcst, vector<ForecastBucketData>& bucketdata,
     short firstbckt, vector<double>& timeseries, unsigned int count,
     ForecastSolver* solver) {
+#if FREPPLE_RUST_FORECAST
+  // Phase 7: the numeric core runs in Rust (rust/frepple-forecast). timeseries
+  // holds `count` data points at [0..count-1] (a trailing 0 placeholder at
+  // [count]) - exactly what the Rust port + parity reference consume. The engine
+  // model mutation (outlier problems, applyForecast) stays in C++ below.
+  double params[4] = {static_cast<double>(order),
+                      ForecastSolver::Forecast_maxDeviation,
+                      ForecastSolver::Forecast_SmapeAlfa,
+                      static_cast<double>(solver->getForecastSkip())};
+  vector<size_t> outl(count + 1);
+  size_t olen = 0;
+  double r_smape = 0.0, r_stddev = 0.0, r_avg = 0.0;
+  frepple_moving_average(timeseries.data(), count, &r_smape, &r_stddev, &r_avg,
+                         outl.data(), outl.size(), &olen, params, 4);
+  avg = r_avg;
+  for (size_t k = 0; k < olen && k < outl.size(); ++k)
+    new ProblemOutlier(
+        bucketdata[outl[k] + firstbckt].getOrCreateForecastBucket(), this, true);
+  if (solver->getLogLevel() > 0)
+    logger << (fcst ? fcst->getName() : "") << ": moving average (rust) : "
+           << "smape " << r_smape << ", forecast " << avg
+           << ", standard deviation " << r_stddev << '\n';
+  return ForecastSolver::Metrics(r_smape, r_stddev, false);
+#else
   double error_smape, error_smape_weights;
   auto* clean_history = new double[count + 1];
 
@@ -381,6 +418,7 @@ ForecastSolver::Metrics ForecastSolver::MovingAverage::generateForecast(
            << ", standard deviation " << standarddeviation << '\n';
   delete[] clean_history;
   return ForecastSolver::Metrics(error_smape, standarddeviation, false);
+#endif
 }
 
 void ForecastSolver::MovingAverage::applyForecast(

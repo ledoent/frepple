@@ -94,13 +94,23 @@ flag-gated dispatch + `forecast_*` golden run:
   on its print precision. The clean way to guarantee it is to build the forecast translation unit with
   `-ffp-contract=off` (matching Rust), which the integration should set.
 
-**Remaining (the gated "go" step, needs the full engine build to validate):** add the cargo staticlib to
-CMake under `option(FREPPLE_RUST_FORECAST OFF)`, swap each C++ `generateForecast` body for the
-`extern "C"` call behind the flag, build the engine image with `rustup` (buildx-cached), and add a
-`ubuntu24` CI leg that builds `-DFREPPLE_RUST_FORECAST=ON -ffp-contract=off` and runs `runtest.py` over
-`test/forecast_*`. Flip the default ON only if that leg is green; otherwise the byte-parity gap above is
-the recorded "stop" datapoint. This phase can't be validated on the macOS dev box (the engine build is
-Linux-only here), so it's CI-gated and default-OFF (zero risk to the shipping engine).
+**Implemented (default-OFF, CI-gated):**
+- `option(FREPPLE_RUST_FORECAST OFF)` in the root `CMakeLists.txt`; when ON, `src/CMakeLists.txt`
+  cargo-builds `libfrepple_forecast.a`, links it into the `forecast` lib, defines
+  `FREPPLE_RUST_FORECAST=1`, and compiles the forecast TU with `-ffp-contract=off` (match rustc, no FMA).
+- `src/forecast/timeseries.cpp`: `MovingAverage::generateForecast` now dispatches to the `extern "C"`
+  `frepple_moving_average` behind the flag (the template). The engine passes `timeseries.data(), count`
+  — verified to be the same `[0..count-1]` data points (trailing-0 placeholder at `[count]`) the parity
+  reference + Rust port consume. The model mutation (`ProblemOutlier` creation, `applyForecast`) stays in
+  C++; the Rust returns only the numbers + outlier indices. SingleExp/DoubleExp/Croston/Seasonal still run
+  C++ under the flag — mechanical follow-on once the gate below is green for MovingAverage.
+- **Golden gate CI:** `.github/workflows/forecast-phase7.yml` builds `-DFREPPLE_RUST_FORECAST=ON` and runs
+  `runtest.py` over `test/forecast_1..11` (byte-exact vs `.expect`). This is where the FP-contraction
+  finding gets its verdict: **green ⇒ the flag can flip ON; red ⇒ the ULP gap is the recorded "stop".**
+
+The e2e engine image is intentionally left flag-OFF (no `rustup` added there — it would only bloat an
+image that runs the C++ path). Validation is CI-only (the engine build is Linux-only on this dev box);
+default-OFF means zero risk to the shipping engine regardless of the gate outcome.
 
 ## Slice 2 — forecast (MovingAverage), the real algorithm
 

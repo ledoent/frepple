@@ -78,6 +78,13 @@ if(grunt)
   )
 endif()
 
+# Engine track E4 / phase 7: link the Rust forecast methods (rust/frepple-forecast)
+# into libfrepple behind this flag. Default OFF — the C++ forecast remains the
+# shipping path; ON swaps each generateForecast body for the extern "C" Rust call
+# and builds the forecast TU with -ffp-contract=off to match rustc (no FMA), the
+# documented requirement for byte-exact golden parity (tools/modernization/rust-pilot.md).
+option(FREPPLE_RUST_FORECAST "Use the Rust forecast methods instead of C++ (phase 7)" OFF)
+
 # C++ compiler flags and features
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED True)

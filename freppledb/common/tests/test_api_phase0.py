@@ -105,6 +105,17 @@ class Phase0OutputEndpointTest(TestCase):
         self.assertIn(b'"buckets":', body)
         self.assertIn(b'"data":', body)
 
+    def test_flat_output_endpoints(self):
+        # The flat violation-list reports (Phase 3 problem/constraint) are exposed
+        # via the bare JSONStreamView - the report's own {total,page,records,rows}
+        # stream, no enrichment (they aren't pivots).
+        for endpoint in ("/api/output/problem/", "/api/output/constraint/"):
+            with self.subTest(endpoint=endpoint):
+                response = self.client.get(endpoint)
+                self.assertEqual(response.status_code, 200, endpoint)
+                body = _body(response)
+                self.assertIn(b'"rows":', body, endpoint)
+
     def test_pegging_output_enriched(self):
         # The pegging Gantt endpoint (Phase 3-D) wraps the demand-pegging report's
         # tree object under "data" and prepends an absolute time "window" (the

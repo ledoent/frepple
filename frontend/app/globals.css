@@ -804,6 +804,41 @@ a:hover {
 }
 
 /* ── instrument table (forecast) ────────────────────────────────────────── */
+/* ── tab bar (problems / orders list screens) ───────────────────────────── */
+.tabbar {
+  display: inline-flex;
+  gap: 2px;
+  margin-bottom: 16px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--panel);
+}
+.tab {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--font-mono), monospace;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 7px 14px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+.tab:hover {
+  color: var(--text);
+  background: var(--panel-2);
+}
+.tab.is-active {
+  color: var(--signal);
+  background: var(--signal-dim);
+  border-color: rgba(245, 183, 51, 0.3);
+}
+
 .tablewrap {
   overflow: auto;
   border: 1px solid var(--line);

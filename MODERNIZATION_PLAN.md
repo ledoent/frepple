@@ -201,6 +201,14 @@ fix the confirmed N+1s with set-based prefetch; split into (a) scheduled master-
 **Delivered — Inventory / Demand / Resource (read pivots):** the three reporting
 screens ship as `PivotScreen` over enriched `/api/output/{inventory,demand,resource}/`.
 
+**Delivered — Problems / Constraints + Orders (flat lists):** the violation-list and
+order-summary screens ship as a reusable `RecordTable` + `useRecordList` (flat records,
+not pivots). Problems/Constraints toggle over new `/api/output/{problem,constraint}/`
+(`JSONStreamView`, Django-tested); Orders toggle MO/PO/DO over the input DRF lists
+(`/api/input/{manufacturingorder,purchaseorder,distributionorder}/`). Read-only — inline
+CRUD editing is a follow-on (the pegging Gantt already covers date edits). Covered by
+Playwright smoke + a11y (0 critical).
+
 **Delivered — Demand Pegging Gantt, slice D1 (read-only):** pick a sales order →
 trace its supply chain on a dated Gantt. Backend `PeggingJSONView`
 (`freppledb/common/api/output.py`) enriches the pegging report with a `window`

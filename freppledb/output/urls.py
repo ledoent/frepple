@@ -25,6 +25,7 @@ from django.urls import re_path
 
 from freppledb import mode
 from freppledb.common.api.output import (
+    JSONStreamView,
     PivotJSONStreamView,
     PeggingJSONView,
 )
@@ -78,6 +79,20 @@ if mode == "WSGI":
                 report_class=freppledb.output.views.pegging.ReportByDemand
             ),
             name="api_output_pegging",
+        ),
+        re_path(
+            r"^api/output/problem/$",
+            # Flat violation list (Phase 3): the report's raw-SQL ?format=json
+            # stream, no enrichment needed (not a pivot).
+            JSONStreamView.as_view(report_class=freppledb.output.views.problem.Report),
+            name="api_output_problem",
+        ),
+        re_path(
+            r"^api/output/constraint/$",
+            JSONStreamView.as_view(
+                report_class=freppledb.output.views.constraint.BaseReport
+            ),
+            name="api_output_constraint",
         ),
         re_path(
             r"^buffer/item/(.+)/$",

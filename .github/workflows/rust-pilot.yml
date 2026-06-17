@@ -60,6 +60,13 @@ jobs:
           FORECAST_CXX_REF_BIN: /tmp/forecast_reference
         run: pytest test/rust_parity/ -q
 
+      - name: C-ABI smoke test (staticlib link, phase 7 foundation)
+        run: |
+          cargo build --release --manifest-path rust/frepple-forecast/Cargo.toml
+          cc -O2 -I tools/rust-pilot tools/rust-pilot/capi_harness.c \
+             rust/frepple-forecast/target/release/libfrepple_forecast.a -o /tmp/capi_harness
+          /tmp/capi_harness
+
       - name: Measurements
         if: always()
         run: |

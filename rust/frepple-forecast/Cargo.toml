@@ -7,7 +7,9 @@ license = "MIT"
 
 [lib]
 name = "frepple_forecast"
-crate-type = ["cdylib", "rlib"]
+# cdylib for the PyO3 wheel (parity tests); rlib for `cargo test`; staticlib for
+# the C-ABI link into libfrepple (Phase 7 engine integration).
+crate-type = ["cdylib", "rlib", "staticlib"]
 
 # pyo3 optional + feature-gated so `cargo test` runs the pure-logic tests with no
 # Python dependency; `maturin build --features extension-module` builds the wheel.

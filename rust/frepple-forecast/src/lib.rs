@@ -5,6 +5,7 @@
 //! compiled only into the wheel (`maturin build --features extension-module`) so
 //! the parity tests can diff them against the verbatim C++ references.
 
+pub mod capi; // C ABI for the engine link (phase 7)
 pub mod common;
 pub mod croston; // Croston (phase 5)
 pub mod double_exp; // DoubleExponential (phase 4)

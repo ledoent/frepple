@@ -73,9 +73,34 @@ Porting `src/forecast/` method-by-method (each a CI-only parity slice). Status:
 **All five forecast methods ported and parity-verified** (57 parity tests; smape/stddev/forecast within
 1e-9, outliers/period/force/seasonal-factors exact). Shared helpers in `common.rs` (`smape_weight`,
 weight table, constants, the `Forecast` result, `solve_2x2_marquardt` — bit-for-bit with the C++
-damping/singular-retry order, used by DoubleExp + Seasonal). Remaining: the flag-gated **engine
-integration** (Phase 7) — link the Rust as a C-ABI staticlib into `libfrepple` and validate with the
-`forecast_*` golden tests.
+damping/singular-retry order, used by DoubleExp + Seasonal).
+
+## Phase 7 — engine integration (C ABI + the byte-parity finding)
+
+**Done + CI-covered:** the crate now also builds a `staticlib` with a C ABI
+(`src/capi.rs` + `tools/rust-pilot/frepple_forecast.h`) — `extern "C"` wrappers for all five methods,
+the *only* `unsafe` in the crate (the FFI boundary; the numeric modules stay `#![forbid(unsafe_code)]`).
+A committed C harness (`tools/rust-pilot/capi_harness.c`) links `libfrepple_forecast.a` and calls the
+methods exactly as `libfrepple` would (MovingAverage→8.0, Seasonal→period 7), run in the `rust-pilot`
+CI. So the FFI link that the engine integration needs is proven.
+
+**Key finding — byte-exact parity needs `-ffp-contract=off`.** The Rust matches the standalone C++
+reference to ~1e-9 but **not** bit-for-bit (~14/33 vectors exact). Cause: `g++ -O2` defaults to
+`-ffp-contract=fast` (FMA fusion of `a*b+c` into one rounding); rustc does not contract. So the engine
+(C++, FMA-on) and the Rust port differ by a few ULPs on the same inputs. Implications for the remaining
+flag-gated dispatch + `forecast_*` golden run:
+- Method *selection* is robust — a ULP-level `smape` difference won't flip the lowest-error winner.
+- The forecast *values* differ by ULPs; whether the `.expect` golden output stays byte-identical depends
+  on its print precision. The clean way to guarantee it is to build the forecast translation unit with
+  `-ffp-contract=off` (matching Rust), which the integration should set.
+
+**Remaining (the gated "go" step, needs the full engine build to validate):** add the cargo staticlib to
+CMake under `option(FREPPLE_RUST_FORECAST OFF)`, swap each C++ `generateForecast` body for the
+`extern "C"` call behind the flag, build the engine image with `rustup` (buildx-cached), and add a
+`ubuntu24` CI leg that builds `-DFREPPLE_RUST_FORECAST=ON -ffp-contract=off` and runs `runtest.py` over
+`test/forecast_*`. Flip the default ON only if that leg is green; otherwise the byte-parity gap above is
+the recorded "stop" datapoint. This phase can't be validated on the macOS dev box (the engine build is
+Linux-only here), so it's CI-gated and default-OFF (zero risk to the shipping engine).
 
 ## Slice 2 — forecast (MovingAverage), the real algorithm
 

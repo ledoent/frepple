@@ -1,0 +1,126 @@
+name: Frontend E2E (compose)
+
+# Backward-compat guardrail for the SPA: brings up the full same-origin stack
+# (Postgres + Django/wsgi + daphne/asgi on the C++ engine image + Next.js +
+# nginx) via the e2e compose files and runs the Playwright suite (smoke + a11y
+# across all five screens + the engine-backed live-progress run). This is the
+# automated net so new features can't silently break an existing screen.
+#
+# The engine image is restored from the deploy-staging buildx registry cache, so
+# the C++ engine is NOT recompiled here (~5 min job, not ~15). The frontend image
+# is built fresh from the checkout (the thing under test).
+
+on:
+  push:
+    branches: ["modernization", "modernization/**"]
+    paths:
+      - "frontend/**"
+      - "e2e/**"
+      - "freppledb/**"
+      - ".github/workflows/frontend-e2e.yml"
+  pull_request:
+    branches: [master, modernization]
+    paths:
+      - "frontend/**"
+      - "e2e/**"
+      - "freppledb/**"
+      - ".github/workflows/frontend-e2e.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: read
+
+# Supersede in-flight runs on the same ref - this stack build + Playwright is
+# expensive, no point finishing a run a newer push already obsoleted.
+concurrency:
+  group: frontend-e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  COMPOSE: docker compose -f e2e/docker-compose.yml -f e2e/docker-compose.engine.yml
+
+jobs:
+  e2e:
+    name: Playwright vs compose stack
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+      - name: Log in to GHCR (for the engine buildcache)
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Restore the compiled C++ engine layer from the deploy-staging cache and
+      # load it locally as `frepple-e2e-engine` so compose reuses it (no rebuild).
+      - name: Engine image (from registry cache)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: e2e/Dockerfile.engine
+          tags: frepple-e2e-engine:latest
+          load: true
+          cache-from: type=registry,ref=ghcr.io/ledoent/frepple-app:buildcache
+
+      - name: Bring up the stack
+        run: $COMPOSE up -d --build
+
+      - name: Wait for the stack to be ready
+        run: |
+          for i in $(seq 1 72); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:18080/data/login/ || true)
+            if [ "$code" = "200" ]; then echo "login up after ${i}x5s"; sleep 5; break; fi
+            sleep 5
+          done
+          code=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:18080/data/login/ || true)
+          if [ "$code" != "200" ]; then echo "::error::stack did not become ready"; $COMPOSE logs --tail=120; exit 1; fi
+
+      # Wait for the startup warmup plan (FREPPLE_INIT_RUNPLAN in the engine
+      # overlay) to finish. This guarantees the C++ engine is warm and the
+      # Redis->websocket broadcast path has fired once before the live-progress
+      # test launches its own plan - removing the cold-start race that made the
+      # first runplan slower than the test's terminal-state timeout.
+      - name: Wait for the engine warmup plan to complete
+        run: |
+          for i in $(seq 1 60); do
+            status=$($COMPOSE exec -T db psql -U frepple -d frepple0 -tAc \
+              "SELECT status FROM execute_log WHERE name='runplan' ORDER BY id DESC LIMIT 1;" 2>/dev/null | tr -d '[:space:]' || true)
+            case "$status" in
+              Done)   echo "engine warm after ${i}x5s"; exit 0 ;;
+              Failed) echo "::error::engine warmup plan failed"; $COMPOSE logs --tail=200 web-wsgi web-asgi; exit 1 ;;
+            esac
+            sleep 5
+          done
+          echo "::error::engine warmup plan did not complete"; $COMPOSE logs --tail=200 web-wsgi web-asgi; exit 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: e2e/playwright/package-lock.json
+
+      - name: Install Playwright deps
+        working-directory: e2e/playwright
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Playwright (12 specs, all 5 screens + live-progress)
+        working-directory: e2e/playwright
+        env:
+          E2E_BASE_URL: http://127.0.0.1:18080
+          E2E_ENGINE: "1"
+        run: npx playwright test
+
+      - name: Compose logs on failure
+        if: failure()
+        run: $COMPOSE logs --tail=200
+
+      - name: Teardown
+        if: always()
+        run: $COMPOSE down -v

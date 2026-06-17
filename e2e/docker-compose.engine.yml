@@ -10,6 +10,13 @@ services:
     build:
       context: ..
       dockerfile: e2e/Dockerfile.engine
+    # Compute an initial plan on startup so the C++ engine is warm (CPython +
+    # demo dataset loaded) before the first test-driven runplan, and so the
+    # Redis->websocket broadcast path is exercised once. Removes the cold-start
+    # race where the live-progress test launched a plan faster than a freshly
+    # built engine could complete + broadcast its terminal status.
+    environment:
+      FREPPLE_INIT_RUNPLAN: "1"
 
   web-asgi:
     image: frepple-e2e-engine

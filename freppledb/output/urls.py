@@ -52,14 +52,17 @@ if mode == "WSGI":
         ),
         re_path(
             r"^api/output/demand/$",
-            JSONStreamView.as_view(
+            # Enriched (self-describing measures+buckets) for the SPA demand
+            # screen; data payload stays byte-identical under "data".
+            PivotJSONStreamView.as_view(
                 report_class=freppledb.output.views.demand.OverviewReport
             ),
             name="api_output_demand",
         ),
         re_path(
             r"^api/output/resource/$",
-            JSONStreamView.as_view(
+            # Enriched for the SPA resource screen (utilization/load over buckets).
+            PivotJSONStreamView.as_view(
                 report_class=freppledb.output.views.resource.OverviewReport
             ),
             name="api_output_resource",

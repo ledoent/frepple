@@ -40,6 +40,27 @@ export type Pegging = {
   rows: PeggingRow[];
 };
 
+// The supply-chain rows whose timing depends on the operation at `rowIndex` — its
+// chain toward the demand delivery (Phase 3-D3). The pegging tree is pre-order
+// with depth 1 = the delivery and deeper = upstream supply, so the "downstream"
+// of an upstream op is its ancestors: walking back from `rowIndex`, the nearest
+// preceding row at each smaller depth, down to depth 1. Rescheduling the op may
+// push those later — a re-plan computes the exact result; this just flags WHICH
+// rows are affected. Returns a Set of row ids (incl. the moved row itself).
+export function downstreamChain(rows: PeggingRow[], rowIndex: number): Set<string> {
+  const affected = new Set<string>();
+  if (rowIndex < 0 || rowIndex >= rows.length) return affected;
+  affected.add(rows[rowIndex].id);
+  let wantDepth = rows[rowIndex].depth - 1;
+  for (let i = rowIndex - 1; i >= 0 && wantDepth >= 1; i--) {
+    if (rows[i].depth === wantDepth) {
+      affected.add(rows[i].id);
+      wantDepth -= 1;
+    }
+  }
+  return affected;
+}
+
 function num(v: unknown): number {
   const n = typeof v === "number" ? v : parseFloat(String(v));
   return Number.isFinite(n) ? n : 0;

@@ -1024,6 +1024,14 @@ table.grid thead th {
 .gantt-row:hover {
   background: var(--bg-2);
 }
+/* D3: a downstream step whose timing may shift after a reschedule, until re-plan */
+.gantt-row--affected {
+  background: var(--signal-dim);
+  box-shadow: inset 3px 0 0 var(--signal);
+}
+.gantt-row--affected:hover {
+  background: var(--signal-dim);
+}
 .gantt-head {
   background: var(--panel-2);
 }

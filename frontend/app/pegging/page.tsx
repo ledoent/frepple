@@ -6,20 +6,24 @@ import { isAuthError } from "@/lib/errors";
 import { loginUrl } from "@/lib/session";
 import { useDemandList } from "@/lib/useDemandList";
 import { usePegging } from "@/lib/usePegging";
+import { useReplan } from "@/lib/useReplan";
 import { patchReschedule } from "@/lib/reschedule";
 import { useToast } from "@/components/Toast";
-import type { PeggingBar } from "@/lib/pegging";
+import { downstreamChain, type PeggingBar } from "@/lib/pegging";
 import PeggingGantt from "./PeggingGantt";
 
-// Demand Pegging Gantt screen (Phase 3-D1 read / D2 reschedule). Pick a demand;
-// see the supply-chain tree that pegs to it on a dated Gantt; drag a bar to
-// reschedule the operationplan. Deep-linkable via ?demand=.
+// Demand Pegging Gantt screen (Phase 3-D1 read / D2 reschedule / D3 re-plan loop).
+// Pick a demand; trace the supply chain on a dated Gantt; drag a bar to
+// reschedule the operationplan; re-plan in place to recompute the peg.
 function PeggingScreen() {
   const router = useRouter();
   const params = useSearchParams();
   const selected = params.get("demand") ?? "";
   const [q, setQ] = useState("");
+  // After a reschedule the peg is stale; `affected` are the downstream rows whose
+  // timing may shift (highlighted until a re-plan recomputes the real result).
   const [stale, setStale] = useState(false);
+  const [affected, setAffected] = useState<Set<string>>(new Set());
   const toast = useToast();
 
   const { demands, authError: listAuth } = useDemandList();
@@ -30,17 +34,22 @@ function PeggingScreen() {
     authError: pegAuth,
     reload,
   } = usePegging(selected);
+  const { replan, running: replanning } = useReplan();
   const authError = listAuth || pegAuth;
 
   // A reschedule persists dates but does NOT recompute the peg — only a re-plan
-  // does. Clear the "stale" hint whenever the selected demand changes.
-  useEffect(() => setStale(false), [selected]);
+  // does. Clear the stale hint + affected highlight whenever the demand changes.
+  useEffect(() => {
+    setStale(false);
+    setAffected(new Set());
+  }, [selected]);
 
-  // Drag-drop reschedule: PATCH the operationplan's dates, then reload so the
-  // Gantt reflects the persisted state (and flag the peg as stale). On failure
+  // Drag-drop reschedule: PATCH the operationplan's dates, flag the downstream
+  // chain (D3), then reload so the Gantt reflects the persisted state. On failure
   // reload too, snapping the bar back; rethrow so the bar clears its pending UI.
   async function handleReschedule(
     bar: PeggingBar,
+    rowId: string,
     startdate: string,
     enddate: string,
   ) {
@@ -52,6 +61,8 @@ function PeggingScreen() {
         enddate,
       });
       toast("ok", "Rescheduled", `${bar.type} ${bar.reference} → ${startdate.slice(0, 10)}.`);
+      const rows = pegging?.rows ?? [];
+      setAffected(downstreamChain(rows, rows.findIndex((r) => r.id === rowId)));
       setStale(true);
       reload();
     } catch (e) {
@@ -62,6 +73,24 @@ function PeggingScreen() {
       }
       reload();
       throw e;
+    }
+  }
+
+  // The re-plan loop: run the engine, then re-fetch the (now authoritative)
+  // pegging and clear the stale/affected hints.
+  async function handleReplan() {
+    try {
+      await replan();
+      toast("ok", "Re-planned", "Pegging refreshed from the engine.");
+      setStale(false);
+      setAffected(new Set());
+      reload();
+    } catch (e) {
+      if (isAuthError(e)) {
+        toast("error", "Sign-in required", "Sign in to re-plan.");
+      } else {
+        toast("error", "Re-plan failed", e instanceof Error ? e.message : String(e));
+      }
     }
   }
 
@@ -157,16 +186,35 @@ function PeggingScreen() {
         </div>
       )}
       {stale && (
-        <div className="notice notice--auth" style={{ marginBottom: 14 }}>
+        <div
+          className="notice notice--auth"
+          style={{
+            marginBottom: 14,
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+          }}
+        >
           <span className="dot dot--run" aria-hidden />
-          <span>
-            Dates saved. The peg won&apos;t reflect the move until you{" "}
-            <a href="/execute">run a plan</a>.
+          <span style={{ flex: 1 }}>
+            Dates saved. Highlighted steps may shift — the peg recomputes when you
+            re-plan.
           </span>
+          <button
+            className="btn btn-primary btn-mini"
+            onClick={handleReplan}
+            disabled={replanning}
+          >
+            {replanning ? "Re-planning…" : "Re-plan now"}
+          </button>
         </div>
       )}
       {selected && !loading && !error && pegging && (
-        <PeggingGantt pegging={pegging} onReschedule={handleReschedule} />
+        <PeggingGantt
+          pegging={pegging}
+          onReschedule={handleReschedule}
+          affected={affected}
+        />
       )}
     </main>
   );

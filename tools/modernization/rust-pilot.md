@@ -58,17 +58,42 @@ instructions; the ~39 ns is dominated by the Python FFI boundary (irrelevant her
 - A Rust toolchain in the *engine image* (~150 MB) is **deferred** — only needed if we ship the wheel,
   which is a "go"-only fast-follow.
 
+## Slice 2 — forecast (MovingAverage), the real algorithm
+
+Slice 1 was a trivial clamp; slice 2 ports an actual forecasting method:
+`ForecastSolver::MovingAverage::generateForecast` (`src/forecast/timeseries.cpp:294-384`) + the
+`smapeWeight` recency weighting (`forecast.h:3041-3054`) — the **other fixed memory-bug site** (the
+`weight[]` out-of-bounds read on histories longer than `MAXBUCKETS=500`). Crate: `rust/frepple-forecast/`.
+
+- **Parity** (`test/rust_parity/test_forecast_parity.py`, **10/10**): the Rust `moving_average` is diffed
+  against a verbatim C++ reference (`tools/rust-pilot/forecast_reference.cpp`) over constant / trend /
+  outlier / intermittent / fractional series **and** two >`MAXBUCKETS` series (the OOB case). `smape`,
+  `standarddeviation` and `avg` match within a 1e-9 relative epsilon (same f64 op order); outlier index
+  sets match exactly.
+- **LOC: comparable, not smaller** — Rust ~109 (incl. the weight-table helper + result struct +
+  explicit-index loops) vs ~73 for the C++ method body (+~10 for `smapeWeight`/weight init). On a tight
+  numeric loop, safe Rust is *roughly the same size*; the win here is **not** LOC.
+- **Safety:** **0 `unsafe`** (compile-enforced); the `weight[]` OOB read is impossible — indexing is
+  bounds-checked and the clamp is one line. The engine-model coupling (the two `new ProblemOutlier(...)`
+  writes) is the only thing left in C++; the port returns outlier indices instead (numeric kernel, not
+  the model mutation).
+- **Honest caveat:** parity required mirroring the C++ float operation order exactly. That's the cost of
+  a numeric port — bit-level reproducibility is a real constraint, and a careless rewrite would drift.
+
 ## Decision (rust-decision)
 
 **Conditional GO — for targeted Rust on isolated, numeric, safety-critical leaf modules; NO-GO for a
 wholesale engine rewrite.**
 
-The evidence is one-sided on the question that motivated the pilot: Rust eliminates *this exact class*
-of memory/UB bug by construction, at a tiny LOC and a low, decoupled integration cost, with no
-meaningful perf trade-off on this kind of code. That justifies continuing **incrementally**: the next
-evidence step is the larger, still-isolated `src/forecast/` SMAPE math (~1.1k LOC, the other fixed
-memory-bug site) ported behind the same maturin/PyO3 pattern and validated against the existing
-forecast golden tests, with the C++ remaining the shipping path until that port reaches golden-parity.
+The evidence across both slices is consistent: Rust eliminates *this exact class* of memory/UB bug by
+construction (the json clamp and the forecast `weight[]` OOB), at a low, decoupled integration cost and
+no meaningful perf trade-off. LOC is **not** the headline — slice 2 showed safe Rust is roughly the same
+size as the C++ for tight numeric code; the value is the compile-enforced safety + the clean PyO3 linkage
+(no manual refcounting — the very `python.cpp` refcount/UB bugs the modernization fixed). That justifies
+continuing **incrementally**: the next forecast slices (SingleExponential / DoubleExponential / Seasonal /
+Croston — iterative optimisers) port behind the same maturin/PyO3 pattern, with the C++ remaining the
+shipping path until a method reaches full golden-parity; if a method proves too entangled to port cleanly,
+that itself is recorded evidence.
 
 A full rewrite of the deeply C++-coupled engine (object graph, embedded CPython, solver) is **not**
 justified by this evidence — the cost/risk is enormous and most of the engine is not the bug-prone,

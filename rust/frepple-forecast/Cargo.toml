@@ -1,0 +1,18 @@
+[package]
+name = "frepple-forecast"
+version = "0.1.0"
+edition = "2021"
+description = "frePPLe Rust/PyO3 pilot (Engine track E4, slice 2): MovingAverage forecast method"
+license = "MIT"
+
+[lib]
+name = "frepple_forecast"
+crate-type = ["cdylib", "rlib"]
+
+# pyo3 optional + feature-gated so `cargo test` runs the pure-logic tests with no
+# Python dependency; `maturin build --features extension-module` builds the wheel.
+[dependencies]
+pyo3 = { version = "0.22", optional = true }
+
+[features]
+extension-module = ["dep:pyo3", "pyo3/extension-module"]

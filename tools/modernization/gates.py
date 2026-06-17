@@ -454,13 +454,18 @@ GATES = [
     (
         "Engine E4",
         "rust-pilot-parity",
-        "Rust/PyO3 pilot (json number kernel) passes a Rust-vs-C++ parity diff",
+        "Rust/PyO3 pilots (json kernel + forecast MovingAverage) pass Rust-vs-C++ parity diffs",
         "active",
-        lambda: has_file("rust", "frepple-num", "src", "num.rs")
-        and file_contains(
+        lambda: file_contains(
             ("rust", "frepple-num", "src", "num.rs"), "forbid(unsafe_code)"
         )
         and file_contains(("test", "rust_parity", "test_parity.py"), "frepple_num")
+        and file_contains(
+            ("rust", "frepple-forecast", "src", "forecast.rs"), "forbid(unsafe_code)"
+        )
+        and file_contains(
+            ("test", "rust_parity", "test_forecast_parity.py"), "frepple_forecast"
+        )
         and has_file(".github", "workflows", "rust-pilot.yml"),
     ),
     (

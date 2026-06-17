@@ -400,5 +400,11 @@ most isolated). Measure dev experience, safety (no manual refcount/ptr bugs), pe
 (`tools/rust-pilot/cxx_reference.cpp`, `test/rust_parity/`, 24/24); evidence + go/no-go in
 `tools/modernization/rust-pilot.md`; CI in `.github/workflows/rust-pilot.yml` (cargo test + maturin +
 parity, no engine build). All three E4 gates active. **Decision: conditional GO** for targeted Rust on
-isolated numeric leaf modules (next: the `src/forecast/` SMAPE math), **NO-GO** for a wholesale engine
-rewrite. Intentionally CI-only — shipping the wheel into the engine image is a "go"-only fast-follow.
+isolated numeric leaf modules, **NO-GO** for a wholesale engine rewrite. Intentionally CI-only —
+shipping the wheel into the engine image is a "go"-only fast-follow.
+
+**Slice 2 (delivered):** ported a real forecasting method — `MovingAverage::generateForecast` +
+`smapeWeight` (`src/forecast/timeseries.cpp:294-384`, the `weight[]` OOB site) to `rust/frepple-forecast/`,
+parity-diffed 10/10 against a verbatim C++ reference (incl. >MAXBUCKETS series) within 1e-9. Finding:
+LOC is comparable (not smaller) for tight numeric code — the win is compile-enforced safety + the PyO3
+linkage, not line count. Next slices: SingleExponential / DoubleExponential / Seasonal / Croston.

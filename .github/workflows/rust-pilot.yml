@@ -37,20 +37,27 @@ jobs:
           python-version: "3.12"
 
       - name: Rust unit tests (pure logic, no Python)
-        run: cargo test --manifest-path rust/frepple-num/Cargo.toml
+        run: |
+          cargo test --manifest-path rust/frepple-num/Cargo.toml
+          cargo test --manifest-path rust/frepple-forecast/Cargo.toml
 
-      - name: Build the C++ parity reference
-        run: g++ -O2 -o /tmp/cxx_reference tools/rust-pilot/cxx_reference.cpp
+      - name: Build the C++ parity references
+        run: |
+          g++ -O2 -o /tmp/cxx_reference tools/rust-pilot/cxx_reference.cpp
+          g++ -O2 -o /tmp/forecast_reference tools/rust-pilot/forecast_reference.cpp
 
-      - name: Build + install the Rust wheel (maturin)
+      - name: Build + install the Rust wheels (maturin)
         run: |
           python -m pip install --upgrade pip maturin pytest
           maturin build --release -m rust/frepple-num/Cargo.toml
+          maturin build --release -m rust/frepple-forecast/Cargo.toml
           pip install --force-reinstall --no-deps rust/frepple-num/target/wheels/*.whl
+          pip install --force-reinstall --no-deps rust/frepple-forecast/target/wheels/*.whl
 
-      - name: Parity test (Rust vs C++ reference)
+      - name: Parity tests (Rust vs C++ references)
         env:
           CXX_REF_BIN: /tmp/cxx_reference
+          FORECAST_CXX_REF_BIN: /tmp/forecast_reference
         run: pytest test/rust_parity/ -q
 
       - name: Measurements
@@ -59,9 +66,11 @@ jobs:
           {
             echo "## Rust pilot measurements"
             echo '```'
-            echo "unsafe blocks in pilot logic: $(grep -c 'unsafe {' rust/frepple-num/src/num.rs || echo 0)"
-            echo "rust core LOC (4 fns):        $(sed -n '/^pub fn /,/^}/p' rust/frepple-num/src/num.rs | grep -vcE '^\s*//|^\s*$')"
-            echo "c++ getters LOC (json.cpp):   $(sed -n '790,890p' src/utils/json.cpp | grep -vcE '^\s*//|^\s*$')"
+            echo "slice 1 (json) — unsafe blocks: $(grep -c 'unsafe {' rust/frepple-num/src/num.rs || echo 0)"
+            echo "slice 1 (json) — rust core LOC: $(sed -n '/^pub fn /,/^}/p' rust/frepple-num/src/num.rs | grep -vcE '^\s*//|^\s*$')"
+            echo "slice 2 (forecast) — unsafe blocks: $(grep -c 'unsafe {' rust/frepple-forecast/src/forecast.rs || echo 0)"
+            echo "slice 2 (forecast) — rust LOC: $(grep -vcE '^\s*//|^\s*$' rust/frepple-forecast/src/forecast.rs)"
+            echo "slice 2 (forecast) — c++ MovingAverage LOC: $(sed -n '294,384p' src/forecast/timeseries.cpp | grep -vcE '^\s*//|^\s*$')"
             echo '```'
             echo "See tools/modernization/rust-pilot.md for the full evidence + go/no-go."
           } >> "$GITHUB_STEP_SUMMARY"

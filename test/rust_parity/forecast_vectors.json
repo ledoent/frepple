@@ -1,0 +1,12 @@
+[
+  { "name": "constant", "history": [10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10] },
+  { "name": "linear_trend", "history": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] },
+  { "name": "outlier_spike", "history": [10, 11, 9, 10, 12, 8, 10, 11, 9, 500, 10, 11, 9, 10, 12] },
+  { "name": "two_outliers", "history": [20, 21, 19, 22, 18, 300, 20, 21, 19, 22, 18, -200, 20, 21, 19, 22] },
+  { "name": "intermittent", "history": [0, 0, 5, 0, 0, 0, 8, 0, 0, 3, 0, 0, 0, 0, 6, 0, 0, 2] },
+  { "name": "noisy", "history": [23, 19, 27, 31, 18, 22, 29, 17, 25, 30, 21, 16, 28, 24, 20, 26, 33, 15, 22, 27] },
+  { "name": "fractional", "history": [1.5, 2.25, 3.125, 2.75, 4.0, 3.5, 2.875, 4.125, 3.75, 5.0, 4.25, 3.625] },
+  { "name": "short_below_skip", "history": [4, 5, 6] },
+  { "name": "long_over_maxbuckets", "generate": { "n": 800, "base": 100, "mod": 7 } },
+  { "name": "long_with_trend", "generate": { "n": 650, "base": 50, "mod": 13 } }
+]

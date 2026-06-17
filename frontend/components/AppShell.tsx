@@ -12,7 +12,9 @@ const NAV = [
   { href: "/demand", label: "Demand", hint: "Sales orders" },
   { href: "/pegging", label: "Pegging", hint: "Supply trace" },
   { href: "/inventory", label: "Inventory", hint: "On-hand & supply" },
+  { href: "/orders", label: "Orders", hint: "MO / PO / DO" },
   { href: "/resource", label: "Resource", hint: "Capacity & load" },
+  { href: "/problems", label: "Problems", hint: "Violations" },
 ];
 
 // The persistent console chrome: a left rail (brand + nav + session) and a top

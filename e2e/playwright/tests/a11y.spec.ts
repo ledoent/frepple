@@ -51,3 +51,17 @@ test("Pegging screen: 0 critical a11y violations", async ({ page }) => {
   const critical = await criticalViolations(page);
   expect(critical, JSON.stringify(critical.map((v) => v.id))).toEqual([]);
 });
+
+test("Problems screen: 0 critical a11y violations", async ({ page }) => {
+  await page.goto("/problems");
+  await expect(page.getByRole("heading", { name: "Problems" })).toBeVisible();
+  const critical = await criticalViolations(page);
+  expect(critical, JSON.stringify(critical.map((v) => v.id))).toEqual([]);
+});
+
+test("Orders screen: 0 critical a11y violations", async ({ page }) => {
+  await page.goto("/orders");
+  await expect(page.getByRole("heading", { name: "Orders" })).toBeVisible();
+  const critical = await criticalViolations(page);
+  expect(critical, JSON.stringify(critical.map((v) => v.id))).toEqual([]);
+});

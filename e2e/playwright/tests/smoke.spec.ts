@@ -80,3 +80,23 @@ test("Pegging screen loads and lists demands", async ({ page }) => {
       .or(page.getByText("NO DEMANDS MATCH")),
   ).toBeVisible();
 });
+
+test("Problems screen loads with tabs", async ({ page }) => {
+  await page.goto("/problems");
+  await expect(page.getByRole("heading", { name: "Problems" })).toBeVisible();
+  // The Problems/Constraints tabs render; the list or empty-state both mean the
+  // /api/output/problem/ read worked.
+  await expect(page.getByRole("tab", { name: "Constraints" })).toBeVisible();
+  await expect(
+    page.getByText(/rows/).or(page.getByText(/NO PROBLEMS/)),
+  ).toBeVisible();
+});
+
+test("Orders screen loads MO/PO/DO tabs", async ({ page }) => {
+  await page.goto("/orders");
+  await expect(page.getByRole("heading", { name: "Orders" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Purchase" })).toBeVisible();
+  await expect(
+    page.getByText(/rows/).or(page.getByText(/NO ORDERS/)),
+  ).toBeVisible();
+});

@@ -33,16 +33,19 @@ export function cellText(col: Column, row: RecordRow): string {
   return String(v);
 }
 
-// Common formatter: an ISO/naive datetime -> "YYYY-MM-DD HH:MM" (or "—").
+// Common formatter: an ISO/naive datetime -> "YYYY-MM-DD HH:MM". Anything that
+// isn't a recognisable date renders as "—" (a malformed value shouldn't masquerade
+// as a partial date like "2026" or leak "invalid").
 export function fmtDate(v: unknown): string {
   if (!v) return "—";
   const s = String(v).replace("T", " ");
-  return s.length >= 16 ? s.slice(0, 16) : s;
+  return /^\d{4}-\d{2}-\d{2}/.test(s) ? s.slice(0, 16) : "—";
 }
 
 // Common formatter: a numeric-ish value -> trimmed number (drops "50.0000000").
+// Non-finite (NaN/Infinity) and unparseable values render as "—", never garbage.
 export function fmtNum(v: unknown): string {
   if (v == null || v === "") return "—";
   const n = typeof v === "number" ? v : parseFloat(String(v));
-  return Number.isFinite(n) ? String(n) : String(v);
+  return Number.isFinite(n) ? String(n) : "—";
 }

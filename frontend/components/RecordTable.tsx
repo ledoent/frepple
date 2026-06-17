@@ -69,7 +69,9 @@ export default function RecordTable({
             </thead>
             <tbody>
               {rows.map((r, i) => (
-                <tr key={i}>
+                // Prefer the record's natural key (orders: reference, problems:
+                // id) so filtering doesn't reshuffle index-keyed rows.
+                <tr key={String(r.reference ?? r.id ?? i)}>
                   {columns.map((c) => (
                     <td
                       key={c.key}

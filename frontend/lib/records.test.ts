@@ -44,4 +44,17 @@ describe("formatters", () => {
     expect(fmtNum(null)).toBe("—");
     expect(fmtNum("")).toBe("—");
   });
+
+  it("fmtNum renders non-finite / unparseable as the em-dash, not garbage", () => {
+    expect(fmtNum("NaN")).toBe("—");
+    expect(fmtNum("Infinity")).toBe("—");
+    expect(fmtNum(NaN)).toBe("—");
+    expect(fmtNum("not a number")).toBe("—");
+  });
+
+  it("fmtDate rejects non-date strings instead of leaking partials", () => {
+    expect(fmtDate("2026")).toBe("—");
+    expect(fmtDate("2026-06")).toBe("—");
+    expect(fmtDate("invalid")).toBe("—");
+  });
 });

@@ -33,6 +33,8 @@ export function useRecordList(
     async function load() {
       try {
         const prefix = scenario ? `/${scenario}` : "";
+        // Append format=json, picking & vs ? so an endpoint that already carries
+        // query params (e.g. a future ?filter=) still composes correctly.
         const sep = endpoint.includes("?") ? "&" : "?";
         const res = await authedFetch(`${prefix}${endpoint}${sep}format=json`);
         if (!res.ok)

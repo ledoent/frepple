@@ -42,8 +42,6 @@
   --rail: 232px;
   --shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset,
     0 12px 36px -18px rgba(0, 0, 0, 0.9);
-  /* a crisp keyboard-focus ring, reused on every interactive element */
-  --ring: 0 0 0 1px var(--bg), 0 0 0 3px rgba(245, 183, 51, 0.7);
   /* shared entrance easing — confident, slightly overshooting */
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -100,11 +98,14 @@ body::before {
   z-index: 1;
 }
 
-/* one crisp, consistent keyboard-focus ring everywhere (refinement + a11y). */
+/* one crisp, consistent keyboard-focus ring everywhere (refinement + a11y).
+   An OUTLINE, not a box-shadow: outlines aren't clipped by overflow:hidden
+   ancestors (the launch console, the gantt, the table/picker scrollers all clip)
+   and they follow each element's own border-radius - so the ring stays visible
+   and correctly shaped on every control. */
 :focus-visible {
-  outline: none;
-  box-shadow: var(--ring);
-  border-radius: var(--radius);
+  outline: 2px solid var(--signal);
+  outline-offset: 2px;
 }
 
 /* tabular figures everywhere numbers matter */
@@ -368,7 +369,7 @@ a:hover {
   justify-content: space-between;
   gap: 20px;
   margin-bottom: 26px;
-  animation: reveal 0.5s ease both;
+  /* entrance handled by the .content > main > * stagger (pagehead is child 1) */
 }
 .eyebrow {
   font-size: 10.5px;
@@ -582,7 +583,7 @@ a:hover {
   overflow: hidden;
   margin-bottom: 26px;
   box-shadow: var(--shadow);
-  animation: reveal 0.55s 0.05s ease both;
+  /* entrance handled by the .content > main > * stagger */
 }
 .console-cell {
   background: linear-gradient(180deg, var(--panel), var(--panel-2));

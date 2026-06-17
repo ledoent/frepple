@@ -566,7 +566,8 @@ static int seasonal(int argc, char** argv) {
                period, autocorrelation);
   if (!period) {
     printf("{\"smape\":%.17g,\"standarddeviation\":%.17g,\"forecast\":0,"
-           "\"period\":0,\"force\":false,\"s_i\":[]}\n",
+           "\"period\":0,\"force\":false,\"s_i\":[],"
+           "\"l_i\":0,\"t_i\":0,\"cycleindex\":0}\n",
            DBL_MAX, DBL_MAX);
     return 0;
   }
@@ -729,7 +730,10 @@ static int seasonal(int argc, char** argv) {
          (autocorrelation > max_autocorrelation) ? "true" : "false");
   for (unsigned short i = 0; i < period; ++i)
     printf("%s%.17g", i ? "," : "", best_S_i[i]);
-  printf("]}\n");
+  // phase-7 apply-state: the level/trend + cycle position applyForecast resumes
+  // from (cycleindex = count%period, the slot the first forecast bucket uses).
+  printf("],\"l_i\":%.17g,\"t_i\":%.17g,\"cycleindex\":%u}\n", L_i, T_i,
+         (unsigned int)(count % period));
   return 0;
 }
 

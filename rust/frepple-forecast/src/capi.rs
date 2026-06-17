@@ -127,6 +127,10 @@ pub unsafe extern "C" fn frepple_seasonal(
     out_s_i: *mut f64,
     s_i_cap: usize,
     out_s_i_len: *mut usize,
+    // apply-state for the engine's per-bucket extrapolation (phase 7).
+    out_l_i: *mut f64,
+    out_t_i: *mut f64,
+    out_cycleindex: *mut u32,
 ) -> i32 {
     let h = std::slice::from_raw_parts(history, count);
     let pr = std::slice::from_raw_parts(p, np);
@@ -143,5 +147,8 @@ pub unsafe extern "C" fn frepple_seasonal(
     for (k, &s) in r.s_i.iter().take(s_i_cap).enumerate() {
         *out_s_i.add(k) = s;
     }
+    *out_l_i = r.l_i;
+    *out_t_i = r.t_i;
+    *out_cycleindex = r.cycleindex;
     0
 }

@@ -38,10 +38,12 @@ int main(void) {
   int force;
   double s_i[80];
   size_t s_i_len;
+  double l_i, t_i;
+  unsigned int cycleindex;
   rc = frepple_seasonal(cyc, 70, seas, 14, &smape, &stddev, &forecast, &period,
-                        &force, s_i, 80, &s_i_len);
-  printf("seasonal: rc=%d period=%u force=%d s_i_len=%zu\n", rc, period, force,
-         s_i_len);
+                        &force, s_i, 80, &s_i_len, &l_i, &t_i, &cycleindex);
+  printf("seasonal: rc=%d period=%u force=%d s_i_len=%zu cycleindex=%u\n", rc,
+         period, force, s_i_len, cycleindex);
   if (rc != 0 || period != 7) fail = 1;
 
   printf(fail ? "CAPI HARNESS: FAIL\n" : "CAPI HARNESS: OK\n");

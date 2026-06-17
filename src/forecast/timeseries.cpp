@@ -43,6 +43,10 @@ int frepple_croston(const double*, size_t, double*, double*, double*, size_t*,
 int frepple_double_exponential(const double*, size_t, double*, double*, double*,
                                size_t*, size_t, size_t*, const double*, size_t,
                                double*, double*);
+// Seasonal returns period/force/s_i + the level/trend/cycle apply-state.
+int frepple_seasonal(const double*, size_t, const double*, size_t, double*,
+                     double*, double*, unsigned int*, int*, double*, size_t,
+                     size_t*, double*, double*, unsigned int*);
 }
 #endif
 
@@ -1109,6 +1113,45 @@ ForecastSolver::Metrics
                                                 // this method
     (const Forecast* fcst, vector<ForecastBucketData>&, short,
      vector<double>& timeseries, unsigned int count, ForecastSolver* solver) {
+#if FREPPLE_RUST_FORECAST
+  // Phase 7: numeric core in Rust. Seasonal carries level/trend/cycle state into
+  // applyForecast (L_i/T_i/cycleindex/S_i), so the Rust returns it - byte-parity
+  // verified against the C++ reference (test_forecast_parity). No outlier
+  // detection in this method, so nothing model-mutating to recreate here.
+  double params[14] = {initial_alfa,
+                      min_alfa,
+                      max_alfa,
+                      initial_beta,
+                      min_beta,
+                      max_beta,
+                      gamma,
+                      static_cast<double>(min_period),
+                      static_cast<double>(max_period),
+                      min_autocorrelation,
+                      max_autocorrelation,
+                      ForecastSolver::Forecast_SmapeAlfa,
+                      static_cast<double>(solver->getForecastSkip()),
+                      static_cast<double>(solver->getForecastIterations())};
+  double s_i_buf[80];
+  size_t s_i_len = 0;
+  double r_smape = 0.0, r_stddev = 0.0, r_fc = 0.0, r_l = 0.0, r_t = 0.0;
+  unsigned int r_period = 0, r_cycle = 0;
+  int r_force = 0;
+  frepple_seasonal(timeseries.data(), count, params, 14, &r_smape, &r_stddev,
+                   &r_fc, &r_period, &r_force, s_i_buf, 80, &s_i_len, &r_l, &r_t,
+                   &r_cycle);
+  period = static_cast<unsigned short>(r_period);
+  L_i = r_l;
+  T_i = r_t;
+  cycleindex = r_cycle;
+  for (size_t i = 0; i < s_i_len && i < 80; ++i) S_i[i] = s_i_buf[i];
+  if (solver->getLogLevel() > 0)
+    logger << (fcst ? fcst->getName() : "") << ": seasonal (rust) : "
+           << "smape " << r_smape << ", forecast " << r_fc
+           << ", standard deviation " << r_stddev << ", period " << period
+           << '\n';
+  return ForecastSolver::Metrics(r_smape, r_stddev, r_force != 0);
+#else
   // Check for seasonal cycles
   detectCycle(timeseries, count);
 
@@ -1362,6 +1405,7 @@ ForecastSolver::Metrics
   // This enforces the use of the seasonal method.
   return ForecastSolver::Metrics(best_smape, best_standarddeviation,
                                  autocorrelation > max_autocorrelation);
+#endif
 }
 
 void ForecastSolver::Seasonal::applyForecast(

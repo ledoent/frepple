@@ -141,13 +141,17 @@ mod bindings {
         smape_alfa: f64,
         skip: u64,
         iterations: u64,
-    ) -> (f64, f64, f64, u32, bool, Vec<f64>) {
+    ) -> (f64, f64, f64, u32, bool, Vec<f64>, f64, f64, u32) {
         let r = seasonal_mod::seasonal(
             &history, initial_alfa, min_alfa, max_alfa, initial_beta, min_beta,
             max_beta, gamma, min_period, max_period, min_autocorrelation,
             max_autocorrelation, smape_alfa, skip, iterations,
         );
-        (r.smape, r.standarddeviation, r.forecast, r.period, r.force, r.s_i)
+        // ...+ apply-state (l_i, t_i, cycleindex) for the phase-7 parity check.
+        (
+            r.smape, r.standarddeviation, r.forecast, r.period, r.force, r.s_i,
+            r.l_i, r.t_i, r.cycleindex,
+        )
     }
 
     #[pymodule]

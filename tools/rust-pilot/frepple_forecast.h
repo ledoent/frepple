@@ -34,11 +34,14 @@ int frepple_croston(FREPPLE_FORECAST_SCALAR_SIG);
 int frepple_double_exponential(FREPPLE_FORECAST_SCALAR_SIG, double *out_constant,
                                double *out_trend);
 
+/* Seasonal also returns the level/trend/cycle apply-state (out_l_i, out_t_i,
+ * out_cycleindex) the engine extrapolates from per bucket. */
 int frepple_seasonal(const double *history, size_t count, const double *p,
                      size_t np, double *out_smape, double *out_stddev,
                      double *out_forecast, uint32_t *out_period,
                      int32_t *out_force, double *out_s_i, size_t s_i_cap,
-                     size_t *out_s_i_len);
+                     size_t *out_s_i_len, double *out_l_i, double *out_t_i,
+                     uint32_t *out_cycleindex);
 
 #ifdef __cplusplus
 }

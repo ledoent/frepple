@@ -98,15 +98,25 @@ flag-gated dispatch + `forecast_*` golden run:
 - `option(FREPPLE_RUST_FORECAST OFF)` in the root `CMakeLists.txt`; when ON, `src/CMakeLists.txt`
   cargo-builds `libfrepple_forecast.a`, links it into the `forecast` lib, defines
   `FREPPLE_RUST_FORECAST=1`, and compiles the forecast TU with `-ffp-contract=off` (match rustc, no FMA).
-- `src/forecast/timeseries.cpp`: `MovingAverage::generateForecast` now dispatches to the `extern "C"`
-  `frepple_moving_average` behind the flag (the template). The engine passes `timeseries.data(), count`
-  — verified to be the same `[0..count-1]` data points (trailing-0 placeholder at `[count]`) the parity
-  reference + Rust port consume. The model mutation (`ProblemOutlier` creation, `applyForecast`) stays in
-  C++; the Rust returns only the numbers + outlier indices. SingleExp/DoubleExp/Croston/Seasonal still run
-  C++ under the flag — mechanical follow-on once the gate below is green for MovingAverage.
+- `src/forecast/timeseries.cpp`: **MovingAverage, SingleExponential and Croston** `generateForecast` now
+  dispatch to their `extern "C"` Rust functions behind the flag. The engine passes `timeseries.data(),
+  count` — verified to be the same `[0..count-1]` data points (trailing-0 placeholder at `[count]`) the
+  parity reference + Rust port consume. The model mutation (`ProblemOutlier` creation, `applyForecast`)
+  stays in C++; the Rust returns only the numbers + outlier indices. These three write a **constant**
+  forecast (`avg`/`f_i`), so the scalar C-ABI's single `forecast` value is all `applyForecast` needs.
 - **Golden gate CI:** `.github/workflows/forecast-phase7.yml` builds `-DFREPPLE_RUST_FORECAST=ON` and runs
-  `runtest.py` over `test/forecast_1..11` (byte-exact vs `.expect`). This is where the FP-contraction
-  finding gets its verdict: **green ⇒ the flag can flip ON; red ⇒ the ULP gap is the recorded "stop".**
+  `runtest.py` over `test/forecast_1..11` (byte-exact vs `.expect`). **First verdict: GREEN** with
+  MovingAverage wired — in-engine byte-exact golden parity holds with `-ffp-contract=off`, settling the
+  FP-contraction question positively. The gate now also covers SingleExponential + Croston.
+
+**Remaining for full coverage — DoubleExponential + Seasonal need a C-ABI extension (a real finding).**
+The current C-ABI was built for the *parity harness*, which only checks the single one-step `forecast`
+value. But these two methods' `applyForecast` **extrapolate per bucket** and so need the *decomposed*
+state, which the scalar ABI doesn't expose: DoubleExp needs `constant_i` **and** `trend_i` separately
+(not their sum); Seasonal needs `L_i` + `T_i` + the `S_i[]` factors + `cycleindex` (the ABI returns
+`period`/`force`/`s_i` but not the level/trend/cycle state). Completing them = extend `capi.rs` (+ the
+header) to return that state, then wire + re-run the gate. Until then they run the (unchanged) C++ path
+under the flag, so the gate stays meaningful and green.
 
 The e2e engine image is intentionally left flag-OFF (no `rustup` added there — it would only bloat an
 image that runs the C++ path). Validation is CI-only (the engine build is Linux-only on this dev box);

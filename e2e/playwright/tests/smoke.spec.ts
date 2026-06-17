@@ -65,3 +65,18 @@ test("Resource report loads without error", async ({ page }) => {
     page.getByText(/Resource by series over/).or(page.getByText("No resources.")),
   ).toBeVisible();
 });
+
+test("Pegging screen loads and lists demands", async ({ page }) => {
+  await page.goto("/pegging");
+  await expect(page.getByRole("heading", { name: "Demand pegging" })).toBeVisible();
+  // The demand picker is populated from /api/input/demand/; selecting one and
+  // the Gantt render is the engine-backed test. Here we only assert the picker
+  // loaded (a demand option) or the no-match empty state - both mean the list
+  // read worked without error.
+  await expect(
+    page
+      .getByRole("option")
+      .first()
+      .or(page.getByText("NO DEMANDS MATCH")),
+  ).toBeVisible();
+});

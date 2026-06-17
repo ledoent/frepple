@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useSession } from "@/lib/useSession";
 import { loginUrl, logoutUrl } from "@/lib/session";
 
@@ -64,11 +64,40 @@ export default function AppShell({ children }: { children: ReactNode }) {
             <span className="stat-key">env</span> <b>staging</b>
           </span>
           <span className="rail-spacer" />
+          <RailClock />
           <SessionStat session={session} status={status} path={pathname} />
         </header>
         <div className="content">{children}</div>
       </div>
     </div>
+  );
+}
+
+// A live UTC mission-clock in the status rail — the small heartbeat that makes
+// the console feel "on". Renders nothing until mounted so SSR and the first
+// client paint match (no hydration mismatch from a server-vs-client time).
+function RailClock() {
+  const [now, setNow] = useState<string | null>(null);
+  useEffect(() => {
+    const tick = () =>
+      setNow(
+        new Date().toLocaleTimeString("en-GB", {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          timeZone: "UTC",
+        }),
+      );
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+  if (!now) return null;
+  return (
+    <span className="stat rail-clock" aria-hidden suppressHydrationWarning>
+      <span className="dot dot--live" />
+      <span className="stat-key">utc</span> {now}
+    </span>
   );
 }
 

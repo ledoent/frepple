@@ -42,6 +42,10 @@
   --rail: 232px;
   --shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset,
     0 12px 36px -18px rgba(0, 0, 0, 0.9);
+  /* a crisp keyboard-focus ring, reused on every interactive element */
+  --ring: 0 0 0 1px var(--bg), 0 0 0 3px rgba(245, 183, 51, 0.7);
+  /* shared entrance easing — confident, slightly overshooting */
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 * {
@@ -77,6 +81,30 @@ body {
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+}
+
+/* fine film-grain over the whole canvas: breaks up the flat near-black and
+   gives the dark surfaces a tactile, printed-instrument depth. Fixed + behind
+   content, never intercepts pointer/much paint. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.shell {
+  position: relative;
+  z-index: 1;
+}
+
+/* one crisp, consistent keyboard-focus ring everywhere (refinement + a11y). */
+:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+  border-radius: var(--radius);
 }
 
 /* tabular figures everywhere numbers matter */
@@ -186,6 +214,7 @@ a:hover {
   padding: 14px 8px 6px;
 }
 .nav-item {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -199,17 +228,36 @@ a:hover {
   transition:
     background 0.15s ease,
     color 0.15s ease,
-    border-color 0.15s ease;
+    border-color 0.15s ease,
+    transform 0.15s var(--ease);
+}
+/* a left rail-bar that grows in on the active route — the instrument-panel tell */
+.nav-item::before {
+  content: "";
+  position: absolute;
+  left: -14px;
+  top: 50%;
+  height: 0;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background: var(--signal);
+  box-shadow: 0 0 10px var(--signal);
+  transform: translateY(-50%);
+  transition: height 0.2s var(--ease);
 }
 .nav-item:hover {
   color: var(--text);
   background: var(--panel-2);
   text-decoration: none;
+  transform: translateX(2px);
 }
 .nav-item[aria-current="page"] {
   color: var(--text);
   background: var(--signal-dim);
   border-color: rgba(245, 183, 51, 0.3);
+}
+.nav-item[aria-current="page"]::before {
+  height: 22px;
 }
 .nav-item[aria-current="page"] .nav-tick {
   background: var(--signal);
@@ -251,7 +299,24 @@ a:hover {
   background: rgba(10, 11, 14, 0.72);
   backdrop-filter: blur(8px);
 }
+/* a hairline amber underglow on the rail — a thin line of "power". */
+.statusrail::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(245, 183, 51, 0.35) 18%,
+    rgba(245, 183, 51, 0.12) 60%,
+    transparent
+  );
+}
 .stat {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 7px;
@@ -260,6 +325,24 @@ a:hover {
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--muted);
+}
+/* hairline divider between adjacent rail stats */
+.statusrail .stat + .stat::before {
+  content: "";
+  position: absolute;
+  left: -9px;
+  top: 50%;
+  height: 12px;
+  width: 1px;
+  background: var(--line-bright);
+  transform: translateY(-50%);
+}
+.rail-clock {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.rail-clock .stat-key {
+  color: var(--faint);
 }
 .stat b {
   color: var(--text);
@@ -305,6 +388,62 @@ a:hover {
   font-size: 13px;
   margin: 6px 0 0;
   max-width: 60ch;
+}
+
+/* ── entrance orchestration ─────────────────────────────────────────────────
+   Each screen assembles top-to-bottom: the page sections rise + fade in a quick
+   stagger, so a load reads as the console powering up rather than a flat paint.
+   (Disabled wholesale under prefers-reduced-motion, see the media query below.) */
+.content > main > * {
+  animation: reveal 0.5s var(--ease) both;
+}
+.content > main > *:nth-child(1) {
+  animation-delay: 0.02s;
+}
+.content > main > *:nth-child(2) {
+  animation-delay: 0.09s;
+}
+.content > main > *:nth-child(3) {
+  animation-delay: 0.16s;
+}
+.content > main > *:nth-child(4) {
+  animation-delay: 0.23s;
+}
+.content > main > *:nth-child(n + 5) {
+  animation-delay: 0.3s;
+}
+/* the nav itself cascades in on first paint. `backwards` (not `both`) so the
+   finished animation doesn't lock `transform` and block the :hover nudge. */
+.nav-item {
+  animation: navin 0.5s var(--ease) backwards;
+}
+.nav-item:nth-child(2) {
+  animation-delay: 0.04s;
+}
+.nav-item:nth-child(3) {
+  animation-delay: 0.08s;
+}
+.nav-item:nth-child(4) {
+  animation-delay: 0.12s;
+}
+.nav-item:nth-child(5) {
+  animation-delay: 0.16s;
+}
+.nav-item:nth-child(6) {
+  animation-delay: 0.2s;
+}
+.nav-item:nth-child(n + 7) {
+  animation-delay: 0.24s;
+}
+@keyframes navin {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 /* ── dot / connection indicator ─────────────────────────────────────────── */
@@ -381,10 +520,26 @@ a:hover {
 
 /* ── panels & cards ─────────────────────────────────────────────────────── */
 .panel {
+  position: relative;
   background: linear-gradient(180deg, var(--panel), var(--panel-2));
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
+}
+/* a 1px top highlight so panels catch the light off the dark canvas */
+.panel::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.07) 30%,
+    rgba(255, 255, 255, 0.07) 70%,
+    transparent
+  );
 }
 .panel-head {
   display: flex;
@@ -395,11 +550,25 @@ a:hover {
   border-bottom: 1px solid var(--line);
 }
 .panel-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
   font-family: var(--font-mono), monospace;
   font-size: 12px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--muted);
+}
+/* leading amber tick — the section marker */
+.panel-title::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: 1px;
+  background: var(--signal);
+  box-shadow: 0 0 8px var(--signal);
+  flex: none;
+  transform: rotate(45deg);
 }
 
 /* launch console hero */

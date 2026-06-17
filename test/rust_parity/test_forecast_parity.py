@@ -1,10 +1,10 @@
-"""Rust/PyO3 forecast-port parity (Engine track E4, slice 2).
+"""Rust/PyO3 forecast-port parity (Engine track E4).
 
-Diffs the Rust `frepple_forecast.moving_average` against a standalone C++
-reference that replicates ForecastSolver::MovingAverage::generateForecast +
-smapeWeight verbatim. smape/standarddeviation/avg must match within a tight
-relative epsilon (same f64 op order); outlier index sets must match exactly.
-Includes a >MAXBUCKETS series — the exact OOB-read case.
+Diffs each Rust forecast method against a standalone C++ reference that
+replicates the corresponding `timeseries.cpp` numeric core verbatim. smape /
+standarddeviation / forecast must match within a tight relative epsilon (same
+f64 op order); outlier index sets must match exactly. Vectors include
+>MAXBUCKETS series — the smapeWeight OOB site.
 """
 
 import json
@@ -22,8 +22,9 @@ REPO = HERE.parent.parent
 VECTORS = json.loads((HERE / "forecast_vectors.json").read_text())
 CXX_SRC = REPO / "tools" / "rust-pilot" / "forecast_reference.cpp"
 
-# Engine defaults (timeseries.cpp:32-36, forecast.h).
-ORDER, MAXDEV, ALFA, SKIP = 5, 4.0, 0.95, 5
+# Engine defaults (timeseries.cpp:32-36, 416-418).
+MA_PARAMS = (5, 4.0, 0.95, 5)  # order, max_deviation, smape_alfa, skip
+SE_PARAMS = (0.2, 0.03, 1.0, 4.0, 0.95, 5, 15)  # init/min/max alfa, maxdev, smape_alfa, skip, iters
 
 
 @pytest.fixture(scope="session")
@@ -43,11 +44,22 @@ def _history(case):
     return [float(g["base"] + (i % g["mod"])) for i in range(g["n"])]
 
 
-def _cxx(cxx_ref, history):
-    stdin = " ".join(repr(x) for x in history)
+def _rust(method, history):
+    if method == "single_exp":
+        return frepple_forecast.single_exponential(history, *SE_PARAMS)
+    return frepple_forecast.moving_average(history, *MA_PARAMS)
+
+
+def _cxx_argv(method):
+    if method == "single_exp":
+        return ["single_exp", *[str(x) for x in SE_PARAMS]]
+    return ["moving_average", *[str(x) for x in MA_PARAMS]]
+
+
+def _cxx(cxx_ref, method, history):
     res = subprocess.run(
-        [cxx_ref, str(ORDER), str(MAXDEV), str(ALFA), str(SKIP)],
-        input=stdin,
+        [cxx_ref, *_cxx_argv(method)],
+        input=" ".join(repr(x) for x in history),
         capture_output=True,
         text=True,
         check=True,
@@ -56,24 +68,24 @@ def _cxx(cxx_ref, history):
 
 
 def _approx(a, b, rel=1e-9, abs_=1e-12):
+    if a == b:  # handles DBL_MAX sentinel + exact zeros
+        return True
     return abs(a - b) <= max(rel * max(abs(a), abs(b)), abs_)
 
 
 @pytest.mark.parametrize("case", VECTORS, ids=lambda c: c["name"])
 def test_forecast_parity(case, cxx_ref):
+    method = case.get("method", "moving_average")
     history = _history(case)
-    smape, stdev, avg, outliers = frepple_forecast.moving_average(
-        history, ORDER, MAXDEV, ALFA, SKIP
-    )
-    ref = _cxx(cxx_ref, history)
-    assert _approx(smape, ref["smape"]), f"smape rust={smape} cxx={ref['smape']}"
+    smape, stdev, forecast, outliers = _rust(method, history)
+    ref = _cxx(cxx_ref, method, history)
+    assert _approx(smape, ref["smape"]), f"[{method}] smape rust={smape} cxx={ref['smape']}"
     assert _approx(
         stdev, ref["standarddeviation"]
-    ), f"stdev rust={stdev} cxx={ref['standarddeviation']}"
-    assert _approx(avg, ref["avg"]), f"avg rust={avg} cxx={ref['avg']}"
+    ), f"[{method}] stdev rust={stdev} cxx={ref['standarddeviation']}"
+    assert _approx(
+        forecast, ref["forecast"]
+    ), f"[{method}] forecast rust={forecast} cxx={ref['forecast']}"
     assert set(outliers) == set(ref["outliers"]), (
-        f"outliers rust={sorted(outliers)} cxx={sorted(ref['outliers'])}"
+        f"[{method}] outliers rust={sorted(outliers)} cxx={sorted(ref['outliers'])}"
     )
-    # All outputs must be finite (the long >MAXBUCKETS case exercises the
-    # smapeWeight clamp / OOB-read site).
-    assert all(map(lambda v: v == v, (smape, stdev, avg)))

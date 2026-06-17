@@ -58,6 +58,20 @@ instructions; the ~39 ns is dominated by the Python FFI boundary (irrelevant her
 - A Rust toolchain in the *engine image* (~150 MB) is **deferred** — only needed if we ship the wheel,
   which is a "go"-only fast-follow.
 
+## Forecast-method conversion progress
+
+Porting `src/forecast/` method-by-method (each a CI-only parity slice). Status:
+
+| Method | Rust | Parity vs C++ ref | Notes |
+| --- | --- | --- | --- |
+| MovingAverage | `forecast.rs` | ✅ | the `weight[]` OOB site |
+| SingleExponential | `single_exp.rs` | ✅ | 1D Levenberg-Marquardt; shared `common.rs` extracted |
+| DoubleExponential | — | — | pending |
+| Croston | — | — | pending |
+| Seasonal | — | — | pending (hardest: seasonal-factor state flow) |
+
+Shared helpers in `common.rs` (`smape_weight`, weight table, constants, the `Forecast` result).
+
 ## Slice 2 — forecast (MovingAverage), the real algorithm
 
 Slice 1 was a trivial clamp; slice 2 ports an actual forecasting method:

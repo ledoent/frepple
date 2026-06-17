@@ -10,38 +10,7 @@
 //! the `weight[]` OOB read impossible (bounds-checked indexing + the clamp).
 #![forbid(unsafe_code)]
 
-const MAXBUCKETS: usize = 500;
-const ROUNDING_ERROR: f64 = 0.000001; // include/frepple/utils.h:64
-
-/// Result of the moving-average evaluation — mirrors `ForecastSolver::Metrics`
-/// plus the forecast `avg` and the outlier indices the C++ would have written as
-/// ProblemOutlier objects (relative to the series; `firstbckt` is 0 here).
-#[derive(Debug, Clone, PartialEq)]
-pub struct MaResult {
-    pub smape: f64,
-    pub standarddeviation: f64,
-    pub avg: f64,
-    pub outliers: Vec<usize>,
-}
-
-/// The exponentially-decaying smape weight table (forecast.h:2627-2629):
-/// weight[0] = 1, weight[i+1] = weight[i] * alfa.
-fn weight_table(smape_alfa: f64) -> [f64; MAXBUCKETS] {
-    let mut w = [0.0f64; MAXBUCKETS];
-    w[0] = 1.0;
-    for i in 0..MAXBUCKETS - 1 {
-        w[i + 1] = w[i] * smape_alfa;
-    }
-    w
-}
-
-/// Bounds-safe weight accessor (forecast.h:3051-3054). The C++ needed a hand-
-/// written clamp here to avoid an OOB read when the history exceeds MAXBUCKETS;
-/// in Rust the clamp is one line and the indexing is bounds-checked regardless.
-fn smape_weight(weight: &[f64; MAXBUCKETS], idx: i64) -> f64 {
-    let i = idx.clamp(0, (MAXBUCKETS - 1) as i64) as usize;
-    weight[i]
-}
+use crate::common::{smape_weight, weight_table, Forecast, ROUNDING_ERROR};
 
 /// Moving-average forecast + SMAPE error over a history series. `history` is the
 /// raw demand history (length = count); a trailing sentinel 0 is appended to
@@ -57,7 +26,7 @@ pub fn moving_average(
     max_deviation: f64,
     smape_alfa: f64,
     skip: u64,
-) -> MaResult {
+) -> Forecast {
     let order = order.max(1);
     let order_f = order as f64;
     let count = history.len();
@@ -150,10 +119,10 @@ pub fn moving_average(
     if error_smape_weights != 0.0 {
         error_smape /= error_smape_weights;
     }
-    MaResult {
+    Forecast {
         smape: error_smape,
         standarddeviation,
-        avg,
+        forecast: avg,
         outliers,
     }
 }
@@ -171,7 +140,7 @@ mod tests {
         let h = vec![10.0; 30];
         let r = moving_average(&h, ORDER, MAXDEV, ALFA, SKIP);
         assert!(r.smape.abs() < 1e-12, "smape={}", r.smape);
-        assert!((r.avg - 10.0).abs() < 1e-9, "avg={}", r.avg);
+        assert!((r.forecast - 10.0).abs() < 1e-9, "avg={}", r.forecast);
         assert!(r.outliers.is_empty());
     }
 
@@ -180,7 +149,7 @@ mod tests {
         // Last 5 values: 6,7,8,9,10 -> avg 8.0 is the forecast.
         let h: Vec<f64> = (1..=10).map(|x| x as f64).collect();
         let r = moving_average(&h, ORDER, MAXDEV, ALFA, SKIP);
-        assert!((r.avg - 8.0).abs() < 1e-9, "avg={}", r.avg);
+        assert!((r.forecast - 8.0).abs() < 1e-9, "avg={}", r.forecast);
     }
 
     #[test]

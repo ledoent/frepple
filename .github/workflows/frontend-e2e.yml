@@ -31,6 +31,12 @@ permissions:
   contents: read
   packages: read
 
+# Supersede in-flight runs on the same ref - this stack build + Playwright is
+# expensive, no point finishing a run a newer push already obsoleted.
+concurrency:
+  group: frontend-e2e-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   COMPOSE: docker compose -f e2e/docker-compose.yml -f e2e/docker-compose.engine.yml
 
@@ -38,6 +44,7 @@ jobs:
   e2e:
     name: Playwright vs compose stack
     runs-on: ubuntu-24.04
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
@@ -81,9 +88,12 @@ jobs:
       - name: Wait for the engine warmup plan to complete
         run: |
           for i in $(seq 1 60); do
-            done=$($COMPOSE exec -T db psql -U frepple -d frepple0 -tAc \
-              "SELECT 1 FROM execute_log WHERE name='runplan' AND status='Done' LIMIT 1;" 2>/dev/null || true)
-            if [ "$done" = "1" ]; then echo "engine warm after ${i}x5s"; exit 0; fi
+            status=$($COMPOSE exec -T db psql -U frepple -d frepple0 -tAc \
+              "SELECT status FROM execute_log WHERE name='runplan' ORDER BY id DESC LIMIT 1;" 2>/dev/null | tr -d '[:space:]' || true)
+            case "$status" in
+              Done)   echo "engine warm after ${i}x5s"; exit 0 ;;
+              Failed) echo "::error::engine warmup plan failed"; $COMPOSE logs --tail=200 web-wsgi web-asgi; exit 1 ;;
+            esac
             sleep 5
           done
           echo "::error::engine warmup plan did not complete"; $COMPOSE logs --tail=200 web-wsgi web-asgi; exit 1
@@ -91,16 +101,21 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
+          cache: npm
+          cache-dependency-path: e2e/playwright/package-lock.json
+
+      - name: Install Playwright deps
+        working-directory: e2e/playwright
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
 
       - name: Playwright (12 specs, all 5 screens + live-progress)
         working-directory: e2e/playwright
         env:
           E2E_BASE_URL: http://127.0.0.1:18080
           E2E_ENGINE: "1"
-        run: |
-          npm ci
-          npx playwright install --with-deps chromium
-          npx playwright test
+        run: npx playwright test
 
       - name: Compose logs on failure
         if: failure()

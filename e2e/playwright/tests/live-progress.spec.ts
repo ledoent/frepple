@@ -15,8 +15,12 @@ test("Run plan streams live progress to a terminal state", async ({ page }) => {
 
   await page.getByRole("button", { name: /Run plan/ }).click();
 
-  // The launched task appears and advances to a terminal status. A demo plan
-  // runs in seconds; allow generous time for the engine + broadcast round-trip.
+  // TaskProgressConsumer relays only *live* broadcasts - it sends no backlog on
+  // connect (asgi.py) - so the feed starts empty and the only task that can show
+  // up is the one this test just launched. The startup warmup plan
+  // (FREPPLE_INIT_RUNPLAN) finished before page load, so it never appears here;
+  // its job is purely to warm the engine so this launch reaches a terminal state
+  // in seconds. A page-wide match is therefore unambiguous.
   await expect(page.getByText(/runplan/)).toBeVisible({ timeout: 30_000 });
   await expect(page.getByText(/Done|Failed/)).toBeVisible({ timeout: 90_000 });
 });

@@ -57,3 +57,19 @@ cd e2e/playwright && E2E_ENGINE=1 npx playwright test
 
 Note: forecast override re-net (ForecastService) needs the asgi to run inside the
 frepple interpreter (frepplectl runwebservice); not yet wired here.
+
+The engine overlay sets `FREPPLE_INIT_RUNPLAN`, so `web-wsgi` computes one plan on
+startup. That warms the engine (CPython + demo dataset) and fires the
+Redis->websocket path once, so the live-progress test's own launch reaches a
+terminal state in seconds instead of racing a cold engine.
+
+## CI
+
+`.github/workflows/frontend-e2e.yml` (`Frontend E2E (compose)`) runs this harness
+**with the engine overlay** on pushes to `modernization` and on PRs into
+`master`/`modernization` (path-filtered to `frontend/`, `e2e/`, `freppledb/`). The
+compiled C++ engine is **restored from the deploy-staging buildx registry cache**
+(`ghcr.io/ledoent/frepple-app:buildcache`) rather than recompiled, so the job is
+~5 min. It waits for the startup warmup plan to reach `Done` before running the
+full Playwright suite (smoke + a11y across all five screens + engine-backed
+live-progress), making it the backward-compat guardrail for the SPA.

@@ -1,8 +1,14 @@
-# E2E engine image: the frePPLe C++ engine (Release) + Django, for the flows that
+# Engine image: the frePPLe C++ engine (Release) + Django, for the flows that
 # need real planning - runplan -> live task progress. runplan shells out to the
 # `frepple` executable (subprocess), so the importable extension is not required
 # here; we build the executable + shared lib and skip the slow cmake venv target,
 # then make our own venv for Django.
+#
+# Layer order is deliberate: the engine SOURCE (CMakeLists / src / include / bin /
+# doc / contrib / requirements - everything add_subdirectory() and the venv
+# target reference) is copied and compiled BEFORE the Django app, so a Python- or
+# frontend-only change reuses the cached C++ build layer (paired with the
+# workflow's buildx registry cache) instead of recompiling the whole engine.
 FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -14,17 +20,27 @@ RUN apt-get update -qq && apt-get install -y -qq --no-install-recommends \
     python3-dev python3-venv postgresql-client && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-COPY . /app
+
+# --- engine build inputs only (changing Python/JS does NOT invalidate this) ---
+COPY CMakeLists.txt requirements.txt requirements.dev.txt ./
+COPY src ./src
+COPY include ./include
+COPY bin ./bin
+COPY doc ./doc
+COPY contrib ./contrib
 
 # Build the engine (Release). Pre-create the venv + stamp so the engine targets'
 # build-order dependency on the 'venv' target is satisfied without the slow
-# pip-install-dev-requirements step.
+# pip-install-dev-requirements step, then pip-install the Django runtime reqs.
 RUN cmake -B /app/build -DCMAKE_BUILD_TYPE=Release -S /app \
     && python3 -m venv /app/venv \
     && touch /app/build/venv.stamp \
     && cmake --build /app/build -j"$(nproc)" \
     && /app/venv/bin/pip install --no-cache-dir -r requirements.txt \
     && rm -rf /app/build /root/.cache
+
+# --- the Django app + everything else (changes here skip the compile above) ---
+COPY . /app
 
 ENV PATH=/app/bin:/app/venv/bin:$PATH \
     FREPPLE_HOME=/app/bin \

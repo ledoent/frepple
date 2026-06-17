@@ -41,6 +41,9 @@ jobs:
           cargo test --manifest-path rust/frepple-num/Cargo.toml
           cargo test --manifest-path rust/frepple-forecast/Cargo.toml
 
+      - name: Solver spike (good_lp + microlp, keeps it building)
+        run: cargo run --manifest-path rust/solver-spike/Cargo.toml
+
       - name: Build the C++ parity references
         run: |
           g++ -O2 -o /tmp/cxx_reference tools/rust-pilot/cxx_reference.cpp

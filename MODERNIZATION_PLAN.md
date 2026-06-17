@@ -210,9 +210,13 @@ byte-identical under `data` (Django data-parity test). Frontend `app/pegging/`
 Gantt — *not* SVG, so the drag-reschedule slice drops in without re-plumbing
 geometry. Covered by Playwright smoke + a11y (0 critical) + an engine-backed
 render spec. Sequenced **read-only first**; the ambitious parts are split out:
-- **D2 — reschedule write-path:** drag a bar → `PATCH /api/input/<ordertype>/<ref>/`.
-- **D3 — downstream preview + re-plan loop** (pegging is engine-computed/read-only,
-  so a reschedule persists dates but only a re-plan recomputes the peg).
+- **D2 — reschedule write-path (delivered):** drag a bar → `PATCH /api/input/<ordertype>/<ref>/`
+  via `authedFetch` (type→endpoint map, editability lock, optimistic + snap-back). Engine-backed E2E.
+- **D3 — downstream highlight + re-plan loop (delivered):** a reschedule flags the affected downstream
+  chain (`downstreamChain`, the moved op + its ancestors toward the delivery — unit-tested) and offers an
+  in-place **Re-plan now** (`useReplan` launches `runplan`, waits over the task ws, re-fetches the peg).
+  Deliberately *not* a precise client-side ghost-bar simulation (it can't match the engine + would mislead);
+  the re-plan gives the authoritative downstream. Engine-backed E2E for the full loop.
 
 ### Phase 3.5 — Deployment: Helm chart + load-balanced images
 **Context — data/state model (from code audit):**

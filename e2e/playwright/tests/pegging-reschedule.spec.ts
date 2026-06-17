@@ -31,5 +31,5 @@ test("Dragging a bar reschedules the operationplan", async ({ page }) => {
 
   // The PATCH succeeded -> a success toast, and the "peg is stale, re-plan" hint.
   await expect(page.getByText(/Rescheduled/i)).toBeVisible({ timeout: 15_000 });
-  await expect(page.getByText(/run a plan/i)).toBeVisible();
+  await expect(page.getByRole("button", { name: /Re-plan now/i })).toBeVisible();
 });

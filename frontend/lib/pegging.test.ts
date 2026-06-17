@@ -4,7 +4,22 @@ import {
   fractionOf,
   parseEngineDate,
   axisTicks,
+  downstreamChain,
+  type PeggingRow,
 } from "./pegging";
+
+// A pre-order pegging tree: delivery(1) -> make(2) -> [purchase(3), ink(3)],
+// then a second make(2). The `r()` helper fills the unused row fields.
+function r(id: string, depth: number): PeggingRow {
+  return { id, depth, operation: id, type: "MO", item: null, quantity: 0, bars: [] };
+}
+const TREE: PeggingRow[] = [
+  r("delivery", 1),
+  r("make", 2),
+  r("purchase", 3),
+  r("ink", 3),
+  r("make2", 2),
+];
 
 const SAMPLE = {
   window: {
@@ -105,5 +120,29 @@ describe("axisTicks", () => {
     expect(axisTicks({ start: null, end: null, due: null, current: null })).toEqual(
       [],
     );
+  });
+});
+
+describe("downstreamChain", () => {
+  it("returns the moved row + its ancestors toward the delivery (depth 1)", () => {
+    // purchase(3) -> nearest preceding make(2) -> delivery(1)
+    const c = downstreamChain(TREE, 2);
+    expect([...c].sort()).toEqual(["delivery", "make", "purchase"]);
+  });
+
+  it("does not include later siblings or unrelated branches", () => {
+    // 'ink'(3) ancestors are make(2) + delivery(1); make2 is a later sibling, out.
+    const c = downstreamChain(TREE, 3);
+    expect(c.has("make2")).toBe(false);
+    expect([...c].sort()).toEqual(["delivery", "ink", "make"]);
+  });
+
+  it("a depth-1 row (the delivery) affects only itself", () => {
+    expect([...downstreamChain(TREE, 0)]).toEqual(["delivery"]);
+  });
+
+  it("returns empty for an out-of-range index", () => {
+    expect(downstreamChain(TREE, -1).size).toBe(0);
+    expect(downstreamChain(TREE, 99).size).toBe(0);
   });
 });

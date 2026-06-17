@@ -41,15 +41,21 @@ function barTooltip(b: PeggingBar, editable: boolean): string {
 export default function PeggingGantt({
   pegging,
   onReschedule,
+  affected,
 }: {
   pegging: Pegging;
   // Provided => bars are draggable; resolves once the PATCH persisted (the page
-  // then reloads), rejects on failure (the bar snaps back to server state).
+  // then reloads), rejects on failure (the bar snaps back to server state). The
+  // `rowId` lets the page flag the affected downstream chain (D3).
   onReschedule?: (
     bar: PeggingBar,
+    rowId: string,
     startdate: string,
     enddate: string,
   ) => Promise<void>;
+  // Row ids whose timing depends on a just-rescheduled op (D3) — highlighted as
+  // "impact pending" until a re-plan recomputes the peg.
+  affected?: Set<string>;
 }) {
   const { window, rows } = pegging;
   const startMs = parseEngineDate(window.start);
@@ -69,6 +75,7 @@ export default function PeggingGantt({
     laneW: number;
     baseLeft: number;
     bar: PeggingBar;
+    rowId: string;
   } | null>(null);
 
   if (!rows.length) {
@@ -83,6 +90,7 @@ export default function PeggingGantt({
     e: React.PointerEvent<HTMLSpanElement>,
     bar: PeggingBar,
     baseLeft: number,
+    rowId: string,
   ) {
     const lane = e.currentTarget.parentElement;
     if (!lane) return;
@@ -91,6 +99,7 @@ export default function PeggingGantt({
       laneW: lane.getBoundingClientRect().width || 1,
       baseLeft,
       bar,
+      rowId,
     };
     e.currentTarget.setPointerCapture(e.pointerId);
     setDrag({ ref: bar.reference, deltaFrac: 0 });
@@ -118,7 +127,7 @@ export default function PeggingGantt({
     const ne = shiftEngineDate(info.bar.end || info.bar.start, deltaMs);
     if (!ns || !ne) return;
     setPendingRef(info.bar.reference);
-    onReschedule(info.bar, ns, ne).finally(() => setPendingRef(null));
+    onReschedule(info.bar, info.rowId, ns, ne).finally(() => setPendingRef(null));
   }
 
   return (
@@ -141,7 +150,11 @@ export default function PeggingGantt({
       </div>
 
       {rows.map((row) => (
-        <div className="gantt-row" role="row" key={row.id}>
+        <div
+          className={`gantt-row${affected?.has(row.id) ? " gantt-row--affected" : ""}`}
+          role="row"
+          key={row.id}
+        >
           <div
             className="gantt-label"
             role="rowheader"
@@ -191,7 +204,9 @@ export default function PeggingGantt({
                   style={{ left: `${left * 100}%`, width: `${widthPct}%` }}
                   title={barTooltip(b, editable)}
                   onPointerDown={
-                    editable ? (e) => onPointerDown(e, b, baseLeft) : undefined
+                    editable
+                      ? (e) => onPointerDown(e, b, baseLeft, row.id)
+                      : undefined
                   }
                   onPointerMove={editable ? onPointerMove : undefined}
                   onPointerUp={editable ? onPointerUp : undefined}

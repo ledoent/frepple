@@ -1,0 +1,13 @@
+[package]
+name = "solver-spike"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+# Evidence-gathering spike (Engine track): can an advanced optimization engine,
+# orchestrated from Rust, power a greenfield finite-capacity planning mode? We
+# model a small capacitated production-planning LP with the `good_lp` modeling
+# layer + the PURE-RUST `microlp` backend (no C++ HiGHS build). good_lp lets the
+# same model swap to HiGHS/CBC/SCIP via a feature flag when scale demands it.
+[dependencies]
+good_lp = { version = "1.13", default-features = false, features = ["microlp"] }

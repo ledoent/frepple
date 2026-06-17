@@ -9,8 +9,17 @@
 
 use crate::common::{smape_weight, solve_2x2_marquardt, weight_table, Forecast, ACCURACY, ROUNDING_ERROR};
 
+/// DoubleExp result carrying the level+trend state `applyForecast` needs (phase
+/// 7): the engine extrapolates `constant + k*trend*damp` per bucket, so it needs
+/// the two components, not just their one-step sum (`base.forecast`).
+pub struct DoubleExpState {
+    pub base: Forecast,
+    pub constant: f64,
+    pub trend: f64,
+}
+
 #[allow(clippy::too_many_arguments)]
-pub fn double_exponential(
+pub fn double_exponential_state(
     history: &[f64],
     initial_alfa: f64,
     min_alfa: f64,
@@ -22,14 +31,18 @@ pub fn double_exponential(
     smape_alfa: f64,
     skip: u64,
     iterations: u64,
-) -> Forecast {
+) -> DoubleExpState {
     let count = history.len();
     if (count as u64) < skip + 5 {
-        return Forecast {
-            smape: f64::MAX,
-            standarddeviation: f64::MAX,
-            forecast: 0.0,
-            outliers: Vec::new(),
+        return DoubleExpState {
+            base: Forecast {
+                smape: f64::MAX,
+                standarddeviation: f64::MAX,
+                forecast: 0.0,
+                outliers: Vec::new(),
+            },
+            constant: 0.0,
+            trend: 0.0,
         };
     }
 
@@ -231,12 +244,38 @@ pub fn double_exponential(
         iteration += 1;
     }
 
-    Forecast {
-        smape: best_smape,
-        standarddeviation: best_standarddeviation,
-        forecast: best_constant_i + best_trend_i,
-        outliers,
+    DoubleExpState {
+        base: Forecast {
+            smape: best_smape,
+            standarddeviation: best_standarddeviation,
+            forecast: best_constant_i + best_trend_i,
+            outliers,
+        },
+        constant: best_constant_i,
+        trend: best_trend_i,
     }
+}
+
+/// Thin wrapper for the PyO3 export + parity test (one-step forecast only).
+#[allow(clippy::too_many_arguments)]
+pub fn double_exponential(
+    history: &[f64],
+    initial_alfa: f64,
+    min_alfa: f64,
+    max_alfa: f64,
+    initial_gamma: f64,
+    min_gamma: f64,
+    max_gamma: f64,
+    max_deviation: f64,
+    smape_alfa: f64,
+    skip: u64,
+    iterations: u64,
+) -> Forecast {
+    double_exponential_state(
+        history, initial_alfa, min_alfa, max_alfa, initial_gamma, min_gamma,
+        max_gamma, max_deviation, smape_alfa, skip, iterations,
+    )
+    .base
 }
 
 #[cfg(test)]

@@ -39,6 +39,10 @@ int frepple_single_exponential(const double*, size_t, double*, double*, double*,
                                size_t*, size_t, size_t*, const double*, size_t);
 int frepple_croston(const double*, size_t, double*, double*, double*, size_t*,
                     size_t, size_t*, const double*, size_t);
+// DoubleExp returns the level/trend state too (out_constant, out_trend).
+int frepple_double_exponential(const double*, size_t, double*, double*, double*,
+                               size_t*, size_t, size_t*, const double*, size_t,
+                               double*, double*);
 }
 #endif
 
@@ -702,6 +706,36 @@ ForecastSolver::Metrics ForecastSolver::DoubleExponential::generateForecast(
     const Forecast* fcst, vector<ForecastBucketData>& bucketdata,
     short firstbckt, vector<double>& timeseries, unsigned int count,
     ForecastSolver* solver) {
+#if FREPPLE_RUST_FORECAST
+  // Phase 7: numeric core in Rust. Level+trend: applyForecast extrapolates per
+  // bucket, so the Rust returns constant_i + trend_i (not just their sum).
+  double params[10] = {initial_alfa,
+                      min_alfa,
+                      max_alfa,
+                      initial_gamma,
+                      min_gamma,
+                      max_gamma,
+                      ForecastSolver::Forecast_maxDeviation,
+                      ForecastSolver::Forecast_SmapeAlfa,
+                      static_cast<double>(solver->getForecastSkip()),
+                      static_cast<double>(solver->getForecastIterations())};
+  vector<size_t> outl(count + 1);
+  size_t olen = 0;
+  double r_smape = 0.0, r_stddev = 0.0, r_fc = 0.0, r_const = 0.0, r_trend = 0.0;
+  frepple_double_exponential(timeseries.data(), count, &r_smape, &r_stddev,
+                             &r_fc, outl.data(), outl.size(), &olen, params, 10,
+                             &r_const, &r_trend);
+  constant_i = r_const;
+  trend_i = r_trend;
+  for (size_t k = 0; k < olen && k < outl.size(); ++k)
+    new ProblemOutlier(
+        bucketdata[outl[k] + firstbckt].getOrCreateForecastBucket(), this, true);
+  if (solver->getLogLevel() > 0)
+    logger << (fcst ? fcst->getName() : "") << ": double exponential (rust) : "
+           << "smape " << r_smape << ", forecast " << (constant_i + trend_i)
+           << ", standard deviation " << r_stddev << '\n';
+  return ForecastSolver::Metrics(r_smape, r_stddev, false);
+#else
   // Verify whether this is a valid forecast method.
   //   - We need at least 5 buckets after the warmup period.
   if (count < solver->getForecastSkip() + 5)
@@ -957,6 +991,7 @@ ForecastSolver::Metrics ForecastSolver::DoubleExponential::generateForecast(
            << ", forecast " << (trend_i + constant_i) << ", standard deviation "
            << best_standarddeviation << '\n';
   return ForecastSolver::Metrics(best_smape, best_standarddeviation, false);
+#endif
 }
 
 void ForecastSolver::DoubleExponential::applyForecast(

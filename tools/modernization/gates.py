@@ -454,23 +454,32 @@ GATES = [
     (
         "Engine E4",
         "rust-pilot-parity",
-        "Rust/PyO3 pilot passes same tests as C++ equivalent",
-        "pending",
-        None,
+        "Rust/PyO3 pilot (json number kernel) passes a Rust-vs-C++ parity diff",
+        "active",
+        lambda: has_file("rust", "frepple-num", "src", "num.rs")
+        and file_contains(
+            ("rust", "frepple-num", "src", "num.rs"), "forbid(unsafe_code)"
+        )
+        and file_contains(("test", "rust_parity", "test_parity.py"), "frepple_num")
+        and has_file(".github", "workflows", "rust-pilot.yml"),
     ),
     (
         "Engine E4",
         "rust-measured",
         "Measured LOC/perf/safety comparison vs C++ recorded",
-        "pending",
-        None,
+        "active",
+        lambda: file_contains(
+            ("tools", "modernization", "rust-pilot.md"), "Measurements", "Safety", "LOC"
+        ),
     ),
     (
         "Engine E4",
         "rust-decision",
         "Rust go/no-go documented from evidence (stop = success)",
-        "pending",
-        None,
+        "active",
+        lambda: file_contains(
+            ("tools", "modernization", "rust-pilot.md"), "Decision", "GO"
+        ),
     ),
 ]
 

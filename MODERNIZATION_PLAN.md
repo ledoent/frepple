@@ -393,3 +393,12 @@ most isolated). Measure dev experience, safety (no manual refcount/ptr bugs), pe
       assessment vs the C++ baseline.
 - [ ] **Decision documented**: proceed to wider Rust migration, or stop at the pilot — justified by the
       measurements above, not preference. (A "stop" outcome is a success — it's an answered question.)
+
+**Delivered (first pilot):** Started small + decoupled — ported the JSON number-conversion kernel
+(`src/utils/json.cpp` getLong/getInt/getUnsignedLong, the inverted-bound bug site) to a PyO3 extension
+`rust/frepple-num/`. Parity = a Rust-vs-C++ diff against a verbatim reference
+(`tools/rust-pilot/cxx_reference.cpp`, `test/rust_parity/`, 24/24); evidence + go/no-go in
+`tools/modernization/rust-pilot.md`; CI in `.github/workflows/rust-pilot.yml` (cargo test + maturin +
+parity, no engine build). All three E4 gates active. **Decision: conditional GO** for targeted Rust on
+isolated numeric leaf modules (next: the `src/forecast/` SMAPE math), **NO-GO** for a wholesale engine
+rewrite. Intentionally CI-only — shipping the wheel into the engine image is a "go"-only fast-follow.

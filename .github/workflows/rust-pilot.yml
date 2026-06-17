@@ -1,0 +1,67 @@
+name: Rust pilot (E4)
+
+# Evidence-gathering for the Rust/PyO3 pilot (MODERNIZATION_PLAN.md §E4):
+# cargo unit tests + a Rust-vs-C++ parity diff for the ported json.cpp number
+# kernel. Fast and standalone - no engine build, no deploy. See
+# tools/modernization/rust-pilot.md for the measurements + decision.
+
+on:
+  push:
+    branches: ["modernization", "modernization/**"]
+    paths:
+      - "rust/**"
+      - "tools/rust-pilot/**"
+      - "test/rust_parity/**"
+      - ".github/workflows/rust-pilot.yml"
+  pull_request:
+    branches: [master]
+    paths:
+      - "rust/**"
+      - "tools/rust-pilot/**"
+      - "test/rust_parity/**"
+      - ".github/workflows/rust-pilot.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pilot:
+    name: Rust pilot — parity + measurements
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Rust unit tests (pure logic, no Python)
+        run: cargo test --manifest-path rust/frepple-num/Cargo.toml
+
+      - name: Build the C++ parity reference
+        run: g++ -O2 -o /tmp/cxx_reference tools/rust-pilot/cxx_reference.cpp
+
+      - name: Build + install the Rust wheel (maturin)
+        run: |
+          python -m pip install --upgrade pip maturin pytest
+          maturin build --release -m rust/frepple-num/Cargo.toml
+          pip install --force-reinstall --no-deps rust/frepple-num/target/wheels/*.whl
+
+      - name: Parity test (Rust vs C++ reference)
+        env:
+          CXX_REF_BIN: /tmp/cxx_reference
+        run: pytest test/rust_parity/ -q
+
+      - name: Measurements
+        if: always()
+        run: |
+          {
+            echo "## Rust pilot measurements"
+            echo '```'
+            echo "unsafe blocks in pilot logic: $(grep -c 'unsafe {' rust/frepple-num/src/num.rs || echo 0)"
+            echo "rust core LOC (4 fns):        $(sed -n '/^pub fn /,/^}/p' rust/frepple-num/src/num.rs | grep -vcE '^\s*//|^\s*$')"
+            echo "c++ getters LOC (json.cpp):   $(sed -n '790,890p' src/utils/json.cpp | grep -vcE '^\s*//|^\s*$')"
+            echo '```'
+            echo "See tools/modernization/rust-pilot.md for the full evidence + go/no-go."
+          } >> "$GITHUB_STEP_SUMMARY"

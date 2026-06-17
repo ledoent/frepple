@@ -57,7 +57,7 @@ describe("parsePegging", () => {
     expect(row.bars[0].reference).toBe("39");
     expect(row.bars[0].quantity).toBe(50);
     expect(row.bars[0].status).toBe("proposed");
-    expect(row.bars[0].color).toBeNull();
+    expect(row.bars[0].criticality).toBe(0);
   });
 
   it("degrades to an empty tree on null/legacy bodies (no plan yet)", () => {

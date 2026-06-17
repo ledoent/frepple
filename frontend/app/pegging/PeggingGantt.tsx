@@ -27,7 +27,8 @@ function barTooltip(b: PeggingBar): string {
     b.start && b.end && b.start !== b.end
       ? `${b.start} → ${b.end}`
       : b.start || b.end || "no dates";
-  return `${b.type} ${b.reference}\n${b.operation}\nqty ${b.quantity}\n${b.status} · ${dates}`;
+  const risk = b.criticality > 0 ? `\ncriticality ${b.criticality}` : "";
+  return `${b.type} ${b.reference}\n${b.operation}\nqty ${b.quantity}\n${b.status} · ${dates}${risk}`;
 }
 
 export default function PeggingGantt({ pegging }: { pegging: Pegging }) {

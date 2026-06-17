@@ -21,10 +21,7 @@ export type PeggingBar = {
   quantity: number;
   status: string; // proposed | approved | confirmed | completed | closed
   type: string; // MO | WO | PO | DO | DLVR | STCK
-  color: number | null; // criticality/delay color code (0..100)
-  criticality: number;
-  item: string | null;
-  location: string | null;
+  criticality: number; // 0 = on time; higher = more at-risk (shown in tooltip)
 };
 
 // One node of the demand's supply-chain tree = one Gantt row (lane of bars).
@@ -82,10 +79,7 @@ export function parsePegging(json: RawPegging | null | undefined): Pegging {
       quantity: num(b.quantity),
       status: String(b.status ?? ""),
       type: String(b.type ?? ""),
-      color: b.color == null ? null : num(b.color),
       criticality: num(b.criticality),
-      item: (b.item as string) ?? null,
-      location: (b.location as string) ?? null,
     })),
   }));
   return { window, rows };

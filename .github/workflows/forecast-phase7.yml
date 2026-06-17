@@ -1,0 +1,97 @@
+name: Forecast Rust integration (phase 7)
+
+# Engine track E4 / phase 7 GATE: build the engine with the Rust forecast methods
+# linked in (-DFREPPLE_RUST_FORECAST=ON, which also builds the forecast TU with
+# -ffp-contract=off to match rustc's no-FMA), and run the forecast_* golden tests.
+# These diff the engine's output byte-for-byte against the .expect files, so this
+# job answers the open question from tools/modernization/rust-pilot.md: does the
+# in-engine Rust path reach byte-exact golden parity? Green => the flag can flip
+# ON; red => the FP-contraction gap is the recorded "stop = success" datapoint.
+#
+# Mirrors the ubuntu24 build job's engine setup, adds the Rust toolchain + the
+# flag, and runs only the forecast golden suite.
+
+on:
+  push:
+    branches: ["modernization", "modernization/**", "rust-forecast-link"]
+    paths:
+      - "src/forecast/**"
+      - "rust/frepple-forecast/**"
+      - "CMakeLists.txt"
+      - "src/CMakeLists.txt"
+      - ".github/workflows/forecast-phase7.yml"
+  pull_request:
+    branches: [master, modernization]
+    paths:
+      - "src/forecast/**"
+      - "rust/frepple-forecast/**"
+      - "CMakeLists.txt"
+      - "src/CMakeLists.txt"
+      - ".github/workflows/forecast-phase7.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: forecast-phase7-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  golden-parity:
+    name: forecast_* golden tests (Rust forecast ON)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: frepple
+          POSTGRES_PASSWORD: frepple
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready --health-interval 10s
+          --health-timeout 5s --health-retries 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-node@v6
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install packages
+        run: |
+          sudo apt update
+          sudo apt install --no-upgrade libxerces-c-dev openssl libssl-dev libpq5 libpq-dev postgresql-client python3 python3-dev python3-venv python3-setuptools
+          sudo npm -g install pnpm@latest-10
+          pnpm install --frozen-lockfile
+
+      - name: Build engine with the Rust forecast linked in
+        run: |
+          git submodule update --remote --checkout --force
+          grunt
+          cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release -DFREPPLE_RUST_FORECAST=ON
+          cmake --build ${{github.workspace}}/build --config Release -- -j 4
+          . ${{github.workspace}}/venv/bin/activate
+          echo "PATH=$PATH" >> $GITHUB_ENV
+          echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
+
+      - name: Forecast golden tests (byte-exact vs .expect)
+        working-directory: ${{github.workspace}}
+        run: |
+          export POSTGRES_HOST=localhost POSTGRES_PORT=5432
+          export FREPPLE_DATE_STYLE="day-month-year"
+          ./test/runtest.py forecast_1 forecast_2 forecast_3 forecast_4 \
+            forecast_5 forecast_6 forecast_7 forecast_8 forecast_9 \
+            forecast_10 forecast_11
+
+      - name: Keep logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: forecast-phase7-logs
+          path: logs
+          retention-days: 2

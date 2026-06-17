@@ -27,8 +27,12 @@ extern "C" {
 
 int frepple_moving_average(FREPPLE_FORECAST_SCALAR_SIG);
 int frepple_single_exponential(FREPPLE_FORECAST_SCALAR_SIG);
-int frepple_double_exponential(FREPPLE_FORECAST_SCALAR_SIG);
 int frepple_croston(FREPPLE_FORECAST_SCALAR_SIG);
+
+/* DoubleExp also returns the level/trend state applyForecast extrapolates from,
+ * via two extra trailing out-pointers (constant, trend). */
+int frepple_double_exponential(FREPPLE_FORECAST_SCALAR_SIG, double *out_constant,
+                               double *out_trend);
 
 int frepple_seasonal(const double *history, size_t count, const double *p,
                      size_t np, double *out_smape, double *out_stddev,

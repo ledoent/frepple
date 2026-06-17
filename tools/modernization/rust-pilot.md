@@ -94,13 +94,34 @@ flag-gated dispatch + `forecast_*` golden run:
   on its print precision. The clean way to guarantee it is to build the forecast translation unit with
   `-ffp-contract=off` (matching Rust), which the integration should set.
 
-**Remaining (the gated "go" step, needs the full engine build to validate):** add the cargo staticlib to
-CMake under `option(FREPPLE_RUST_FORECAST OFF)`, swap each C++ `generateForecast` body for the
-`extern "C"` call behind the flag, build the engine image with `rustup` (buildx-cached), and add a
-`ubuntu24` CI leg that builds `-DFREPPLE_RUST_FORECAST=ON -ffp-contract=off` and runs `runtest.py` over
-`test/forecast_*`. Flip the default ON only if that leg is green; otherwise the byte-parity gap above is
-the recorded "stop" datapoint. This phase can't be validated on the macOS dev box (the engine build is
-Linux-only here), so it's CI-gated and default-OFF (zero risk to the shipping engine).
+**Implemented (default-OFF, CI-gated):**
+- `option(FREPPLE_RUST_FORECAST OFF)` in the root `CMakeLists.txt`; when ON, `src/CMakeLists.txt`
+  cargo-builds `libfrepple_forecast.a`, links it into the `forecast` lib, defines
+  `FREPPLE_RUST_FORECAST=1`, and compiles the forecast TU with `-ffp-contract=off` (match rustc, no FMA).
+- `src/forecast/timeseries.cpp`: **MovingAverage, SingleExponential, Croston and DoubleExponential**
+  `generateForecast` now dispatch to their `extern "C"` Rust functions behind the flag (**4/5**). The
+  engine passes `timeseries.data(), count` — verified to be the same `[0..count-1]` data points (trailing-0
+  placeholder at `[count]`) the parity reference + Rust port consume. The model mutation (`ProblemOutlier`
+  creation, `applyForecast`) stays in C++; the Rust returns the numbers + outlier indices. MA/SE/Croston
+  write a **constant** forecast (`avg`/`f_i`) — the scalar C-ABI suffices. **DoubleExp** needed a C-ABI
+  extension: its `applyForecast` extrapolates per bucket (`constant_i += trend_i; trend_i *= damp`), so
+  `frepple_double_exponential` returns the **decomposed** `constant`/`trend` via `double_exponential_state`
+  (the `double_exponential` wrapper stays for the PyO3/parity path).
+- **Golden gate CI:** `.github/workflows/forecast-phase7.yml` builds `-DFREPPLE_RUST_FORECAST=ON` and runs
+  `runtest.py` over `test/forecast_1..11` (byte-exact vs `.expect`). **GREEN at 4/5** — in-engine
+  byte-exact golden parity holds with `-ffp-contract=off`, settling the FP-contraction question positively.
+
+**Remaining — Seasonal (its own PR + a new parity check).** Seasonal's `applyForecast` extrapolates with
+`L_i`/`T_i`/`cycleindex`/`S_i[]`, but the existing parity test only pins smape/stddev/forecast/period/s_i —
+it constrains `l_i + t_i/period` (via the verified one-step `forecast`) but **not** `l_i`/`t_i`
+individually, and never checked `cycleindex`. So finishing Seasonal safely needs a **dedicated apply-state
+parity check first** (extend the verbatim C++ reference + Rust to emit `L_i`/`T_i`/`cycleindex`, assert they
+match), *then* wire + gate. If that check fails, Seasonal stays C++ (the mismatch is the recorded finding)
+rather than forcing a red golden gate. Tracked as a follow-on PR.
+
+The e2e engine image is intentionally left flag-OFF (no `rustup` added there — it would only bloat an
+image that runs the C++ path). Validation is CI-only (the engine build is Linux-only on this dev box);
+default-OFF means zero risk to the shipping engine regardless of the gate outcome.
 
 ## Slice 2 — forecast (MovingAverage), the real algorithm
 

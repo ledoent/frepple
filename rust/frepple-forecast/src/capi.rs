@@ -69,14 +69,44 @@ scalar_method!(frepple_moving_average, |h: &[f64], p: &[f64]| {
 scalar_method!(frepple_single_exponential, |h: &[f64], p: &[f64]| {
     crate::single_exp::single_exponential(h, p[0], p[1], p[2], p[3], p[4], p[5] as u64, p[6] as u64)
 });
-scalar_method!(frepple_double_exponential, |h: &[f64], p: &[f64]| {
-    crate::double_exp::double_exponential(
-        h, p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8] as u64, p[9] as u64,
-    )
-});
 scalar_method!(frepple_croston, |h: &[f64], p: &[f64]| {
     crate::croston::croston(h, p[0], p[1], p[2], p[3], p[4], p[5] as u64, p[6] as u64)
 });
+
+/// DoubleExp can't use the scalar macro: `applyForecast` extrapolates per bucket,
+/// so it also returns the level/trend components via two extra out-pointers.
+/// # Safety
+/// As the scalar contract (valid `history`/`count`, writable scalar/outlier
+/// out-params), plus `out_constant`/`out_trend` must be non-null + writable.
+#[no_mangle]
+#[allow(clippy::too_many_arguments)]
+pub unsafe extern "C" fn frepple_double_exponential(
+    history: *const f64,
+    count: usize,
+    out_smape: *mut f64,
+    out_stddev: *mut f64,
+    out_forecast: *mut f64,
+    out_outliers: *mut usize,
+    out_cap: usize,
+    out_len: *mut usize,
+    p: *const f64,
+    np: usize,
+    out_constant: *mut f64,
+    out_trend: *mut f64,
+) -> i32 {
+    let h = std::slice::from_raw_parts(history, count);
+    let params = std::slice::from_raw_parts(p, np);
+    let r = crate::double_exp::double_exponential_state(
+        h, params[0], params[1], params[2], params[3], params[4], params[5],
+        params[6], params[7], params[8] as u64, params[9] as u64,
+    );
+    write_scalar_result(
+        &r.base, out_smape, out_stddev, out_forecast, out_outliers, out_cap, out_len,
+    );
+    *out_constant = r.constant;
+    *out_trend = r.trend;
+    0
+}
 
 /// Seasonal has extra outputs (period, force, seasonal factors).
 /// # Safety

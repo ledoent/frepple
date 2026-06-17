@@ -41,6 +41,9 @@ jobs:
         include:
           - image: frepple-app
             dockerfile: e2e/Dockerfile.engine
+            # Phase 7: staging runs the Rust forecast methods (proven 5/5
+            # byte-parity in the forecast-phase7 gate). Default-OFF elsewhere.
+            rust: "ON"
           - image: frepple-frontend
             dockerfile: e2e/Dockerfile.frontend
     steps:
@@ -65,6 +68,8 @@ jobs:
           context: .
           file: ${{ matrix.dockerfile }}
           push: true
+          build-args: |
+            FREPPLE_RUST_FORECAST=${{ matrix.rust || 'OFF' }}
           tags: |
             ${{ env.REGISTRY }}/${{ matrix.image }}:${{ github.sha }}
             ${{ env.REGISTRY }}/${{ matrix.image }}:latest

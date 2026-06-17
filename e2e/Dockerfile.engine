@@ -28,16 +28,31 @@ COPY include ./include
 COPY bin ./bin
 COPY doc ./doc
 COPY contrib ./contrib
+COPY rust ./rust
+
+# Phase 7: optionally link the Rust forecast methods into the engine. Default OFF
+# keeps the image lean and the e2e stack on the C++ path; deploy-staging builds
+# with FREPPLE_RUST_FORECAST=ON, which makes CMake cargo-build + link the Rust
+# staticlib (-ffp-contract=off, byte-parity-gated in CI) - so it needs rustup.
+ARG FREPPLE_RUST_FORECAST=OFF
+ENV PATH=/root/.cargo/bin:$PATH
+RUN if [ "$FREPPLE_RUST_FORECAST" = "ON" ]; then \
+      apt-get update -qq && apt-get install -y -qq --no-install-recommends curl ca-certificates \
+      && curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+         | sh -s -- -y --default-toolchain stable --profile minimal \
+      && rm -rf /var/lib/apt/lists/* ; \
+    fi
 
 # Build the engine (Release). Pre-create the venv + stamp so the engine targets'
 # build-order dependency on the 'venv' target is satisfied without the slow
 # pip-install-dev-requirements step, then pip-install the Django runtime reqs.
-RUN cmake -B /app/build -DCMAKE_BUILD_TYPE=Release -S /app \
+RUN cmake -B /app/build -DCMAKE_BUILD_TYPE=Release \
+        -DFREPPLE_RUST_FORECAST=${FREPPLE_RUST_FORECAST} -S /app \
     && python3 -m venv /app/venv \
     && touch /app/build/venv.stamp \
     && cmake --build /app/build -j"$(nproc)" \
     && /app/venv/bin/pip install --no-cache-dir -r requirements.txt \
-    && rm -rf /app/build /root/.cache
+    && rm -rf /app/build /app/rust/frepple-forecast/target /root/.cache
 
 # --- the Django app + everything else (changes here skip the compile above) ---
 COPY . /app

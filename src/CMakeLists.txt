@@ -105,6 +105,10 @@ if(FREPPLE_RUST_FORECAST)
   add_custom_command(
     OUTPUT "${RUST_FORECAST_LIB}"
     COMMAND "${CARGO}" build --release --manifest-path "${RUST_FORECAST_DIR}/Cargo.toml"
+    # rustc emits the staticlib without a symbol-table index on some toolchains
+    # (seen on aarch64), which GNU ld rejects ("archive has no index"). ranlib
+    # adds/refreshes the index; a no-op where one already exists (x86 CI).
+    COMMAND "${CMAKE_RANLIB}" "${RUST_FORECAST_LIB}"
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
     COMMENT "Building Rust forecast staticlib (phase 7)"
     VERBATIM

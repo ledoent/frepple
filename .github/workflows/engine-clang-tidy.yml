@@ -57,25 +57,38 @@ jobs:
           cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 
       - name: Run clang-tidy over the engine (advisory)
-        # Parallel xargs over the src/ TUs (uses only `clang-tidy`, which is
-        # guaranteed present - run-clang-tidy isn't always on PATH). Never fails
-        # the job - this is the baseline capture.
+        # Parallel over the src/ TUs, each writing to its OWN log so concurrent
+        # writes can't interleave; then concatenate. Uses only `clang-tidy`
+        # (run-clang-tidy isn't always on PATH). Never fails the job - baseline
+        # capture only.
         run: |
+          mkdir -p .tidy-logs
           find src -name '*.cpp' -print0 \
-            | xargs -0 -P"$(nproc)" -I{} sh -c 'clang-tidy -p build "{}" 2>/dev/null || true' \
-            > clang-tidy.out 2>&1 || true
-          echo "clang-tidy run complete ($(grep -cE 'warning:' clang-tidy.out || echo 0) warnings)"
+            | xargs -0 -P"$(nproc)" -I{} sh -c \
+                'clang-tidy -p build "$1" > ".tidy-logs/$(echo "$1" | tr "/." "__").log" 2>/dev/null || true' _ {}
+          cat .tidy-logs/*.log > clang-tidy.out 2>/dev/null || true
+          echo "clang-tidy run complete over $(find src -name '*.cpp' | wc -l) TUs"
 
       - name: Summarise findings
         if: always()
+        # A header finding is reported once per including TU; the warning line
+        # (path:line:col + check) is byte-identical across them, so `sort -u`
+        # collapses them to DISTINCT findings. The raw line count is shown too.
         run: |
-          echo "## clang-tidy baseline (findings by check)" >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-          grep -oE "\[(clang-analyzer|bugprone)[a-zA-Z.-]+\]" clang-tidy.out 2>/dev/null \
-            | sort | uniq -c | sort -rn >> "$GITHUB_STEP_SUMMARY" \
-            || echo "(no findings)" >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-          echo "total warnings: $(grep -cE 'warning:' clang-tidy.out 2>/dev/null || echo 0)" >> "$GITHUB_STEP_SUMMARY"
+          tidy='\[(clang-analyzer|bugprone)[a-zA-Z.-]+\]'
+          distinct=$(grep -hE ": warning: .*${tidy}" clang-tidy.out 2>/dev/null | sort -u | wc -l | tr -d ' ')
+          raw=$(grep -hcE ": warning: .*${tidy}" clang-tidy.out 2>/dev/null || echo 0)
+          {
+            echo "## clang-tidy baseline"
+            echo "distinct findings: **${distinct}**  (raw lines incl. header re-includes: ${raw})"
+            echo ''
+            echo 'By check (distinct):'
+            echo '```'
+            grep -hE ": warning: .*${tidy}" clang-tidy.out 2>/dev/null | sort -u \
+              | grep -oE "${tidy}" | sort | uniq -c | sort -rn \
+              || echo "(no findings)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Keep report
         uses: actions/upload-artifact@v6

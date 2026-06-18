@@ -20,20 +20,27 @@ off as high-volume/low-signal here:
 
 ## Baseline shape
 
-Configure exports `compile_commands.json` (57 engine TUs). Over a representative sample
-(`operationdependency`, `pegging`, `operationplan`, `timeseries`, `solveroperation`, `json`) the
-**high-signal** remainder after the two noisy checks are excluded:
+Configure exports `compile_commands.json` (57 engine TUs). A header finding is reported once **per
+including TU**, so the raw line count (~182) over-states reality; deduped by `path:line:col`+check the
+baseline is **54 distinct findings**. Breakdown (full `src/`, the check set below):
 
-| Check | Class | Note |
-| --- | --- | --- |
-| `clang-analyzer-core.CallAndMessage` | null/uninit call | calls through a possibly-null/uninit pointer — triage first |
-| `clang-analyzer-core.uninitialized.Assign` | uninitialised read | reading before init |
-| `clang-analyzer-deadcode.DeadStores` | dead store | value computed then overwritten — usually benign, sometimes a logic slip |
-| `bugprone-integer-division` | real bug risk | `int/int` fed to a double — precision-loss sites |
-| `bugprone-switch-missing-default-case`, `bugprone-copy-constructor-init`, `bugprone-throw-keyword-missing` | misc | low volume |
+| Check | n | Class | Triage |
+| --- | --- | --- | --- |
+| `clang-analyzer-deadcode.DeadStores` | 16 | dead store | usually benign; a few may be logic slips |
+| `bugprone-switch-missing-default-case` | 10 | missing default | low risk |
+| `clang-analyzer-core.CallAndMessage` | 5 | null/uninit call | **triage** — call through a possibly-null/uninit arg |
+| `bugprone-integer-division` | 5 | precision loss | **triage** — `int/int` fed to a double |
+| `clang-analyzer-cplusplus.NewDelete` | 4 | manual-memory misuse | **triage** — use-after-free / double-free shapes |
+| `clang-analyzer-security.FloatLoopCounter` | 2 | float loop counter | review |
+| `bugprone-suspicious-string-compare` / `-empty-catch` / `-copy-constructor-init` | 2 ea | misc | low |
+| `clang-analyzer-core.NullDereference` | 1 | **null deref** | **triage first** |
+| `clang-analyzer-core.uninitialized.{Assign,Branch}` | 1 ea | uninitialised read | **triage** |
+| `clang-analyzer-security.insecureAPI.strcpy`, `bugprone-unused-raii`, `-throw-keyword-missing` | 1 ea | misc | low |
 
-The **full** current count + per-check breakdown is produced by the `engine-clang-tidy` CI job (step
-summary + uploaded `clang-tidy-report` artifact) — not pinned here so the doc doesn't drift.
+The live count + breakdown is also emitted by the `engine-clang-tidy` CI job (step summary, distinct vs
+raw) and the uploaded `clang-tidy-report` artifact. The numbers above are a snapshot for orientation; CI
+is the source of truth. The ~10 **triage** findings (NullDereference, CallAndMessage, integer-division,
+NewDelete, uninitialised) are the E2 work-list before the gate tightens to "no new findings".
 
 ## Gate posture
 

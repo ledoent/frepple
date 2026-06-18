@@ -1,0 +1,28 @@
+# Engine track E1 - static-analysis baseline. The point is bug-finding (the
+# "rewrite oracle"), not style: clang-analyzer-* (the path-sensitive analyzer -
+# null derefs, leaks, uninitialised reads) + the high-signal bugprone-* checks.
+# Style/readability/modernize families are deliberately OFF to keep the signal
+# high on a large, mature C++23 codebase. Two bugprone checks are also off as
+# high-volume/low-signal here: unhandled-self-assignment (fires on every operator=
+# lacking a self-check - defensive, not a bug) and exception-escape (legacy
+# destructors). The gate is advisory (engine-clang-tidy.yml) and reports counts;
+# it tightens to "no NEW findings" once the baseline is triaged.
+Checks: >
+  -*,
+  clang-analyzer-*,
+  bugprone-*,
+  -clang-analyzer-optin.*,
+  -clang-analyzer-cplusplus.NewDeleteLeaks,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-narrowing-conversions,
+  -bugprone-branch-clone,
+  -bugprone-reserved-identifier,
+  -bugprone-implicit-widening-of-multiplication-result,
+  -bugprone-unhandled-self-assignment,
+  -bugprone-exception-escape
+
+# Engine headers are ours; third-party (Python.h, xerces) is excluded by the
+# regex so we only flag frePPLe code.
+HeaderFilterRegex: 'frepple/.*\.h$'
+WarningsAsErrors: ''
+FormatStyle: none

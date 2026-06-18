@@ -1,0 +1,86 @@
+name: Engine clang-tidy
+
+# Static-analysis baseline over the C++ engine (Engine track E1). The check set
+# (.clang-tidy) is the bug-finders only - clang-analyzer-* + high-signal
+# bugprone-* - not style. clang-tidy is parse-only (no codegen), so this is
+# lighter than the sanitizer Debug builds.
+#
+# ADVISORY: reports the finding count + breakdown in the job step-summary but
+# never fails the job (the baseline isn't zero on a large legacy codebase). It
+# tightens to "no NEW findings on changed files" (clang-tidy-diff) once the
+# baseline is triaged - tracked as E2. See tools/modernization/ubsan-baseline.md
+# for the sibling sanitizer gates.
+#
+# Path-filtered so doc/gate-only commits don't trigger it.
+
+on:
+  push:
+    branches:
+      - "modernization"
+      - "modernization/**"
+    paths:
+      - "src/**"
+      - "include/**"
+      - ".clang-tidy"
+      - ".github/workflows/engine-clang-tidy.yml"
+  pull_request:
+    paths:
+      - "src/**"
+      - "include/**"
+      - ".clang-tidy"
+      - ".github/workflows/engine-clang-tidy.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  clang-tidy:
+    name: clang-tidy (advisory)
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checking out source code
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Install packages
+        run: |
+          sudo apt update
+          sudo apt install --no-upgrade libxerces-c-dev openssl libssl-dev libpq-dev python3 python3-dev python3-venv clang-tidy
+          clang-tidy --version
+
+      - name: Configure (export compile_commands.json)
+        # No build needed - clang-tidy parses TUs from the compile DB. Configure
+        # still generates config.h (referenced by the engine headers).
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+
+      - name: Run clang-tidy over the engine (advisory)
+        # Parallel xargs over the src/ TUs (uses only `clang-tidy`, which is
+        # guaranteed present - run-clang-tidy isn't always on PATH). Never fails
+        # the job - this is the baseline capture.
+        run: |
+          find src -name '*.cpp' -print0 \
+            | xargs -0 -P"$(nproc)" -I{} sh -c 'clang-tidy -p build "{}" 2>/dev/null || true' \
+            > clang-tidy.out 2>&1 || true
+          echo "clang-tidy run complete ($(grep -cE 'warning:' clang-tidy.out || echo 0) warnings)"
+
+      - name: Summarise findings
+        if: always()
+        run: |
+          echo "## clang-tidy baseline (findings by check)" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          grep -oE "\[(clang-analyzer|bugprone)[a-zA-Z.-]+\]" clang-tidy.out 2>/dev/null \
+            | sort | uniq -c | sort -rn >> "$GITHUB_STEP_SUMMARY" \
+            || echo "(no findings)" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "total warnings: $(grep -cE 'warning:' clang-tidy.out 2>/dev/null || echo 0)" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Keep report
+        uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: clang-tidy-report
+          path: clang-tidy.out
+          retention-days: 7

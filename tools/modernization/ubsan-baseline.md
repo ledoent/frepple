@@ -39,16 +39,17 @@ downcast trips it. These are not bugs. **Decision:** `-fno-sanitize=vptr` in the
 (`CMakeLists.txt`), documented here. Re-enabling vptr would require reworking the object model onto
 standard RTTI — out of scope, and the cast sites are exercised billions of times in production.
 
-### Finding 2 — iterator `operator*` forms a reference to null at `end()` — **LOW (idiom), accepted (baseline)**
-Sites: `include/frepple/timeline.h:293` (`const Event& operator*() const { return *cur; }`, 58 hits) and
-`include/frepple/model.h:8667` (`Problem& operator*() const { return *iter; }`, 58 hits). When the iterator
-is at `end()` / default-constructed, `cur`/`iter` is null and `*cur` *binds a reference to null* — UB by
-the letter, but the value is never dereferenced (`operator++` guards `if (cur)`, and callers compare
-against `end()` before deref). This is the **same UB the standard library has** for `*v.end()`. Fires in
-nearly every test because timelines/problem-lists are iterated everywhere. **Decision:** accepted for the
-baseline; it is why the gate is advisory (below). E2 can retire it by annotating the two `operator*`
-with `__attribute__((no_sanitize("null")))` (g++ has no runtime suppressions file) or refactoring the
-end-sentinel — both are header churn deferred out of the baseline pass.
+### Finding 2 — iterator `operator*` forms a reference to null at `end()` — **LOW (idiom) — RESOLVED**
+Sites: `include/frepple/timeline.h:293` (`const Event& operator*() const { return *cur; }`) and
+`include/frepple/model.h:8667` (`Problem& operator*() const { return *iter; }`). When the iterator is at
+`end()` / default-constructed, `cur`/`iter` is null and `*cur` *binds a reference to null* — UB by the
+letter, but the value is never dereferenced (`operator++` guards `if (cur)`, and callers compare against
+`end()` before deref). This is the **same UB the standard library has** for `*v.end()`. It fired in nearly
+every test (78× each across the full suite) because timelines/problem-lists are iterated everywhere.
+**Resolution (E2 slice 1):** both `operator*` are marked `FREPPLE_NO_SANITIZE_NULL`
+(`__attribute__((no_sanitize("null")))`, defined in `utils.h`; g++ accepts it, no runtime suppressions
+file needed, a no-op in non-sanitized builds). Verified: g++ emits no attribute warning and the full
+golden suite is then UBSan-clean (0 findings), which is what let the gate flip to **blocking**.
 
 ### Finding 3 — `OperationDependency::set{Operation,BlockedBy}` null member-call — **MEDIUM (real) — FIXED**
 Sites: `src/model/operationdependency.cpp:99` and `:122`. Symmetric bug: when only one side of a
@@ -63,20 +64,22 @@ the guarded case — so it removes the UB without changing any output. Golden su
 
 ## Gate posture
 
-`engine-ubsan.yml` runs the full golden suite under UBSan as an **advisory** gate: `halt_on_error=0`, so a
-finding prints + is summarised in the job's step-summary but does **not** fail the job. It still fails on a
-genuine (non-UB) test break (`pipefail`) and on any build/link regression of the UBSan configuration.
+`engine-ubsan.yml` runs the full golden suite under UBSan as a **blocking** gate: `halt_on_error=1` +
+`abort_on_error`, so a single UB diagnostic fails the job — the same contract as `engine-asan.yml`. The
+suite is UBSan-clean after the three findings below were resolved/excluded, so a *new* UB site is a CI
+failure, with the offending site shown in the job step-summary. `runtest.py -d` streams the child stderr
+(otherwise PIPE'd + discarded) so the report is visible, not just a bare non-zero exit.
 
-This mirrors how `engine-asan.yml` was introduced — informational until its 8 crashes were fixed, then
-flipped to blocking. UBSan flips to `halt_on_error=1` (blocking) once Finding 2 is retired (Finding 1
-excluded, Finding 3 fixed), leaving zero expected findings. That tightening is **E2** work.
+This followed the same path as `engine-asan.yml`: it landed **advisory** (`halt_on_error=0`) as a documented
+baseline (E1), then flipped to **blocking** in E2 slice 1 once Finding 2 was retired (Finding 1 excluded,
+Finding 3 fixed) — zero remaining findings.
 
 ## Status
 
 | Finding | Class | Severity | Disposition |
 | --- | --- | --- | --- |
 | 1. vptr on MetaClass RTTI | by-design false positive | noise | `-fno-sanitize=vptr` (excluded) |
-| 2. iterator `operator*` null-binding | UB idiom (STL-parallel) | low | accepted; gate advisory; retire in E2 |
+| 2. iterator `operator*` null-binding | UB idiom (STL-parallel) | low | **resolved** (`FREPPLE_NO_SANITIZE_NULL`) |
 | 3. operationdependency null member-call | real latent UB | medium | **fixed** (`:99`, `:122`) |
 
-ASan: blocking + clean (`engine-asan.yml`). UBSan: advisory baseline established (this doc).
+Both sanitizers are now blocking + clean: ASan (`engine-asan.yml`) and UBSan (`engine-ubsan.yml`).

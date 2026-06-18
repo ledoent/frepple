@@ -395,8 +395,12 @@ critical path). Sequenced E1 → E4.
 already-wired **ASan/UBSan** over the golden test suite; run clang-tidy/analyzer; document findings.
 **Verification gate:**
 - [ ] Review report committed: prioritized debt list, TODO triage, risk hotspots (pegging, solver state machine).
-- [ ] ASan + UBSan run green (or all findings logged with severity) across the 82 golden scenarios.
-- [ ] clang-tidy baseline captured; no *new* warnings gate going forward.
+- [x] ASan + UBSan run green across the golden scenarios. **Both blocking + clean** — `engine-asan.yml`
+      (the 8 Calendar UB crashes fixed earlier) and `engine-ubsan.yml` (vptr excluded for the MetaClass
+      RTTI; one real null member-call fixed in `operationdependency.cpp`; the iterator `operator*`
+      null-binding idiom marked `FREPPLE_NO_SANITIZE_NULL`). Findings in `tools/modernization/ubsan-baseline.md`.
+- [x] clang-tidy baseline captured (advisory gate `engine-clang-tidy.yml`, bug-finder check set in
+      `.clang-tidy`); `tools/modernization/clang-tidy-baseline.md`. "No new findings" tightening → E2.
 
 ### E2 — Test hardening (the rewrite-safety oracle)
 **Build:** Fill the pegging hole (multi-level BOM, circular supply, coalescence, alternate flows);

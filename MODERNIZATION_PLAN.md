@@ -276,6 +276,11 @@ render spec. Sequenced **read-only first**; the ambitious parts are split out:
   Django trusts the https origin; the SPA sends `X-CSRFToken` on the runplan launch POST.
 - Verified: all 6 Playwright specs (smoke + a11y + **live-progress**: Run plan → engine → WS → terminal
   state) green against the live URL; cert Ready; `/data/login/`,`/execute`,`/forecast` → 200.
+- **Rust forecast flipped ON (helm REVISION 7, PR #12, Engine track E4):** the staging `frepple-app`
+  image builds with `FREPPLE_RUST_FORECAST=ON`, so all five forecast methods run in Rust in-engine —
+  **Rust is the forecast source of truth on staging.** The deployed `libfrepple.so` embeds the five
+  `extern "C"` wrappers and `runtest.py forecast_1..11` pass byte-exact *inside the deployed pod* (11/11).
+  Default stays OFF elsewhere; reversible by the flag. See `tools/modernization/rust-pilot.md` Phase 7.
 
 ### Phase 4 (optional) — Go/Rust BFF
 **Only if measured need.** Thin gateway in front of Django for WS fan-out at scale or hot

@@ -117,13 +117,26 @@ flag-gated dispatch + `forecast_*` golden run:
   method runs in Rust in-engine with byte-exact golden parity under `-ffp-contract=off`. The FP-contraction
   question is settled positively across the whole forecast surface.
 
-**The forecast C++→Rust conversion is functionally complete (flag-gated, default-OFF).** Flipping the
-default ON is now a product decision (drop the C++ path / make Rust the source of truth), not a technical
-blocker — the 5/5 golden gate + the 57+3 parity tests are the evidence.
+**The forecast C++→Rust conversion is functionally complete and is now the forecast source of truth on
+staging.** The 5/5 golden gate + the 57+3 parity tests were the evidence; the product decision to flip ON
+has been taken for the review env.
 
-The e2e engine image is intentionally left flag-OFF (no `rustup` added there — it would only bloat an
-image that runs the C++ path). Validation is CI-only (the engine build is Linux-only on this dev box);
-default-OFF means zero risk to the shipping engine regardless of the gate outcome.
+**Shipped to staging (Rust ON) — PR #12, helm REVISION 7:**
+- `deploy-staging.yml` builds the `frepple-app` image with `FREPPLE_RUST_FORECAST=ON`; everywhere else
+  (e2e stack, local) stays default-OFF on the C++ path.
+- `e2e/Dockerfile.engine` installs a minimal `rustup` toolchain (only when the flag is ON) before the C++
+  compile, and threads the flag into cmake so cargo builds + links the staticlib.
+- Two build bugs found + fixed while validating on aarch64 (neither caught by x86 CI):
+  - `src/CMakeLists.txt` now `ranlib`s the cargo staticlib — rustc emits it without a symbol-table index
+    on some toolchains, which GNU `ld` rejects (`archive has no index`). No-op where one already exists.
+  - `.dockerignore` excludes `**/target` — a host-arch `target/` leaking into the build context shadowed
+    the in-image cargo build (CMake saw the OUTPUT present, skipped it), linking a wrong-arch staticlib.
+- **Live verification:** the deployed `libfrepple.so` embeds all five `extern "C"` wrappers, and
+  `runtest.py forecast_1..11` run *inside the deployed pod* pass byte-exact (11/11) against the `.expect`
+  baselines. Reversible by the flag (rebuild OFF + helm rollback).
+
+The conversion is the last step of Engine track **E4**. Default stays OFF outside staging until a broader
+production decision; the flag makes the flip fully reversible.
 
 ## Slice 2 — forecast (MovingAverage), the real algorithm
 

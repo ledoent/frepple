@@ -394,7 +394,11 @@ critical path). Sequenced E1 → E4.
 **Build:** Structured review of engine + Django (debt catalog, the scary TODOs triaged); run the
 already-wired **ASan/UBSan** over the golden test suite; run clang-tidy/analyzer; document findings.
 **Verification gate:**
-- [ ] Review report committed: prioritized debt list, TODO triage, risk hotspots (pegging, solver state machine).
+- [x] Review report committed: `tools/modernization/engine-review-E1.md` — 99-marker TODO triage,
+      risk-hotspot map (solver state machine, memory ownership, CPython coupling, pegging), clang-tidy/UBSan
+      cross-reference, and **verification corrections** (the `a_penalty` "bug" is already fixed; pegging has
+      9 golden tests not 2; the pegging `visited` cycle-guard is sound; the operatordelete "dangerous"
+      block is disabled). Hands a prioritized work-list to E2.
 - [x] ASan + UBSan run green across the golden scenarios. **Both blocking + clean** — `engine-asan.yml`
       (the 8 Calendar UB crashes fixed earlier) and `engine-ubsan.yml` (vptr excluded for the MetaClass
       RTTI; one real null member-call fixed in `operationdependency.cpp`; the iterator `operator*`

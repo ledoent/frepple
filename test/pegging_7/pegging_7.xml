@@ -1,8 +1,14 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <plan xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-  <!-- No .expect golden: alternate/routing selection output is platform-sensitive,
-       so this runs as a smoke/ASan regression test (passes if frepple processes it
-       without error). The 7 golden-backed pegging tests cover correctness. -->
+  <!-- No .expect golden: this alternate/routing model's pegging output is
+       ORDER-unstable across environments. Confirmed (E2): operationplans()
+       iteration order varies with the build/stdlib (Docker Release vs Debug, and
+       the GitHub ubuntu-24.04 runner all differ) - same content, reordered blocks.
+       A byte-exact baseline captured in one environment fails in another, so this
+       runs as a smoke/ASan regression test (passes if frepple processes it without
+       error). Making it golden needs a deterministic tiebreaker in the pegging
+       iterator/output (engine follow-up). The golden-backed pegging tests cover
+       correctness. -->
   <name>Test model for alternate flows</name>
   <description>
   This test verifies the behavior of alternate flows.

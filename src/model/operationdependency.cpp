@@ -96,7 +96,10 @@ void OperationDependency::setOperation(Operation* o) {
   if (!oper && o) {
     oper = o;
     oper->addDependency(this);
-    blockedby->addDependency(this);
+    // blockedby may still be null here; addDependency() no-ops on an
+    // incomplete dependency anyway, so guard the call to avoid the UB
+    // null member-call (UBSan) - behaviour is identical either way.
+    if (blockedby) blockedby->addDependency(this);
   } else if (o && blockedby) {
     oper = o;
     oper->addDependency(this);
@@ -119,7 +122,10 @@ void OperationDependency::setBlockedBy(Operation* o) {
   if (!blockedby && o) {
     blockedby = o;
     blockedby->addDependency(this);
-    oper->addDependency(this);
+    // oper may still be null here; addDependency() no-ops on an incomplete
+    // dependency anyway, so guard the call to avoid the UB null member-call
+    // (UBSan) - behaviour is identical either way.
+    if (oper) oper->addDependency(this);
   } else if (o && oper) {
     blockedby = o;
     blockedby->addDependency(this);

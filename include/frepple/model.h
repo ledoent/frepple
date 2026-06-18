@@ -8664,7 +8664,9 @@ class Problem::iterator {
   /* Equality operator. */
   bool operator==(const iterator& t) const { return iter == t.iter; }
 
-  Problem& operator*() const { return *iter; }
+  // Forms a reference to null at end(); never dereferenced there (callers test
+  // against end() first). See FREPPLE_NO_SANITIZE_NULL in utils.h.
+  FREPPLE_NO_SANITIZE_NULL Problem& operator*() const { return *iter; }
 
   Problem* operator->() const { return iter; }
 };

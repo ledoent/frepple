@@ -11,11 +11,10 @@ name: Engine UBSan
 # -fsanitize=vptr check is excluded there (frePPLe's hand-rolled MetaClass RTTI
 # is incompatible with it - see tools/modernization/ubsan-baseline.md).
 #
-# ADVISORY (informational) baseline: halt_on_error=0, so a UBSan finding does NOT
-# fail the job - it prints to the log and is summarised below. This gate proves
-# the UBSan build keeps compiling/linking and tracks findings while the documented
-# baseline idioms (iterator operator* null-binding) are driven to zero in E2;
-# only then does it flip to halt_on_error=1 (blocking), the way engine-asan did.
+# BLOCKING: the golden suite is UBSan-clean. The baseline findings were resolved
+# (operationdependency null member-call fixed; the iterator operator* null-binding
+# idiom marked FREPPLE_NO_SANITIZE_NULL), so halt_on_error=1 + abort makes a NEW
+# UB site fail CI - same contract as engine-asan.
 #
 # Path-filtered so doc/CI/gate-only commits don't trigger the heavy Debug build.
 
@@ -68,29 +67,29 @@ jobs:
 
       - name: Run engine golden tests under UBSan
         working-directory: ${{github.workspace}}
-        # halt_on_error=0: collect every finding without aborting (advisory).
+        # halt_on_error=1 + abort: a single UB diagnostic fails the run (blocking).
         # print_stacktrace=1: pinpoint the source line.
         # runtest.py -d streams child stdout/stderr (otherwise it PIPEs and
-        # discards it) so the UBSan reports are visible in the log + the summary.
-        # pipefail keeps a genuine (non-UB) test failure fatal despite the tee.
+        # discards it) so the UBSan report is visible in the log, not just a bare
+        # non-zero exit. tee + pipefail keeps the report for the summary step.
         run: |
           set -o pipefail
           export FREPPLE_DATE_STYLE="day-month-year"
-          export UBSAN_OPTIONS="print_stacktrace=1:halt_on_error=0:report_error_type=1"
+          export UBSAN_OPTIONS="print_stacktrace=1:halt_on_error=1:abort_on_error=1:report_error_type=1"
           ./test/runtest.py -d 2>&1 | tee ubsan-output.log
 
       - name: Summarise UBSan findings
         if: always()
         working-directory: ${{github.workspace}}
-        # Dedup by source location (strip the per-run address) so the count
-        # reflects distinct UB sites, not occurrences. Advisory - never fails.
+        # On a green run this is empty; on a regression it shows the new UB site(s)
+        # deduped by source location (per-run address stripped).
         run: |
           echo "## UBSan findings (distinct site x check)" >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
           grep -hE "runtime error:" ubsan-output.log 2>/dev/null \
             | sed -E "s/address 0x[0-9a-f]+/address 0x.../" \
             | sort | uniq -c | sort -rn >> "$GITHUB_STEP_SUMMARY" \
-            || echo "(no UBSan findings)" >> "$GITHUB_STEP_SUMMARY"
+            || echo "(no UBSan findings - clean)" >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
 
       - name: Keep logs

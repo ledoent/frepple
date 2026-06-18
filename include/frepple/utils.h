@@ -61,6 +61,18 @@ using namespace std;
 
 #include <config.h>
 
+// A few container iterators intentionally form a reference to a null sentinel at
+// end() (e.g. the Timeline and Problem-list operator*). The value is never
+// dereferenced - operator++ and every caller guard against end() first - so this
+// is the same benign UB the standard library has for *v.end(). Mark just those
+// spots no_sanitize("null") so the engine-ubsan gate can be blocking without
+// flagging the idiom. A no-op in non-sanitized builds; supported by GCC + Clang.
+#if defined(__GNUC__) || defined(__clang__)
+#define FREPPLE_NO_SANITIZE_NULL __attribute__((no_sanitize("null")))
+#else
+#define FREPPLE_NO_SANITIZE_NULL
+#endif
+
 constexpr double ROUNDING_ERROR = 0.000001;
 
 namespace frepple {

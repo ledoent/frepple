@@ -411,10 +411,16 @@ already-wired **ASan/UBSan** over the golden test suite; run clang-tidy/analyzer
 add **structural assertions** to the test runner (capacity never exceeded, demand≤due-or-flagged);
 add a stress scenario (10k+ operationplans) with time/memory baselines; add negative/infeasible cases.
 **Verification gate:**
-- [ ] Pegging test count ≥ 12 (from 2), covering ≥3-level BOM + a cycle case.
+- [ ] Golden pegging coverage — **blocked by a confirmed engine finding** (`engine-review-E1.md` H4): the 3
+      smoke-only tests (pegging_4/5/7) can't be byte-exact golden as-is because their pegging-report ordering
+      is environment-dependent (verified: deterministic per-environment but reorders across Docker
+      Release/Debug and the GitHub runner; single-threaded; PYTHONHASHSEED-independent — an attempt to convert
+      pegging_4/5 passed in Docker but failed on the GitHub runner). Needs a **deterministic tiebreaker** (a
+      stable secondary sort in the pegging iterator, or a content-keyed sort in each test's output block)
+      before these 3 + a ≥3-level BOM + a cycle case can become golden.
 - [ ] Structural-invariant assertions run on every golden scenario (not just line-diff).
 - [ ] One stress scenario with recorded solve-time + peak-memory baseline (regression-gated).
-- [ ] Sanitizer CI job added and green on the branch.
+- [x] Sanitizer CI job added and green on the branch (ASan + UBSan blocking, clang-tidy advisory — E2 slice 1).
 
 ### E3 — DDMRP mode (hybrid with classic MRP)
 **Build:** Data model (buffer zone profiles, ADU config, spike horizon — via new fields/attributes);

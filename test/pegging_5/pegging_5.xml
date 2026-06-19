@@ -1,8 +1,8 @@
 ﻿<?xml version="1.0" encoding="UTF-8" ?>
 <plan xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-  <!-- No .expect golden: alternate/routing selection output is platform-sensitive,
-       so this runs as a smoke/ASan regression test (passes if frepple processes it
-       without error). The 7 golden-backed pegging tests cover correctness. -->
+  <!-- Smoke/ASan-only (no .expect golden): this alternate/routing model's pegging
+       output ordering is environment-dependent, so it is not byte-exact golden-able
+       as-is. Verified + root-caused in tools/modernization/engine-review-E1.md (H4). -->
   <name>Test model for routing operations</name>
   <description>
     This test verifies the behavior of routing operations.

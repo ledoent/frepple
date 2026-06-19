@@ -71,7 +71,19 @@ nor "never" conclusion is supported; the scoped E4 pilot is the right next probe
 - The real gap is **test coverage of the fragile inputs**: of 12 `test/pegging_*`, **9 carry golden
   `.expect` files and 3 (pegging_4/5/7) are smoke-only** (run-without-crash, no output assertion) — and
   those three are exactly the alternate/routing/infinite-buffer cases. No golden coverage of deep (5+
-  level) BOMs or cyclic dependencies. This is the prime E2 target.
+  level) BOMs or cyclic dependencies.
+- **E2 finding — why those 3 can't be golden as-is (verified, not just asserted).** An attempt to capture
+  golden baselines for pegging_4/5 confirmed the smoke-only decision is correct and structural, not a
+  missing baseline: the pegging report is **deterministic within an environment** (30× identical) but its
+  **`operationplans()` iteration order varies *across* environments** — Docker Release vs Debug+ASan **and**
+  the GitHub `ubuntu-24.04` runner each order the blocks differently (identical content, reordered). It is
+  **single-threaded** (loglevel>0 forces `setMaxParallel(1)`, `solverplan.cpp:840-842`) and
+  **PYTHONHASHSEED-independent**, so it's neither a thread race nor Python hash-seed; the order tracks the
+  build/stdlib (allocation/pointer-ordering among equivalent operationplans). Proof: golden `.expect`
+  captured in two Docker builds **passed locally but failed pegging_4/5 on the GitHub runner**. ⇒ Closing
+  H4's golden gap needs a **deterministic tiebreaker** — either a stable secondary sort in the pegging
+  iterator (engine, affects other goldens) or a content-keyed sort in each test's output `<?python>` block
+  (test-side, cheaper) — *before* any of these 3 + a deep-BOM + a cycle case can become byte-exact golden.
 
 ## Static-analysis cross-reference
 

@@ -418,7 +418,16 @@ add a stress scenario (10k+ operationplans) with time/memory baselines; add nega
       pegging_4/5 passed in Docker but failed on the GitHub runner). Needs a **deterministic tiebreaker** (a
       stable secondary sort in the pegging iterator, or a content-keyed sort in each test's output block)
       before these 3 + a ≥3-level BOM + a cycle case can become golden.
-- [ ] Structural-invariant assertions run on every golden scenario (not just line-diff).
+- [~] Structural-invariant assertions — **mechanism delivered**: a reusable `test/invariants.py` checker +
+      the `test/invariants_1` test that solves a fully-constrained combined model and asserts SOUND invariants
+      (operationplan temporal/quantity sanity; no resource overload under a capacity constraint; a finite
+      buffer goes negative only if a material-shortage problem is flagged). It is a **boolean pass/fail oracle**
+      (deterministic `INVARIANTS_OK` output), so unlike byte-exact golden it is robust to the environment-
+      dependent ORDER (H4) — verified to pass under **both Release and Debug+ASan** and to **fail (exit≠0) on an
+      injected capacity overload** (4 overloads caught). Finding: the "obvious" invariants (demand met-by-due,
+      buffer never negative) **false-positive on valid plans** (legitimate late/short/over deliveries; WIP
+      buffers) — only the conservative set above is universally sound. Still open: wrapping more scenarios
+      (a runtest.py hook that runs the checker after each test) toward "every golden scenario".
 - [ ] One stress scenario with recorded solve-time + peak-memory baseline (regression-gated).
 - [x] Sanitizer CI job added and green on the branch (ASan + UBSan blocking, clang-tidy advisory — E2 slice 1).
 

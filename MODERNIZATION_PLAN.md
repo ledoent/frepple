@@ -411,15 +411,13 @@ already-wired **ASan/UBSan** over the golden test suite; run clang-tidy/analyzer
 add **structural assertions** to the test runner (capacity never exceeded, demand≤due-or-flagged);
 add a stress scenario (10k+ operationplans) with time/memory baselines; add negative/infeasible cases.
 **Verification gate:**
-- [ ] Golden pegging coverage — **blocked by a confirmed engine finding, not yet closed.** The 3 smoke-only
-      tests (pegging_4/5/7, the alternate/routing models) **cannot** be byte-exact golden as-is: their
-      pegging-report **ordering is environment-dependent**. Verified in E2 — the `operationplans()` iteration
-      order varies with the build/stdlib (Docker Release vs Debug **and** the GitHub `ubuntu-24.04` runner all
-      produce different orderings; identical content, reordered blocks; PYTHONHASHSEED-independent). An attempt
-      to convert pegging_4/5 to golden passed in two Docker builds but **failed on the GitHub runner** — proving
-      the instability is environment-wide, validating the maintainers' original "platform-sensitive" call. The
-      fix is a **deterministic tiebreaker in the pegging iterator/output** (engine follow-up); only then can
-      these 3 + a ≥3-level BOM + a cycle case become golden. Documented in each `pegging_*.xml`.
+- [ ] Golden pegging coverage — **blocked by a confirmed engine finding** (`engine-review-E1.md` H4): the 3
+      smoke-only tests (pegging_4/5/7) can't be byte-exact golden as-is because their pegging-report ordering
+      is environment-dependent (verified: deterministic per-environment but reorders across Docker
+      Release/Debug and the GitHub runner; single-threaded; PYTHONHASHSEED-independent — an attempt to convert
+      pegging_4/5 passed in Docker but failed on the GitHub runner). Needs a **deterministic tiebreaker** (a
+      stable secondary sort in the pegging iterator, or a content-keyed sort in each test's output block)
+      before these 3 + a ≥3-level BOM + a cycle case can become golden.
 - [ ] Structural-invariant assertions run on every golden scenario (not just line-diff).
 - [ ] One stress scenario with recorded solve-time + peak-memory baseline (regression-gated).
 - [x] Sanitizer CI job added and green on the branch (ASan + UBSan blocking, clang-tidy advisory — E2 slice 1).

@@ -411,13 +411,12 @@ already-wired **ASan/UBSan** over the golden test suite; run clang-tidy/analyzer
 add **structural assertions** to the test runner (capacity never exceeded, demand≤due-or-flagged);
 add a stress scenario (10k+ operationplans) with time/memory baselines; add negative/infeasible cases.
 **Verification gate:**
-- [ ] Golden pegging coverage — **blocked by a confirmed engine finding** (`engine-review-E1.md` H4): the 3
-      smoke-only tests (pegging_4/5/7) can't be byte-exact golden as-is because their pegging-report ordering
-      is environment-dependent (verified: deterministic per-environment but reorders across Docker
-      Release/Debug and the GitHub runner; single-threaded; PYTHONHASHSEED-independent — an attempt to convert
-      pegging_4/5 passed in Docker but failed on the GitHub runner). Needs a **deterministic tiebreaker** (a
-      stable secondary sort in the pegging iterator, or a content-keyed sort in each test's output block)
-      before these 3 + a ≥3-level BOM + a cycle case can become golden.
+- [x] Golden pegging coverage — **unblocked + done.** The 3 smoke-only tests (pegging_4/5/7) are now full
+      byte-exact golden tests. The blocker (environment-dependent `operationplans()` order) was root-caused to
+      a **pointer tie-breaker** in `OperationPlan::operator<` and fixed with a deterministic creation-sequence
+      tie-breaker (`engine-review-E1.md` H4 → RESOLVED). Verified zero blast radius (full 97-test suite passes
+      on Release + Debug+ASan) and byte-identical pegging output across builds. (A ≥3-level BOM + a cycle case
+      remain as optional future additions, now that the ordering is deterministic.)
 - [x] Structural-invariant assertions — a reusable `test/invariants.py` checker + the `test/invariants_sweep`
       test that loads **11 models** data-only (constraints_resource_1/3/5, constraints_material_1/3,
       constraints_combined_1, constraints_leadtime_1, pegging_5, demand_policy, safety_stock, flow_alternate_1),

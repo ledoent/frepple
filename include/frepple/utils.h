@@ -38,6 +38,7 @@ inline bool unused_function() { return PyDateTimeAPI == nullptr; }
 #include <float.h>
 
 #include <algorithm>
+#include <atomic>
 #include <condition_variable>
 #include <ctime>
 #include <forward_list>

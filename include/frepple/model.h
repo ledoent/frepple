@@ -2742,9 +2742,15 @@ class OperationPlan final : public Object,
    * Subclasses of the Operation class may use this constructor in their
    * own override of the createOperationPlan method.
    */
-  OperationPlan() { initType(metadata); }
+  OperationPlan() {
+    sequence = ++sequenceCounter;
+    initType(metadata);
+  }
 
-  OperationPlan(Operation* o) : oper(o) { initType(metadata); }
+  OperationPlan(Operation* o) : oper(o) {
+    sequence = ++sequenceCounter;
+    initType(metadata);
+  }
 
   static const unsigned short STATUS_APPROVED = 1;
   static const unsigned short STATUS_CONFIRMED = 2;
@@ -2771,6 +2777,14 @@ class OperationPlan final : public Object,
    */
   static unsigned long counterMin;
   static string referenceMax;
+
+  /* Monotonic creation-sequence counter + per-operationplan sequence number.
+   * Used only as the final, deterministic tie-breaker in operator< (replacing a
+   * pointer comparison that was not reproducible across platforms/runs). Atomic
+   * so concurrent per-cluster solver threads don't race; the sequence is
+   * deterministic for a single-threaded solve (the reproducible case). */
+  static atomic<unsigned long> sequenceCounter;
+  unsigned long sequence = 0;
 
   /* Flag controlling where setup time verification should be performed. */
   static bool propagatesetups;

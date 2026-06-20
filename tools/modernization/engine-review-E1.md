@@ -81,9 +81,15 @@ nor "never" conclusion is supported; the scoped E4 pilot is the right next probe
   **PYTHONHASHSEED-independent**, so it's neither a thread race nor Python hash-seed; the order tracks the
   build/stdlib (allocation/pointer-ordering among equivalent operationplans). Proof: golden `.expect`
   captured in two Docker builds **passed locally but failed pegging_4/5 on the GitHub runner**. ⇒ Closing
-  H4's golden gap needs a **deterministic tiebreaker** — either a stable secondary sort in the pegging
-  iterator (engine, affects other goldens) or a content-keyed sort in each test's output `<?python>` block
-  (test-side, cheaper) — *before* any of these 3 + a deep-BOM + a cycle case can become byte-exact golden.
+  H4's golden gap needs a **deterministic tiebreaker**.
+- **RESOLVED.** Root-caused to `OperationPlan::operator<` (`operationplan.cpp:1048`), whose final tie-breaker
+  for otherwise-identical operationplans was a **pointer comparison** (`return this < &a;`) — self-documented
+  as "not reproducible across platforms and runs". It drives the per-operation sorted linked list that
+  `operationplans()` iterates, so the order tracked heap addresses (build/ASLR-dependent). Replaced it with a
+  **monotonic creation-sequence** tie-breaker (an `atomic<unsigned long>` counter + per-operationplan
+  `sequence`, deterministic for the single-threaded reproducible case). Verified: **zero blast radius** (the
+  full 97-test golden suite passes unchanged on Release **and** Debug+ASan), and pegging_4/5/7 output is now
+  **byte-identical across Release and Debug** — so they are converted to full golden tests.
 
 ## Static-analysis cross-reference
 

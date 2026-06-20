@@ -418,21 +418,20 @@ add a stress scenario (10k+ operationplans) with time/memory baselines; add nega
       pegging_4/5 passed in Docker but failed on the GitHub runner). Needs a **deterministic tiebreaker** (a
       stable secondary sort in the pegging iterator, or a content-keyed sort in each test's output block)
       before these 3 + a ≥3-level BOM + a cycle case can become golden.
-- [~] Structural-invariant assertions — **mechanism delivered**: a reusable `test/invariants.py` checker +
-      the `test/invariants_1` test that solves a fully-constrained combined model and asserts SOUND invariants
-      (operationplan temporal/quantity sanity; no resource overload under a capacity constraint; a finite
-      buffer goes negative only if a material-shortage problem is flagged). It is a **boolean pass/fail oracle**
+- [x] Structural-invariant assertions — a reusable `test/invariants.py` checker + the `test/invariants_sweep`
+      test that loads **11 models** data-only (constraints_resource_1/3/5, constraints_material_1/3,
+      constraints_combined_1, constraints_leadtime_1, pegging_5, demand_policy, safety_stock, flow_alternate_1),
+      solves each fully constrained, and asserts SOUND invariants in one process (`frepple.erase(True)` between
+      models): operationplan temporal/quantity sanity; no resource overload under a capacity constraint; a finite
+      buffer goes negative only if a material-shortage problem is flagged. It is a **boolean pass/fail oracle**
       (deterministic `INVARIANTS_OK` output), so unlike byte-exact golden it is robust to the environment-
-      dependent ORDER (H4) — verified to pass under **both Release and Debug+ASan** and to **fail (exit≠0) on an
-      injected capacity overload** (4 overloads caught). Finding: the "obvious" invariants (demand met-by-due,
-      buffer never negative) **false-positive on valid plans** (legitimate late/short/over deliveries; WIP
-      buffers) — only the conservative set above is universally sound.
-- [x] Broadened — `test/invariants_sweep` loads **11 models** data-only (constraints_resource/material/combined/
-      leadtime, pegging_5, demand_policy, safety_stock, flow_alternate), solves each fully constrained, and
-      asserts the invariants in one process (`frepple.erase(True)` between models). All 11 clean under Release +
-      Debug+ASan. NB: a per-test `runtest.py` hook was **rejected** — most golden tests end on an *unconstrained*
-      solve, so applying the capacity/material invariants to their final plan would false-positive; the sweep
-      keeps control of the solve mode instead.
+      dependent ORDER (H4) — all 11 clean under **both Release and Debug+ASan**, and the checker **fails (exit≠0)
+      on an injected capacity overload** (verified: solving without the capacity constraint surfaces overloads).
+      Two findings recorded: (1) the "obvious" invariants (demand met-by-due, buffer never negative)
+      **false-positive on valid plans** (legitimate late/short/over deliveries, WIP buffers) — only the
+      conservative set above is universally sound; (2) a per-test `runtest.py` hook was **rejected** — most golden
+      tests end on an *unconstrained* solve, so applying the capacity/material invariants to their final plan
+      would false-positive, hence the sweep keeps control of the solve mode.
 - [ ] One stress scenario with recorded solve-time + peak-memory baseline (regression-gated).
 - [x] Sanitizer CI job added and green on the branch (ASan + UBSan blocking, clang-tidy advisory — E2 slice 1).
 

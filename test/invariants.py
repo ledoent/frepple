@@ -1,8 +1,8 @@
 # Structural-invariant checks for a solved frePPLe plan (Engine track E2).
 #
 # `check()` inspects the CURRENT in-memory plan and returns a list of violation
-# strings (empty == all invariants hold). A test's <?python> block solves, calls
-# check(), and raises on any violation - so the assertion is a boolean pass/fail,
+# strings (empty == all invariants hold). A test script (e.g. test/invariants_sweep)
+# solves, calls check(), and raises on any violation - so the assertion is a boolean pass/fail,
 # independent of output ORDER (which is environment-dependent for some models; see
 # tools/modernization/engine-review-E1.md H4). That makes it a true "rewrite oracle"
 # the byte-exact golden diff can't be: it catches capacity/material/temporal

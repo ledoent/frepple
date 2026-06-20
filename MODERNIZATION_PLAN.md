@@ -426,8 +426,13 @@ add a stress scenario (10k+ operationplans) with time/memory baselines; add nega
       dependent ORDER (H4) — verified to pass under **both Release and Debug+ASan** and to **fail (exit≠0) on an
       injected capacity overload** (4 overloads caught). Finding: the "obvious" invariants (demand met-by-due,
       buffer never negative) **false-positive on valid plans** (legitimate late/short/over deliveries; WIP
-      buffers) — only the conservative set above is universally sound. Still open: wrapping more scenarios
-      (a runtest.py hook that runs the checker after each test) toward "every golden scenario".
+      buffers) — only the conservative set above is universally sound.
+- [x] Broadened — `test/invariants_sweep` loads **11 models** data-only (constraints_resource/material/combined/
+      leadtime, pegging_5, demand_policy, safety_stock, flow_alternate), solves each fully constrained, and
+      asserts the invariants in one process (`frepple.erase(True)` between models). All 11 clean under Release +
+      Debug+ASan. NB: a per-test `runtest.py` hook was **rejected** — most golden tests end on an *unconstrained*
+      solve, so applying the capacity/material invariants to their final plan would false-positive; the sweep
+      keeps control of the solve mode instead.
 - [ ] One stress scenario with recorded solve-time + peak-memory baseline (regression-gated).
 - [x] Sanitizer CI job added and green on the branch (ASan + UBSan blocking, clang-tidy advisory — E2 slice 1).
 

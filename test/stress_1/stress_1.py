@@ -16,7 +16,7 @@ sup = frepple.supplier(name="sup")
 res = frepple.resource(name="machine", maximum=100000, location=loc)
 due = datetime.datetime(2024, 3, 1)
 
-t_build = time.time()
+t_build = time.perf_counter()
 for i in range(N):
     it = frepple.item(name="I%d" % i)
     comp = frepple.item(name="C%d" % i)
@@ -28,11 +28,11 @@ for i in range(N):
     frepple.load(operation=op, resource=res, quantity=1)
     frepple.demand(name="D%d" % i, item=it, location=loc, quantity=10, due=due,
                    customer=cust, priority=1)
-build_s = time.time() - t_build
+build_s = time.perf_counter() - t_build
 
-t0 = time.time()
+t0 = time.perf_counter()
 frepple.solver_mrp(constraints=15, plantype=1, loglevel=0).solve()
-solve_s = time.time() - t0
+solve_s = time.perf_counter() - t0
 
 count = sum(1 for _ in frepple.operationplans())
 
@@ -61,10 +61,13 @@ print("STRESS items=%d operationplans=%d build_s=%.2f solve_s=%.2f peak_rss_mb=%
 # an optimised Release build: ~24k operationplans, ~1.5 s solve, ~80 MB peak.
 # NB: run in the Release suite only - excluded from engine-asan/engine-ubsan, where
 # the Debug+sanitizer build makes this ~1000x slower (allocation-heavy at scale).
-assert count >= 10000, "expected >= 10000 operationplans, got %d" % count
-assert solve_s < 180.0, "solve regression: %.1fs (baseline ~1.5s; ceiling 180s)" % solve_s
-if mb > 0:
-    assert mb < 1500.0, "memory regression: %.0f MB peak (baseline ~80 MB; ceiling 1500 MB)" % mb
+# Explicit raises (not asserts) so the gate fires even under python -O.
+if count < 10000:
+    raise Exception("stress regression: expected >= 10000 operationplans, got %d" % count)
+if solve_s >= 180.0:
+    raise Exception("stress regression: solve %.1fs exceeds the 180s ceiling (baseline ~1.5s)" % solve_s)
+if mb > 0 and mb >= 1500.0:
+    raise Exception("stress regression: %.0f MB peak exceeds the 1500 MB ceiling (baseline ~80 MB)" % mb)
 
 # Deterministic golden output (host-independent) so this is a stable golden test.
 with open("output.1.xml", "wt") as out:

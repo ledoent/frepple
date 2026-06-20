@@ -76,7 +76,10 @@ jobs:
           set -o pipefail
           export FREPPLE_DATE_STYLE="day-month-year"
           export UBSAN_OPTIONS="print_stacktrace=1:halt_on_error=1:abort_on_error=1:report_error_type=1"
-          ./test/runtest.py -d 2>&1 | tee ubsan-output.log
+          # Exclude the stress scenario (test/stress_1): a Debug+sanitizer build makes
+          # its ~24k-operationplan solve ~1000x slower than Release. It is a perf/scale
+          # gate (runs in the optimised ubuntu24 suite), not a UB-correctness one.
+          ./test/runtest.py -d -e stress_1 2>&1 | tee ubsan-output.log
 
       - name: Summarise UBSan findings
         if: always()

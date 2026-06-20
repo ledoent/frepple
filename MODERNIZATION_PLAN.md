@@ -432,7 +432,14 @@ add a stress scenario (10k+ operationplans) with time/memory baselines; add nega
       conservative set above is universally sound; (2) a per-test `runtest.py` hook was **rejected** — most golden
       tests end on an *unconstrained* solve, so applying the capacity/material invariants to their final plan
       would false-positive, hence the sweep keeps control of the solve mode.
-- [ ] One stress scenario with recorded solve-time + peak-memory baseline (regression-gated).
+- [x] Stress scenario (`test/stress_1`) — builds ~8k items (make-from-purchased-component + demand) via the
+      Python API → **~24k operationplans**, solves fully constrained, and records solve-time + peak RSS.
+      Regression-gated: a hard floor on the operationplan count (≥10k) + **generous ceilings** on time (180s)
+      and memory (1500 MB) that catch a catastrophic blow-up (O(n²)/leak) without flaking on runner variance;
+      actual metrics are printed for trend tracking. Release baseline: ~24k opplans, **~1.5s solve, ~80 MB**.
+      Runs in the optimised ubuntu24 (Release) suite; **excluded from engine-asan/engine-ubsan** — a Debug+
+      sanitizer build makes the at-scale solve ~1000x slower (~24 min, allocation-heavy), and it's a perf gate,
+      not a memory-safety one (the smaller golden tests cover ASan/UBSan).
 - [x] Sanitizer CI job added and green on the branch (ASan + UBSan blocking, clang-tidy advisory — E2 slice 1).
 
 ### E3 — DDMRP mode (hybrid with classic MRP)

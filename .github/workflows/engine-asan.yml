@@ -68,7 +68,11 @@ jobs:
         run: |
           export FREPPLE_DATE_STYLE="day-month-year"
           export ASAN_OPTIONS="detect_leaks=0:halt_on_error=1:abort_on_error=1"
-          ./test/runtest.py
+          # Exclude the stress scenario (test/stress_1): it solves ~24k operationplans,
+          # which under a Debug+ASan build is ~1000x slower (allocation-heavy at scale,
+          # ~24 min) than Release. It is a perf/scale gate, not a memory-safety one - it
+          # runs in the optimised ubuntu24 (Release) suite instead.
+          ./test/runtest.py -e stress_1
 
       - name: Keep logs
         uses: actions/upload-artifact@v6

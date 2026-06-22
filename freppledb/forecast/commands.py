@@ -1105,6 +1105,10 @@ def createForecastSolver(db, task=None):
                     kw[key] = int(parameter_value) * 86400
                 except Exception:
                     logger.error('Incorrect parameter "forecast.%s"' % key)
+            elif key == "MachineLearning_engine":
+                # Consumed by the mlforecast app, not the statistical forecast
+                # solver — skip it here so it isn't flagged as unknown.
+                pass
             else:
                 try:
                     kw[key] = float(parameter_value)

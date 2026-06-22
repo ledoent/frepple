@@ -25,7 +25,15 @@
 frepple_app = {
     "summary": "machine learning forecast",
     "description": """
-        <p>Machine learning forecast generation based on Orbit library.</p>
+        <p>Machine learning forecast generation.</p>
+        <p>Two engines are available, selected with the
+    <em>forecast.MachineLearning_engine</em> parameter:</p>
+        <ul>
+          <li><em>orbit</em> (default): a per-series Bayesian model based on the
+    Orbit library.</li>
+          <li><em>nixtla</em>: a single global gradient-boosting model
+    (LightGBM via the mlforecast library) trained across all series.</li>
+        </ul>
          <p>This app is still in beta-testing and would require the frePPLe team to
     help to make it production ready.</p>
         """,

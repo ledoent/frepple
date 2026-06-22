@@ -4,7 +4,44 @@
 Next.js, expose a clean API + websocket/event layer, and rework the Odoo integration —
 **without rewriting the C++ solver or forecast engines.**
 
-**Status:** Draft v1 — planning artifact. Update as phases complete.
+**Status:** Active — major tracks delivered. Last roadmap review **2026-06-22**.
+
+---
+
+## 0. Progress dashboard (what's shipped)
+
+A live status across the two parallel tracks. PR numbers are on `ledoent/frepple` → `modernization`.
+
+### Engine track (§7)
+| Phase | State | Evidence |
+| --- | --- | --- |
+| **E1** — review + sanitizer baseline | ✅ **done** | ASan **blocking-clean** (`engine-asan.yml`); UBSan **blocking-clean** (`engine-ubsan.yml`, vptr excluded for the MetaClass RTTI, one real null member-call fixed, iterator-idiom annotated) (#14, #15); clang-tidy advisory gate + 54-finding baseline (#15); engine review report — 99-TODO triage + risk hotspots, with verification corrections (#16) |
+| **E2** — test hardening (rewrite oracle) | ✅ **done** | structural-invariant oracle (`test/invariants.py`) + 11-model sweep (#18, #19); 24k-operationplan stress scenario with time+memory regression gate (#20); **deterministic operationplan ordering** — replaced a non-reproducible pointer tie-breaker with a creation-sequence, which **unblocked byte-exact pegging golden coverage** (pegging_4/5/7) and makes plans reproducible run-to-run (#21, #17 finding) |
+| **E3** — DDMRP mode | ⬜ **next** | not started — the larger feature project (≈ a quarter); see §7 E3 |
+| **E4** — Rust pilot + decision | ✅ **done** | json-kernel PyO3 pilot + **all 5 forecast methods** ported to Rust with byte-exact golden parity (#7, #8); flag-gated link (`FREPPLE_RUST_FORECAST`); **flipped ON in staging** — Rust is the forecast source of truth there (#12, #13); optimisation-solver spike evaluated (good_lp/microlp, #9). **Decision: conditional GO** for isolated numeric leaf modules, **NO-GO** for a wholesale engine rewrite (`tools/modernization/rust-pilot.md`) |
+
+### UI / API track (§4)
+| Phase | State | Evidence |
+| --- | --- | --- |
+| **0** — API foundation | 🟡 partial | output JSON endpoints enriched (inventory/demand/resource/pegging via `PivotJSONStreamView`); input CRUD exists. Open: OpenAPI schema + typed client, remaining CRUD-gap polish |
+| **1A** — Execute / plan-run + WS | ✅ **done** | live runplan screen, websocket task-progress (replaces polling), in-place re-plan loop |
+| **1B** — Forecast Editor | ✅ **done** | Forecast pivot screen (live on staging) |
+| **2** — Odoo integration rework | ⬜ not started | |
+| **3** — Expand the new UI | ✅ **largely done** | Inventory, Demand, Resource (generic `PivotScreen`); **Demand Pegging Gantt** (read → drag-to-reschedule → re-plan loop, #3/#6/#10); Orders with inline CRUD; Problems/Constraints (#11). Open follow-on: Order **Create** (needs operation/item picker) |
+| **3.5** — Deployment (Helm) | ✅ **done** | live at **frepple-staging.hz.ledoweb.com** (k3s hetzner-ledo); Helm chart `deploy/helm/frepple/`; CI image builds on ledoent ARC runners (#2 e2e guardrail, deploy-staging) |
+| **4** — Go/Rust BFF | ⬜ optional | only on measured need |
+
+### Standout engineering wins
+- **Reproducible plans** — the operationplan pointer-tie-breaker fix (#21) removes a long-standing source of run-to-run/platform output variance.
+- **Two blocking sanitizer gates** (ASan + UBSan) + an advisory static-analysis gate over the C++ engine, all green.
+- **Rust forecast in production-shaped staging**, byte-parity-gated, reversible by a flag.
+- A **structural-invariant oracle** that's environment-robust where byte-exact golden can't be — the basis for any future engine change.
+
+### Next up
+1. **Engine E3 — DDMRP mode** (the headline remaining feature; §7 E3).
+2. **Phase 0 finish** — OpenAPI schema + typed TS client; close remaining CRUD gaps.
+3. **Order Create** screen (completes Phase 3 CRUD).
+4. **Phase 2 — Odoo rework** (when prioritised).
 
 ---
 
@@ -146,7 +183,7 @@ Phases 1A/1B can run in parallel after Phase 0.
 - [ ] JWT auth round-trip works for both a REST call and a WS connect; unauthorized = 401/403.
 - [ ] No DRF serializer on any output endpoint (grep gate) — SQL path only.
 
-### Phase 1A — Websocket beachhead: Execute / plan-run screen
+### Phase 1A — Websocket beachhead: Execute / plan-run screen  ✅ DONE
 **Build:** Re-enable `WebsocketService` in `asgi.py`; `ws/tasks/` + `ws/tasks/{id}/log/`
 channels; minimal Next.js page that launches a plan and shows **live** progress + log tail.
 **Why:** smallest surface that proves the whole event stack end-to-end (auth → channel → React).
@@ -157,7 +194,7 @@ channels; minimal Next.js page that launches a plan and shows **live** progress 
 - [ ] Two browsers see the same live updates (channel fan-out works).
 - [ ] Token-expired connection is rejected and reconnects cleanly.
 
-### Phase 1B — First real screen: Forecast Editor
+### Phase 1B — First real screen: Forecast Editor  ✅ DONE
 **Build:** Next.js Forecast Editor against `/api/v1/output/forecast/` (read) +
 existing `ForecastService`/`FlushService` async path (write). Modern editable pivot
 (TanStack Table), Recharts/D3v7 charts, bulk edit (copy/fill/±%), outlier highlighting,
@@ -184,7 +221,7 @@ fix the confirmed N+1s with set-based prefetch; split into (a) scheduled master-
 - [ ] Delta sync: changing 1 BOM re-syncs only that BOM, not the full model.
 - [ ] End-to-end sync wall-time recorded before/after on a representative dataset.
 
-### Phase 3 — Expand the new UI (value order)
+### Phase 3 — Expand the new UI (value order)  ✅ LARGELY DONE
 **Build, one screen at a time, each its own mini-gate:**
 1. **Inventory/Buffer report** — reuse `/api/v1/output/inventory/`; sticky headers, virtualized grid.
 2. **Demand Pegging Gantt** — the ambitious one: interactive Gantt with **drag-drop rescheduling**
@@ -229,7 +266,7 @@ render spec. Sequenced **read-only first**; the ambitious parts are split out:
   Deliberately *not* a precise client-side ghost-bar simulation (it can't match the engine + would mislead);
   the re-plan gives the authoritative downstream. Engine-backed E2E for the full loop.
 
-### Phase 3.5 — Deployment: Helm chart + load-balanced images
+### Phase 3.5 — Deployment: Helm chart + load-balanced images  ✅ DONE
 **Context — data/state model (from code audit):**
 - **PostgreSQL is the single source of truth.** Multi-DB router for scenarios. *No Redis today;
   no key-value store.* Cache = per-process `LocMemCache` (not shared). Sessions = `signed_cookies`
@@ -390,7 +427,7 @@ critical path). Sequenced E1 → E4.
   Missing: buffer zones (R/Y/G), ADU, Net Flow Position, qualified/spike demand, dynamic buffer
   adjustment. Adding a hybrid `solver_ddmrp` mode is a **feature project (~a quarter)**, not a rewrite.
 
-### E1 — Thorough code review + sanitizer baseline
+### E1 — Thorough code review + sanitizer baseline  ✅ DONE
 **Build:** Structured review of engine + Django (debt catalog, the scary TODOs triaged); run the
 already-wired **ASan/UBSan** over the golden test suite; run clang-tidy/analyzer; document findings.
 **Verification gate:**
@@ -406,7 +443,7 @@ already-wired **ASan/UBSan** over the golden test suite; run clang-tidy/analyzer
 - [x] clang-tidy baseline captured (advisory gate `engine-clang-tidy.yml`, bug-finder check set in
       `.clang-tidy`); `tools/modernization/clang-tidy-baseline.md`. "No new findings" tightening → E2.
 
-### E2 — Test hardening (the rewrite-safety oracle)
+### E2 — Test hardening (the rewrite-safety oracle)  ✅ DONE
 **Build:** Fill the pegging hole (multi-level BOM, circular supply, coalescence, alternate flows);
 add **structural assertions** to the test runner (capacity never exceeded, demand≤due-or-flagged);
 add a stress scenario (10k+ operationplans) with time/memory baselines; add negative/infeasible cases.
@@ -441,7 +478,7 @@ add a stress scenario (10k+ operationplans) with time/memory baselines; add nega
       not a memory-safety one (the smaller golden tests cover ASan/UBSan).
 - [x] Sanitizer CI job added and green on the branch (ASan + UBSan blocking, clang-tidy advisory — E2 slice 1).
 
-### E3 — DDMRP mode (hybrid with classic MRP)
+### E3 — DDMRP mode (hybrid with classic MRP)  ⬜ NEXT
 **Build:** Data model (buffer zone profiles, ADU config, spike horizon — via new fields/attributes);
 ADU + Net Flow Position calculation; a `solver_ddmrp` path with per-buffer opt-in; reuse the existing
 `getDecoupledLeadTime`. Classic-MRP buffers and DDMRP buffers coexist in one model.
@@ -451,7 +488,7 @@ ADU + Net Flow Position calculation; a `solver_ddmrp` path with per-buffer opt-i
 - [ ] Spike-horizon qualification demonstrably filters order spikes from the buffer signal.
 - [ ] Decoupling point stops BOM explosion at the buffer (vs. classic full explosion) — verified on a multi-level model.
 
-### E4 — Rust pilot + decision (evidence-based)
+### E4 — Rust pilot + decision (evidence-based)  ✅ DONE
 **Build:** Pilot ONE isolated module in Rust via **PyO3** — preferred candidate is the **new DDMRP
 solver** (greenfield → zero regression risk) OR the **forecast module** (`src/forecast/`, ~5.6k LOC,
 most isolated). Measure dev experience, safety (no manual refcount/ptr bugs), perf vs C++.

@@ -28,6 +28,7 @@ It is recommended not to edit this file!
 Instead put all your settings in the file FREPPLE_CONFDIR/djangosettings.py.
 
 """
+
 import locale
 import os
 import sys
@@ -38,7 +39,6 @@ import pathlib
 from django.contrib import messages
 import django.contrib.admindocs
 from django.utils.translation import gettext_lazy as _
-
 
 # FREPPLE_APP directory
 if "FREPPLE_APP" in os.environ:
@@ -104,7 +104,9 @@ DEBUG_JS = DEBUG
 # will match example.com, www.example.com, and any other subdomain of example.com.
 # A value of '*' will match anything, effectively disabling this feature.
 # This option is only active when DEBUG = false.
-ALLOWED_HOSTS = ["*"]
+# Space-separated FREPPLE_ALLOWED_HOSTS narrows this for a deployment (the Helm
+# chart sets it to the public host); defaults to '*' for dev/test.
+ALLOWED_HOSTS = os.environ.get("FREPPLE_ALLOWED_HOSTS", "*").split() or ["*"]
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -169,6 +171,29 @@ APPEND_SLASH = False
 
 ASGI_APPLICATION = "freppledb.asgi.application"
 WSGI_APPLICATION = "freppledb.wsgi.application"
+
+# Channel layer for websockets (Phase 1A live task progress / log tail).
+# Redis is used when REDIS_HOST is set - the load-balanced deployment target,
+# where the worker process publishes progress that web pods relay to browsers.
+# Without REDIS_HOST an in-memory layer keeps single-process dev and the test
+# suite working without extra infrastructure (it does NOT cross processes, so
+# multi-process deployments must configure Redis).
+if os.environ.get("REDIS_HOST"):
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": {
+                "hosts": [
+                    (
+                        os.environ["REDIS_HOST"],
+                        int(os.environ.get("REDIS_PORT", "6379")),
+                    )
+                ]
+            },
+        }
+    }
+else:
+    CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
 ROOT_URLCONF = "freppledb.urls"
 if "FREPPLE_STATIC" in os.environ:
     STATIC_ROOT = os.environ["FREPPLE_STATIC"]
@@ -443,6 +468,17 @@ REST_FRAMEWORK = {
         "rest_framework.renderers.JSONRenderer",
         "freppledb.common.api.renderers.freppleBrowsableAPI",
     ),
+    # OpenAPI schema generation (drf-spectacular). Inert at request time -
+    # only used when generating the schema, so the existing API is unaffected.
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+# OpenAPI / Swagger settings for the modernization REST API (Phase 0).
+SPECTACULAR_SETTINGS = {
+    "TITLE": "frePPLe API",
+    "DESCRIPTION": "REST API for the frePPLe planning application.",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
 }
 
 # Bootstrap

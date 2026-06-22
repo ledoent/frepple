@@ -1,0 +1,19 @@
+[package]
+name = "frepple-num"
+version = "0.1.0"
+edition = "2021"
+description = "frePPLe Rust/PyO3 pilot (Engine track E4): memory-safe JSON number clamping"
+license = "MIT"
+
+[lib]
+name = "frepple_num"
+crate-type = ["cdylib", "rlib"]
+
+# pyo3 is OPTIONAL + gated behind `extension-module` so `cargo test` runs the
+# pure-logic unit tests with zero Python/toolchain dependency, while
+# `maturin build --features extension-module` produces the importable wheel.
+[dependencies]
+pyo3 = { version = "0.22", optional = true }
+
+[features]
+extension-module = ["dep:pyo3", "pyo3/extension-module"]

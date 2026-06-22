@@ -1,0 +1,99 @@
+name: Engine clang-tidy
+
+# Static-analysis baseline over the C++ engine (Engine track E1). The check set
+# (.clang-tidy) is the bug-finders only - clang-analyzer-* + high-signal
+# bugprone-* - not style. clang-tidy is parse-only (no codegen), so this is
+# lighter than the sanitizer Debug builds.
+#
+# ADVISORY: reports the finding count + breakdown in the job step-summary but
+# never fails the job (the baseline isn't zero on a large legacy codebase). It
+# tightens to "no NEW findings on changed files" (clang-tidy-diff) once the
+# baseline is triaged - tracked as E2. See tools/modernization/ubsan-baseline.md
+# for the sibling sanitizer gates.
+#
+# Path-filtered so doc/gate-only commits don't trigger it.
+
+on:
+  push:
+    branches:
+      - "modernization"
+      - "modernization/**"
+    paths:
+      - "src/**"
+      - "include/**"
+      - ".clang-tidy"
+      - ".github/workflows/engine-clang-tidy.yml"
+  pull_request:
+    paths:
+      - "src/**"
+      - "include/**"
+      - ".clang-tidy"
+      - ".github/workflows/engine-clang-tidy.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  clang-tidy:
+    name: clang-tidy (advisory)
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checking out source code
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Install packages
+        run: |
+          sudo apt update
+          sudo apt install --no-upgrade libxerces-c-dev openssl libssl-dev libpq-dev python3 python3-dev python3-venv clang-tidy
+          clang-tidy --version
+
+      - name: Configure (export compile_commands.json)
+        # No build needed - clang-tidy parses TUs from the compile DB. Configure
+        # still generates config.h (referenced by the engine headers).
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+
+      - name: Run clang-tidy over the engine (advisory)
+        # Parallel over the src/ TUs, each writing to its OWN log so concurrent
+        # writes can't interleave; then concatenate. Uses only `clang-tidy`
+        # (run-clang-tidy isn't always on PATH). Never fails the job - baseline
+        # capture only.
+        run: |
+          mkdir -p .tidy-logs
+          find src -name '*.cpp' -print0 \
+            | xargs -0 -P"$(nproc)" -I{} sh -c \
+                'clang-tidy -p build "$1" > ".tidy-logs/$(echo "$1" | tr "/." "__").log" 2>/dev/null || true' _ {}
+          cat .tidy-logs/*.log > clang-tidy.out 2>/dev/null || true
+          echo "clang-tidy run complete over $(find src -name '*.cpp' | wc -l) TUs"
+
+      - name: Summarise findings
+        if: always()
+        # A header finding is reported once per including TU; the warning line
+        # (path:line:col + check) is byte-identical across them, so `sort -u`
+        # collapses them to DISTINCT findings. The raw line count is shown too.
+        run: |
+          tidy='\[(clang-analyzer|bugprone)[a-zA-Z.-]+\]'
+          distinct=$(grep -hE ": warning: .*${tidy}" clang-tidy.out 2>/dev/null | sort -u | wc -l | tr -d ' ')
+          raw=$(grep -hcE ": warning: .*${tidy}" clang-tidy.out 2>/dev/null || echo 0)
+          {
+            echo "## clang-tidy baseline"
+            echo "distinct findings: **${distinct}**  (raw lines incl. header re-includes: ${raw})"
+            echo ''
+            echo 'By check (distinct):'
+            echo '```'
+            grep -hE ": warning: .*${tidy}" clang-tidy.out 2>/dev/null | sort -u \
+              | grep -oE "${tidy}" | sort | uniq -c | sort -rn \
+              || echo "(no findings)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Keep report
+        uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: clang-tidy-report
+          path: clang-tidy.out
+          retention-days: 7

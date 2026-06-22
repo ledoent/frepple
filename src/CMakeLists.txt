@@ -94,6 +94,33 @@ endif()
 
 add_dependencies(forecast solver)
 
+# Phase 7: build the Rust forecast staticlib (cargo) and link it into the
+# forecast lib. The numeric method bodies in timeseries.cpp then dispatch to the
+# extern "C" Rust functions behind FREPPLE_RUST_FORECAST. Default OFF => no cargo,
+# no link, the C++ engine is byte-for-byte unchanged.
+if(FREPPLE_RUST_FORECAST)
+  find_program(CARGO cargo REQUIRED)
+  set(RUST_FORECAST_DIR "${CMAKE_SOURCE_DIR}/rust/frepple-forecast")
+  set(RUST_FORECAST_LIB "${RUST_FORECAST_DIR}/target/release/libfrepple_forecast.a")
+  add_custom_command(
+    OUTPUT "${RUST_FORECAST_LIB}"
+    COMMAND "${CARGO}" build --release --manifest-path "${RUST_FORECAST_DIR}/Cargo.toml"
+    # rustc emits the staticlib without a symbol-table index on some toolchains
+    # (seen on aarch64), which GNU ld rejects ("archive has no index"). ranlib
+    # adds/refreshes the index; a no-op where one already exists (x86 CI).
+    COMMAND "${CMAKE_RANLIB}" "${RUST_FORECAST_LIB}"
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    COMMENT "Building Rust forecast staticlib (phase 7)"
+    VERBATIM
+  )
+  add_custom_target(frepple_forecast_rust DEPENDS "${RUST_FORECAST_LIB}")
+  add_dependencies(forecast frepple_forecast_rust)
+  # Dispatch to Rust + match rustc's FP (no FMA contraction) for byte parity.
+  target_compile_definitions(forecast PRIVATE FREPPLE_RUST_FORECAST=1)
+  target_compile_options(forecast PRIVATE -ffp-contract=off)
+  target_link_libraries(forecast PUBLIC "${RUST_FORECAST_LIB}")
+endif()
+
 # Main shared library
 add_library(frepple SHARED
   dllmain.cpp

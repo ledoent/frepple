@@ -21,10 +21,14 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
+import time
+
 from django.contrib.admin.views.decorators import staff_member_required
+from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.csrf import csrf_protect
+from django.views.decorators.http import require_GET
 
 from rest_framework import generics
 from rest_framework_bulk import ListBulkCreateUpdateDestroyAPIView
@@ -33,6 +37,30 @@ from rest_framework import permissions
 
 from freppledb.common.models import User
 from freppledb.common.auth import getWebserviceAuthorization
+
+
+@require_GET
+def APITokenView(request):
+    """
+    Mint a short-lived JWT for the logged-in (session) user so the same-origin
+    SPA can authenticate REST + websocket calls. The session cookie authorizes
+    this request; the token carries the username and is signed with the
+    scenario's web-token secret (so it is valid for request.database).
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({"detail": "authentication required"}, status=401)
+    ttl = 86400  # 1 day
+    # xframe_options_exempt=False so replaying this token through MultiDBMiddleware
+    # does NOT clear the session's X-Frame-Options (the middleware defaults that
+    # flag to True for legacy embedded webtokens). The same-origin SPA never
+    # embeds frepple in a frame, so it must not weaken clickjacking protection.
+    token = getWebserviceAuthorization(
+        user=request.user.username,
+        exp=ttl,
+        database=request.database,
+        xframe_options_exempt=False,
+    )
+    return JsonResponse({"token": token, "exp": round(time.time()) + ttl})
 
 
 @staff_member_required
@@ -95,6 +123,10 @@ class frePPleListCreateAPIView(ListBulkCreateUpdateDestroyAPIView):
     permission_classes = (frepplePermissionClass,)
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            # OpenAPI schema generation has no scenario request; use the base
+            # queryset so the endpoint is still introspected.
+            return super().get_queryset()
         queryset = super().get_queryset().using(self.request.database)
         return queryset
 
@@ -122,6 +154,9 @@ class frePPleRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
     permission_classes = (frepplePermissionClass,)
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            # OpenAPI schema generation has no scenario request.
+            return super().get_queryset()
         if self.request.database == "default":
             return super().get_queryset()
         else:

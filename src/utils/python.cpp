@@ -170,58 +170,64 @@ void PythonInterpreter::initialize() {
 
   // Capture global lock
   auto pythonstate = PyGILState_Ensure();
+  try {
+    if (!init) {
+      // Create the logging function.
+      // In Python3 this also creates the frepple module, by calling the
+      // createModule callback.
+      PyRun_SimpleString(
+          "import frepple, sys\n"
+          "class redirect:\n"
+          "\tdef write(self,str):\n"
+          "\t\tfrepple.log(str)\n"
+          "\tdef flush(self):\n"
+          "\t\tpass\n"
+          "sys.stdout = redirect()\n"
+          "sys.stderr = redirect()");
+    }
 
-  if (!init) {
-    // Create the logging function.
-    // In Python3 this also creates the frepple module, by calling the
-    // createModule callback.
-    PyRun_SimpleString(
-        "import frepple, sys\n"
-        "class redirect:\n"
-        "\tdef write(self,str):\n"
-        "\t\tfrepple.log(str)\n"
-        "\tdef flush(self):\n"
-        "\t\tpass\n"
-        "sys.stdout = redirect()\n"
-        "sys.stderr = redirect()");
+    if (!module)
+      throw RuntimeException("Can't initialize Python interpreter");
+
+    // Make the datetime types available
+    PyDateTime_IMPORT;
+
+    // Create python exception types
+    int nok = 0;
+    PythonLogicException =
+        PyErr_NewException((char*)"frepple.LogicException", nullptr, nullptr);
+    Py_IncRef(PythonLogicException);
+    nok += PyModule_AddObject(module, "LogicException", PythonLogicException);
+    PythonDataException =
+        PyErr_NewException((char*)"frepple.DataException", nullptr, nullptr);
+    Py_IncRef(PythonDataException);
+    nok += PyModule_AddObject(module, "DataException", PythonDataException);
+    PythonRuntimeException =
+        PyErr_NewException((char*)"frepple.RuntimeException", nullptr, nullptr);
+    Py_IncRef(PythonRuntimeException);
+    nok += PyModule_AddObject(module, "RuntimeException", PythonRuntimeException);
+
+    // Add a string constant for the version
+    nok += PyModule_AddStringConstant(module, "version",
+                                      PACKAGE_VERSION "." PACKAGE_BRANCH);
+
+    // Redirect the stderr and stdout streams of Python
+    registerGlobalMethod("log", python_log, METH_VARARGS,
+                         "Prints a string to the frePPLe log file.", false);
+
+    // A final check, performed while we still hold the GIL.
+    if (nok) throw RuntimeException("Can't initialize Python interpreter");
+  } catch (...) {
+    // Mirror the success-path release exactly before propagating. In embedded
+    // mode (init == false) the main thread intentionally retains the GIL for
+    // the process lifetime, so it must NOT be released here.
+    if (init) PyGILState_Release(pythonstate);
+    throw;
   }
 
-  if (!module) {
-    PyGILState_Release(pythonstate);
-    throw RuntimeException("Can't initialize Python interpreter");
-  }
-
-  // Make the datetime types available
-  PyDateTime_IMPORT;
-
-  // Create python exception types
-  int nok = 0;
-  PythonLogicException =
-      PyErr_NewException((char*)"frepple.LogicException", nullptr, nullptr);
-  Py_IncRef(PythonLogicException);
-  nok += PyModule_AddObject(module, "LogicException", PythonLogicException);
-  PythonDataException =
-      PyErr_NewException((char*)"frepple.DataException", nullptr, nullptr);
-  Py_IncRef(PythonDataException);
-  nok += PyModule_AddObject(module, "DataException", PythonDataException);
-  PythonRuntimeException =
-      PyErr_NewException((char*)"frepple.RuntimeException", nullptr, nullptr);
-  Py_IncRef(PythonRuntimeException);
-  nok += PyModule_AddObject(module, "RuntimeException", PythonRuntimeException);
-
-  // Add a string constant for the version
-  nok += PyModule_AddStringConstant(module, "version",
-                                    PACKAGE_VERSION "." PACKAGE_BRANCH);
-
-  // Redirect the stderr and stdout streams of Python
-  registerGlobalMethod("log", python_log, METH_VARARGS,
-                       "Prints a string to the frePPLe log file.", false);
-
-  // Release the lock
+  // Release the lock (success path). In embedded mode the GIL is intentionally
+  // kept by the main thread.
   if (init) PyGILState_Release(pythonstate);
-
-  // A final check...
-  if (nok) throw RuntimeException("Can't initialize Python interpreter");
 }
 
 void PythonInterpreter::execute(const char* cmd) {
@@ -458,7 +464,8 @@ Duration PythonData::getDuration() const {
     Py_DECREF(utf8_string);
     return t;
   } else if (obj && PyDelta_Check(obj)) {
-    PythonData r = PyObject_CallMethod(obj, "total_seconds", nullptr);
+    // PyObject_CallMethod returns a new reference; adopt it without leaking.
+    PythonData r = PythonData::fromOwned(PyObject_CallMethod(obj, "total_seconds", nullptr));
     return r.getDouble();
   } else if (PyLong_Check(obj)) {
     long result = PyLong_AsLong(obj);
@@ -1032,8 +1039,11 @@ PythonData PythonFunction::call() const {
            << (func ? PyEval_GetFuncName(func) : "nullptr") << "'\n";
     if (PyErr_Occurred()) PyErr_PrintEx(0);
   }
+  // Adopt the owned reference under the GIL (PyObject_CallFunction returns a
+  // new reference; wrapping it directly in PythonData would leak it).
+  PythonData ret = PythonData::fromOwned(result);
   PyGILState_Release(pythonstate);
-  return PythonData(result);
+  return ret;
 }
 
 PythonData PythonFunction::call(const PyObject* p) const {
@@ -1045,8 +1055,11 @@ PythonData PythonFunction::call(const PyObject* p) const {
            << (func ? PyEval_GetFuncName(func) : "nullptr") << "'\n";
     if (PyErr_Occurred()) PyErr_PrintEx(0);
   }
+  // Adopt the owned reference under the GIL (PyObject_CallFunction returns a
+  // new reference; wrapping it directly in PythonData would leak it).
+  PythonData ret = PythonData::fromOwned(result);
   PyGILState_Release(pythonstate);
-  return PythonData(result);
+  return ret;
 }
 
 PythonData PythonFunction::call(const PyObject* p, const PyObject* q) const {
@@ -1058,8 +1071,11 @@ PythonData PythonFunction::call(const PyObject* p, const PyObject* q) const {
            << (func ? PyEval_GetFuncName(func) : "nullptr") << "'\n";
     if (PyErr_Occurred()) PyErr_PrintEx(0);
   }
+  // Adopt the owned reference under the GIL (PyObject_CallFunction returns a
+  // new reference; wrapping it directly in PythonData would leak it).
+  PythonData ret = PythonData::fromOwned(result);
   PyGILState_Release(pythonstate);
-  return PythonData(result);
+  return ret;
 }
 
 extern "C" PyObject* getattro_handler(PyObject* self, PyObject* name) {

@@ -38,6 +38,7 @@ inline bool unused_function() { return PyDateTimeAPI == nullptr; }
 #include <float.h>
 
 #include <algorithm>
+#include <atomic>
 #include <condition_variable>
 #include <ctime>
 #include <forward_list>
@@ -60,6 +61,18 @@ inline bool unused_function() { return PyDateTimeAPI == nullptr; }
 using namespace std;
 
 #include <config.h>
+
+// A few container iterators intentionally form a reference to a null sentinel at
+// end() (e.g. the Timeline and Problem-list operator*). The value is never
+// dereferenced - operator++ and every caller guard against end() first - so this
+// is the same benign UB the standard library has for *v.end(). Mark just those
+// spots no_sanitize("null") so the engine-ubsan gate can be blocking without
+// flagging the idiom. A no-op in non-sanitized builds; supported by GCC + Clang.
+#if defined(__GNUC__) || defined(__clang__)
+#define FREPPLE_NO_SANITIZE_NULL __attribute__((no_sanitize("null")))
+#else
+#define FREPPLE_NO_SANITIZE_NULL
+#endif
 
 constexpr double ROUNDING_ERROR = 0.000001;
 
@@ -2645,6 +2658,25 @@ class PythonData : public DataValue {
   /* Constructor from an existing Python object. */
   PythonData(const PyObject* o) : obj(o ? const_cast<PyObject*>(o) : Py_None) {
     Py_INCREF(obj);
+  }
+
+  /* Factory that ADOPTS an already-owned ("new") reference.
+   * Unlike the PythonData(const PyObject*) constructor, this does NOT
+   * increment the refcount: the caller's owned reference is taken over and
+   * released by the resulting PythonData's destructor. Use this to wrap the
+   * result of a Python C-API call that returns a new reference (e.g.
+   * PyObject_CallFunction/CallMethod) without leaking it. A nullptr is
+   * treated as Py_None. The caller must hold the GIL. */
+  static inline PythonData fromOwned(PyObject* o) {
+    PythonData d;
+    d.setNull();
+    if (o)
+      d.obj = o;  // adopt the owned reference as-is (no INCREF)
+    else {
+      d.obj = Py_None;
+      Py_INCREF(Py_None);
+    }
+    return d;
   }
 
   /* Set the internal pointer to nullptr. */

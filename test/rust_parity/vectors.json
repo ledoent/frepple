@@ -1,0 +1,27 @@
+[
+  { "op": "clamp_to_long", "cxx": "long", "input": 42.9, "mode": "agree" },
+  { "op": "clamp_to_long", "cxx": "long", "input": -42.9, "mode": "agree" },
+  { "op": "clamp_to_long", "cxx": "long", "input": 5.0, "mode": "agree", "note": "ordinary double; the C++ inverted-bound bug returned LONG_MIN here" },
+  { "op": "clamp_to_long", "cxx": "long", "input": 0.0, "mode": "agree" },
+  { "op": "clamp_to_long", "cxx": "long", "input": 1e30, "mode": "agree" },
+  { "op": "clamp_to_long", "cxx": "long", "input": -1e30, "mode": "agree" },
+  { "op": "clamp_to_int", "cxx": "int", "input": 7.9, "mode": "agree" },
+  { "op": "clamp_to_int", "cxx": "int", "input": -7.9, "mode": "agree" },
+  { "op": "clamp_to_int", "cxx": "int", "input": 1e30, "mode": "agree" },
+  { "op": "clamp_to_int", "cxx": "int", "input": -1e30, "mode": "agree" },
+  { "op": "clamp_to_unsigned_long", "cxx": "ulong", "input": 5.5, "mode": "agree" },
+  { "op": "clamp_to_unsigned_long", "cxx": "ulong", "input": 0.0, "mode": "agree" },
+  { "op": "clamp_to_unsigned_long", "cxx": "ulong", "input": 1e30, "mode": "agree" },
+  { "op": "parse_long", "cxx": "parse_long", "input": "42", "mode": "agree" },
+  { "op": "parse_long", "cxx": "parse_long", "input": "-17", "mode": "agree" },
+  { "op": "parse_long", "cxx": "parse_long", "input": "+9", "mode": "agree" },
+  { "op": "parse_long", "cxx": "parse_long", "input": "  123abc", "mode": "agree" },
+  { "op": "parse_long", "cxx": "parse_long", "input": "abc", "mode": "agree" },
+  { "op": "parse_long", "cxx": "parse_long", "input": "", "mode": "agree" },
+
+  { "op": "clamp_to_long", "input": "nan", "mode": "rust_safe", "rust_expected": 0, "note": "C++ static_cast<long>(NaN) is undefined behaviour" },
+  { "op": "clamp_to_long", "input": "inf", "mode": "rust_safe", "rust_expected": 9223372036854775807, "note": "i64::MAX" },
+  { "op": "clamp_to_long", "input": "-inf", "mode": "rust_safe", "rust_expected": -9223372036854775808, "note": "i64::MIN" },
+  { "op": "clamp_to_unsigned_long", "input": -5.0, "mode": "rust_safe", "rust_expected": 0, "note": "C++ has no lower clamp; a negative wraps to a huge value" },
+  { "op": "clamp_to_unsigned_long", "input": "nan", "mode": "rust_safe", "rust_expected": 0, "note": "C++ NaN cast is UB" }
+]

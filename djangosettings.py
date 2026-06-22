@@ -25,6 +25,7 @@
 r"""
 Main Django configuration file.
 """
+
 import os
 import sys
 import pathlib
@@ -35,14 +36,21 @@ try:
     DEBUG = "runserver" in sys.argv
 except Exception:
     DEBUG = False
+# A deployment can force DEBUG off even when served via `runserver --insecure`
+# (FREPPLE_DEBUG=false), so a public env isn't running with tracebacks on.
+_debug_env = os.environ.get("FREPPLE_DEBUG")
+if _debug_env is not None:
+    DEBUG = _debug_env.strip().lower() in ("1", "true", "yes", "on")
 DEBUG_JS = DEBUG
 
 ADMINS = (
     # ('Your Name', 'your_email@domain.com'),
 )
 
-# Make this unique, and don't share it with anybody.
-SECRET_KEY = "%@mzit!i8b*$zc&6oev96=RANDOMSTRING"
+# Make this unique, and don't share it with anybody. A deployment should set
+# FREPPLE_SECRETKEY (the Helm chart generates and persists one per release); the
+# literal below is only a dev/test fallback and must not protect a real env.
+SECRET_KEY = os.environ.get("FREPPLE_SECRETKEY") or "%@mzit!i8b*$zc&6oev96=RANDOMSTRING"
 
 # Configuration of the frepple database
 MIN_NUMBER_OF_SCENARIOS = 2
@@ -133,6 +141,7 @@ INSTALLED_APPS = (
     "freppledb.common",
     "django_filters",
     "rest_framework",
+    "drf_spectacular",
     "django.contrib.admin",
     "freppledb.archive",
     # The next two apps allow users to run their own SQL statements on
@@ -487,7 +496,17 @@ CSRF_COOKIE_SECURE = (
 # CSRF_TRUSTED_ORIGINS = ["https://yourserver", "https://*.yourdomain.com"]
 # SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 CSRF_TRUSTED_ORIGINS = os.environ.get("FREPPLE_CSRF_TRUSTED_ORIGINS", "").split()
-SECURE_PROXY_SSL_HEADER = os.environ.get("FREPPLE_SECURE_PROXY_SSL_HEADER", "").split()
+# Django unpacks this as `header, value = SECURE_PROXY_SSL_HEADER`, so it must be
+# a 2-tuple (e.g. "HTTP_X_FORWARDED_PROTO https") or left unset. Only assign it
+# when exactly two words are given, so a misconfigured value fails loudly here
+# instead of raising ImproperlyConfigured on every request.
+_proxy_ssl = os.environ.get("FREPPLE_SECURE_PROXY_SSL_HEADER", "").split()
+if _proxy_ssl:
+    if len(_proxy_ssl) != 2:
+        raise ValueError(
+            "FREPPLE_SECURE_PROXY_SSL_HEADER must be two words ('HEADER value')"
+        )
+    SECURE_PROXY_SSL_HEADER = tuple(_proxy_ssl)
 
 # Configuration of the ftp/sftp/ftps server where to upload reports
 # Note that for SFTP protocol, the host needs to be defined

@@ -1,0 +1,17 @@
+# Keep the E2E build context lean and host-artifact-free.
+.git
+venv
+build
+logs
+node_modules
+frontend/node_modules
+frontend/.next
+# Rust build dirs are host-arch artifacts; a leaked target/ shadows the
+# in-image cargo build (CMake sees the OUTPUT present and skips it), linking
+# a wrong-arch/index-less staticlib. Force a clean cargo build inside the image.
+**/target
+**/__pycache__
+*.pyc
+bin/frepple
+bin/libfrepple.*
+.DS_Store

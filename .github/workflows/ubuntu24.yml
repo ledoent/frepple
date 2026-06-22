@@ -36,6 +36,15 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - name: Checking out source code
@@ -69,9 +78,31 @@ jobs:
         run: |
           export POSTGRES_HOST=localhost
           export POSTGRES_PORT=5432
+          export REDIS_HOST=localhost
+          export REDIS_PORT=6379
           export FREPPLE_DATE_STYLE="day-month-year"
           ./test/runtest.py
           ./frepplectl.py test freppledb --verbosity=2
+
+      - name: Generate typed API client (Phase 0 ts-client gate)
+        if: contains(github.ref_name, 'modernization') || contains(github.head_ref, 'modernization')
+        working-directory: ${{github.workspace}}
+        run: |
+          export POSTGRES_HOST=localhost
+          export POSTGRES_PORT=5432
+          ./frepplectl.py createdatabase --noinput
+          ./frepplectl.py migrate --noinput
+          ./tools/modernization/gen_api_client.sh generated
+
+      - name: Upload generated API client
+        if: contains(github.ref_name, 'modernization') || contains(github.head_ref, 'modernization')
+        uses: actions/upload-artifact@v6
+        with:
+          name: api-client
+          path: |
+            generated/openapi.yaml
+            generated/api-types.ts
+          retention-days: 7
 
       - name: Test uninstalling apps
         working-directory: ${{github.workspace}}

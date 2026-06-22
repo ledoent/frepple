@@ -1,0 +1,74 @@
+# frePPLe staging/review deploy. See deploy/helm/frepple/README or the modernization plan.
+nameOverride: ""
+
+image:
+  registry: ghcr.io/ledoent
+  app: frepple-app # engine image (e2e/Dockerfile.engine): Django + C++ engine
+  frontend: frepple-frontend # Next.js SPA (e2e/Dockerfile.frontend)
+  tag: latest
+  pullPolicy: IfNotPresent
+
+imagePullSecrets:
+  - name: ghcr-pull
+
+# Public host (same-origin: SPA + API + websockets behind one ingress).
+host: frepple-staging.hz.ledoweb.com
+
+ingress:
+  className: nginx
+  clusterIssuer: letsencrypt-prod
+  tls: true
+
+# Postgres. Default: external (the shared CNPG instance). The credentials secret
+# must contain POSTGRES_USER and POSTGRES_PASSWORD (created at deploy time from
+# the shared-db superuser). frePPLe needs superuser/CREATEDB to build its
+# scenario databases.
+postgres:
+  mode: external # external | builtin
+  external:
+    host: shared-db-rw.cnpg.svc.cluster.local
+    port: 5432
+    dbname: frepple # scenario DBs become frepple0/1/2
+    credentialsSecret: frepple-db
+  builtin:
+    image: postgres:16
+    storage: 5Gi
+    user: frepple
+    password: frepple
+    dbname: frepple
+
+redis:
+  image: redis:7
+  resources:
+    requests: { cpu: 25m, memory: 64Mi }
+    limits: { cpu: 250m, memory: 256Mi }
+
+app:
+  replicas: 1
+  # Run an initial plan on first boot so the screens have data.
+  initRunplan: true
+  # Load the demo dataset on first boot (FREPPLE_LOAD_DEMO). Set false for a
+  # blank scenario.
+  loadDemo: true
+  web:
+    resources:
+      requests: { cpu: 250m, memory: 1Gi }
+      limits: { cpu: "2", memory: 4Gi }
+  asgi:
+    resources:
+      requests: { cpu: 50m, memory: 256Mi }
+      limits: { cpu: "1", memory: 1Gi }
+
+frontend:
+  replicas: 1
+  resources:
+    requests: { cpu: 25m, memory: 128Mi }
+    limits: { cpu: 500m, memory: 512Mi }
+
+# Django SECRET_KEY (+ JWT signing). Left empty -> the chart generates one and
+# preserves it across upgrades via a lookup (templates/secret.yaml), wired into
+# the app as FREPPLE_SECRETKEY. Set explicitly to pin/share a key.
+secretKey: ""
+
+# FREPPLE_ALLOWED_HOSTS for the app. Defaults to {{ .Values.host }} when empty.
+allowedHosts: ""

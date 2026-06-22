@@ -355,9 +355,11 @@ HasProblems::EntityIterator::~EntityIterator() {
 }
 
 HasProblems::EntityIterator::EntityIterator(const EntityIterator& o) {
-  // Delete old iterator
-  this->~EntityIterator();
-  // Populate new values
+  // Note: this is a constructor, so there is no previous iterator to delete.
+  // Calling ~EntityIterator() here would read the still-uninitialized 'type'
+  // and delete a garbage union pointer (undefined behaviour). The assignment
+  // operator below does call the destructor, which is correct there because
+  // 'type' is already initialized.
   type = o.type;
   if (type == 0)
     bufIter = new Buffer::iterator(*(o.bufIter));

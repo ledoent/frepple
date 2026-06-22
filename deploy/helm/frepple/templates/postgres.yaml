@@ -1,0 +1,72 @@
+{{- if eq .Values.postgres.mode "builtin" }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ include "frepple.name" . }}-postgres
+  labels: {{- include "frepple.labels" . | nindent 4 }}
+type: Opaque
+stringData:
+  POSTGRES_USER: {{ .Values.postgres.builtin.user | quote }}
+  POSTGRES_PASSWORD: {{ .Values.postgres.builtin.password | quote }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "frepple.name" . }}-postgres
+  labels: {{- include "frepple.labels" . | nindent 4 }}
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: {{ .Values.postgres.builtin.storage }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "frepple.name" . }}-postgres
+  labels: {{- include "frepple.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  strategy: { type: Recreate }
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "frepple.name" . }}
+      app.kubernetes.io/component: postgres
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "frepple.name" . }}
+        app.kubernetes.io/component: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: {{ .Values.postgres.builtin.image }}
+          env:
+            - { name: POSTGRES_USER, value: {{ .Values.postgres.builtin.user | quote }} }
+            - { name: POSTGRES_PASSWORD, value: {{ .Values.postgres.builtin.password | quote }} }
+            - { name: POSTGRES_DB, value: {{ .Values.postgres.builtin.dbname | quote }} }
+            - { name: PGDATA, value: /var/lib/postgresql/data/pgdata }
+          ports:
+            - { name: postgres, containerPort: 5432 }
+          volumeMounts:
+            - { name: data, mountPath: /var/lib/postgresql/data }
+          readinessProbe:
+            exec: { command: ["pg_isready", "-U", {{ .Values.postgres.builtin.user | quote }}] }
+            periodSeconds: 5
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "frepple.name" . }}-postgres
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "frepple.name" . }}-postgres
+  labels: {{- include "frepple.labels" . | nindent 4 }}
+spec:
+  selector:
+    app.kubernetes.io/name: {{ include "frepple.name" . }}
+    app.kubernetes.io/component: postgres
+  ports:
+    - { name: postgres, port: 5432, targetPort: 5432 }
+{{- end }}

@@ -1,0 +1,62 @@
+name: Modernization progress
+
+# Fast, lightweight CI for the modernization effort (see MODERNIZATION_PLAN.md).
+# Tracks verification-gate progress and lints modernization tooling/code.
+# The heavy C++ engine build lives in ubuntu24.yml — this workflow stays fast.
+
+on:
+  push:
+    branches:
+      - "modernization"
+      - "modernization/**"
+  pull_request:
+    branches:
+      - master
+    paths:
+      - "tools/modernization/**"
+      - ".github/workflows/modernization.yml"
+      - "MODERNIZATION_PLAN.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  progress:
+    name: Verification-gate progress
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Evaluate modernization gates
+        run: python tools/modernization/gates.py
+
+  lint:
+    name: Lint modernization tooling
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install black (pinned to repo version)
+        run: pip install "black==26.3.1"
+      - name: Check formatting of modernization tooling
+        run: black --check --diff tools/modernization/
+
+  frontend:
+    name: Build Next.js frontend
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install + test + build (next build also typechecks)
+        working-directory: frontend
+        run: |
+          npm ci
+          npm test
+          npm run build

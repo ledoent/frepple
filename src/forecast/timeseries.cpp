@@ -25,6 +25,31 @@
 
 #include "forecast.h"
 
+#if FREPPLE_RUST_FORECAST
+#include <cstdint>
+// C ABI of the Rust forecast staticlib (rust/frepple-forecast, linked by CMake
+// when -DFREPPLE_RUST_FORECAST=ON). See tools/rust-pilot/frepple_forecast.h.
+// Scalars via out-pointers; outlier indices into a caller buffer up to *_cap
+// with the true count via *_len. Params are a small f64 array (order documented
+// in the header). All return 0 on success.
+extern "C" {
+int frepple_moving_average(const double*, size_t, double*, double*, double*,
+                           size_t*, size_t, size_t*, const double*, size_t);
+int frepple_single_exponential(const double*, size_t, double*, double*, double*,
+                               size_t*, size_t, size_t*, const double*, size_t);
+int frepple_croston(const double*, size_t, double*, double*, double*, size_t*,
+                    size_t, size_t*, const double*, size_t);
+// DoubleExp returns the level/trend state too (out_constant, out_trend).
+int frepple_double_exponential(const double*, size_t, double*, double*, double*,
+                               size_t*, size_t, size_t*, const double*, size_t,
+                               double*, double*);
+// Seasonal returns period/force/s_i + the level/trend/cycle apply-state.
+int frepple_seasonal(const double*, size_t, const double*, size_t, double*,
+                     double*, double*, unsigned int*, int*, double*, size_t,
+                     size_t*, double*, double*, unsigned int*);
+}
+#endif
+
 namespace frepple {
 
 #define ACCURACY 0.01
@@ -295,6 +320,30 @@ ForecastSolver::Metrics ForecastSolver::MovingAverage::generateForecast(
     const Forecast* fcst, vector<ForecastBucketData>& bucketdata,
     short firstbckt, vector<double>& timeseries, unsigned int count,
     ForecastSolver* solver) {
+#if FREPPLE_RUST_FORECAST
+  // Phase 7: the numeric core runs in Rust (rust/frepple-forecast). timeseries
+  // holds `count` data points at [0..count-1] (a trailing 0 placeholder at
+  // [count]) - exactly what the Rust port + parity reference consume. The engine
+  // model mutation (outlier problems, applyForecast) stays in C++ below.
+  double params[4] = {static_cast<double>(order),
+                      ForecastSolver::Forecast_maxDeviation,
+                      ForecastSolver::Forecast_SmapeAlfa,
+                      static_cast<double>(solver->getForecastSkip())};
+  vector<size_t> outl(count + 1);
+  size_t olen = 0;
+  double r_smape = 0.0, r_stddev = 0.0, r_avg = 0.0;
+  frepple_moving_average(timeseries.data(), count, &r_smape, &r_stddev, &r_avg,
+                         outl.data(), outl.size(), &olen, params, 4);
+  avg = r_avg;
+  for (size_t k = 0; k < olen && k < outl.size(); ++k)
+    new ProblemOutlier(
+        bucketdata[outl[k] + firstbckt].getOrCreateForecastBucket(), this, true);
+  if (solver->getLogLevel() > 0)
+    logger << (fcst ? fcst->getName() : "") << ": moving average (rust) : "
+           << "smape " << r_smape << ", forecast " << avg
+           << ", standard deviation " << r_stddev << '\n';
+  return ForecastSolver::Metrics(r_smape, r_stddev, false);
+#else
   double error_smape, error_smape_weights;
   auto* clean_history = new double[count + 1];
 
@@ -352,8 +401,8 @@ ForecastSolver::Metrics ForecastSolver::MovingAverage::generateForecast(
       if (i >= solver->getForecastSkip() && i < count &&
           fabs(avg + actual) > ROUNDING_ERROR) {
         error_smape +=
-            fabs(avg - actual) / fabs(avg + actual) * weight[count - i];
-        error_smape_weights += weight[count - i];
+            fabs(avg - actual) / fabs(avg + actual) * smapeWeight(count - i);
+        error_smape_weights += smapeWeight(count - i);
       }
     }
 
@@ -381,6 +430,7 @@ ForecastSolver::Metrics ForecastSolver::MovingAverage::generateForecast(
            << ", standard deviation " << standarddeviation << '\n';
   delete[] clean_history;
   return ForecastSolver::Metrics(error_smape, standarddeviation, false);
+#endif
 }
 
 void ForecastSolver::MovingAverage::applyForecast(
@@ -421,6 +471,31 @@ ForecastSolver::Metrics ForecastSolver::SingleExponential::generateForecast(
     const Forecast* fcst, vector<ForecastBucketData>& bucketdata,
     short firstbckt, vector<double>& timeseries, unsigned int count,
     ForecastSolver* solver) {
+#if FREPPLE_RUST_FORECAST
+  // Phase 7: numeric core in Rust. Constant forecast (f_i) so the scalar ABI
+  // suffices; applyForecast writes f_i to every bucket as in the C++ path.
+  double params[7] = {initial_alfa,
+                      min_alfa,
+                      max_alfa,
+                      ForecastSolver::Forecast_maxDeviation,
+                      ForecastSolver::Forecast_SmapeAlfa,
+                      static_cast<double>(solver->getForecastSkip()),
+                      static_cast<double>(solver->getForecastIterations())};
+  vector<size_t> outl(count + 1);
+  size_t olen = 0;
+  double r_smape = 0.0, r_stddev = 0.0, r_fc = 0.0;
+  frepple_single_exponential(timeseries.data(), count, &r_smape, &r_stddev,
+                             &r_fc, outl.data(), outl.size(), &olen, params, 7);
+  f_i = r_fc;
+  for (size_t k = 0; k < olen && k < outl.size(); ++k)
+    new ProblemOutlier(
+        bucketdata[outl[k] + firstbckt].getOrCreateForecastBucket(), this, true);
+  if (solver->getLogLevel() > 0)
+    logger << (fcst ? fcst->getName() : "") << ": single exponential (rust) : "
+           << "smape " << r_smape << ", forecast " << f_i
+           << ", standard deviation " << r_stddev << '\n';
+  return ForecastSolver::Metrics(r_smape, r_stddev, false);
+#else
   // Verify whether this is a valid forecast method.
   //   - We need at least 5 buckets after the warmup period.
   if (count < solver->getForecastSkip() + 5)
@@ -513,14 +588,14 @@ ForecastSolver::Metrics ForecastSolver::SingleExponential::generateForecast(
                   true);
           }
         }
-        sum_12 += df_dalfa_i * (history_i - f_i) * weight[count - i];
-        sum_11 += df_dalfa_i * df_dalfa_i * weight[count - i];
+        sum_12 += df_dalfa_i * (history_i - f_i) * smapeWeight(count - i);
+        sum_11 += df_dalfa_i * df_dalfa_i * smapeWeight(count - i);
         if (i >= solver->getForecastSkip()) {
-          error += (f_i - history_i) * (f_i - history_i) * weight[count - i];
+          error += (f_i - history_i) * (f_i - history_i) * smapeWeight(count - i);
           if (fabs(f_i + history_i) > ROUNDING_ERROR) {
             error_smape +=
-                fabs(f_i - history_i) / (f_i + history_i) * weight[count - i];
-            error_smape_weights += weight[count - i];
+                fabs(f_i - history_i) / (f_i + history_i) * smapeWeight(count - i);
+            error_smape_weights += smapeWeight(count - i);
           }
         }
       }
@@ -590,6 +665,7 @@ ForecastSolver::Metrics ForecastSolver::SingleExponential::generateForecast(
            << ", forecast " << f_i << ", standard deviation "
            << best_standarddeviation << '\n';
   return ForecastSolver::Metrics(best_smape, best_standarddeviation, false);
+#endif
 }
 
 void ForecastSolver::SingleExponential::applyForecast(
@@ -634,6 +710,36 @@ ForecastSolver::Metrics ForecastSolver::DoubleExponential::generateForecast(
     const Forecast* fcst, vector<ForecastBucketData>& bucketdata,
     short firstbckt, vector<double>& timeseries, unsigned int count,
     ForecastSolver* solver) {
+#if FREPPLE_RUST_FORECAST
+  // Phase 7: numeric core in Rust. Level+trend: applyForecast extrapolates per
+  // bucket, so the Rust returns constant_i + trend_i (not just their sum).
+  double params[10] = {initial_alfa,
+                      min_alfa,
+                      max_alfa,
+                      initial_gamma,
+                      min_gamma,
+                      max_gamma,
+                      ForecastSolver::Forecast_maxDeviation,
+                      ForecastSolver::Forecast_SmapeAlfa,
+                      static_cast<double>(solver->getForecastSkip()),
+                      static_cast<double>(solver->getForecastIterations())};
+  vector<size_t> outl(count + 1);
+  size_t olen = 0;
+  double r_smape = 0.0, r_stddev = 0.0, r_fc = 0.0, r_const = 0.0, r_trend = 0.0;
+  frepple_double_exponential(timeseries.data(), count, &r_smape, &r_stddev,
+                             &r_fc, outl.data(), outl.size(), &olen, params, 10,
+                             &r_const, &r_trend);
+  constant_i = r_const;
+  trend_i = r_trend;
+  for (size_t k = 0; k < olen && k < outl.size(); ++k)
+    new ProblemOutlier(
+        bucketdata[outl[k] + firstbckt].getOrCreateForecastBucket(), this, true);
+  if (solver->getLogLevel() > 0)
+    logger << (fcst ? fcst->getName() : "") << ": double exponential (rust) : "
+           << "smape " << r_smape << ", forecast " << (constant_i + trend_i)
+           << ", standard deviation " << r_stddev << '\n';
+  return ForecastSolver::Metrics(r_smape, r_stddev, false);
+#else
   // Verify whether this is a valid forecast method.
   //   - We need at least 5 buckets after the warmup period.
   if (count < solver->getForecastSkip() + 5)
@@ -778,24 +884,24 @@ ForecastSolver::Metrics ForecastSolver::DoubleExponential::generateForecast(
             (1 - gamma) * d_trend_d_gamma;
         d_forecast_d_alfa = d_constant_d_alfa + d_trend_d_alfa;
         d_forecast_d_gamma = d_constant_d_gamma + d_trend_d_gamma;
-        sum11 += weight[count - i] * d_forecast_d_alfa * d_forecast_d_alfa;
-        sum12 += weight[count - i] * d_forecast_d_alfa * d_forecast_d_gamma;
-        sum22 += weight[count - i] * d_forecast_d_gamma * d_forecast_d_gamma;
-        sum13 += weight[count - i] * d_forecast_d_alfa *
+        sum11 += smapeWeight(count - i) * d_forecast_d_alfa * d_forecast_d_alfa;
+        sum12 += smapeWeight(count - i) * d_forecast_d_alfa * d_forecast_d_gamma;
+        sum22 += smapeWeight(count - i) * d_forecast_d_gamma * d_forecast_d_gamma;
+        sum13 += smapeWeight(count - i) * d_forecast_d_alfa *
                  (history_i - constant_i - trend_i);
-        sum23 += weight[count - i] * d_forecast_d_gamma *
+        sum23 += smapeWeight(count - i) * d_forecast_d_gamma *
                  (history_i - constant_i - trend_i);
         if (i >=
             solver
                 ->getForecastSkip())  // Don't measure during the warmup period
         {
           error += (constant_i + trend_i - history_i) *
-                   (constant_i + trend_i - history_i) * weight[count - i];
+                   (constant_i + trend_i - history_i) * smapeWeight(count - i);
           if (fabs(constant_i + trend_i + history_i) > ROUNDING_ERROR) {
             error_smape += fabs(constant_i + trend_i - history_i) /
                            fabs(constant_i + trend_i + history_i) *
-                           weight[count - i];
-            error_smape_weights += weight[count - i];
+                           smapeWeight(count - i);
+            error_smape_weights += smapeWeight(count - i);
           }
         }
       }
@@ -889,6 +995,7 @@ ForecastSolver::Metrics ForecastSolver::DoubleExponential::generateForecast(
            << ", forecast " << (trend_i + constant_i) << ", standard deviation "
            << best_standarddeviation << '\n';
   return ForecastSolver::Metrics(best_smape, best_standarddeviation, false);
+#endif
 }
 
 void ForecastSolver::DoubleExponential::applyForecast(
@@ -1006,6 +1113,47 @@ ForecastSolver::Metrics
                                                 // this method
     (const Forecast* fcst, vector<ForecastBucketData>&, short,
      vector<double>& timeseries, unsigned int count, ForecastSolver* solver) {
+#if FREPPLE_RUST_FORECAST
+  // Phase 7: numeric core in Rust. Seasonal carries level/trend/cycle state into
+  // applyForecast (L_i/T_i/cycleindex/S_i), so the Rust returns it - byte-parity
+  // verified against the C++ reference (test_forecast_parity). No outlier
+  // detection in this method, so nothing model-mutating to recreate here.
+  // No seasonality (period 0) comes back as smape=DBL_MAX, so the dispatch loop
+  // never selects Seasonal and applyForecast is never reached with period 0.
+  double params[14] = {initial_alfa,
+                      min_alfa,
+                      max_alfa,
+                      initial_beta,
+                      min_beta,
+                      max_beta,
+                      gamma,
+                      static_cast<double>(min_period),
+                      static_cast<double>(max_period),
+                      min_autocorrelation,
+                      max_autocorrelation,
+                      ForecastSolver::Forecast_SmapeAlfa,
+                      static_cast<double>(solver->getForecastSkip()),
+                      static_cast<double>(solver->getForecastIterations())};
+  double s_i_buf[80];
+  size_t s_i_len = 0;
+  double r_smape = 0.0, r_stddev = 0.0, r_fc = 0.0, r_l = 0.0, r_t = 0.0;
+  unsigned int r_period = 0, r_cycle = 0;
+  int r_force = 0;
+  frepple_seasonal(timeseries.data(), count, params, 14, &r_smape, &r_stddev,
+                   &r_fc, &r_period, &r_force, s_i_buf, 80, &s_i_len, &r_l, &r_t,
+                   &r_cycle);
+  period = static_cast<unsigned short>(r_period);
+  L_i = r_l;
+  T_i = r_t;
+  cycleindex = r_cycle;
+  for (size_t i = 0; i < s_i_len && i < 80; ++i) S_i[i] = s_i_buf[i];
+  if (solver->getLogLevel() > 0)
+    logger << (fcst ? fcst->getName() : "") << ": seasonal (rust) : "
+           << "smape " << r_smape << ", forecast " << r_fc
+           << ", standard deviation " << r_stddev << ", period " << period
+           << '\n';
+  return ForecastSolver::Metrics(r_smape, r_stddev, r_force != 0);
+#else
   // Check for seasonal cycles
   detectCycle(timeseries, count);
 
@@ -1139,20 +1287,20 @@ ForecastSolver::Metrics
       d_forecast_d_beta = (d_L_d_beta + d_T_d_beta) * S_i[cycleindex] +
                           (L_i + T_i) * d_S_d_beta[cycleindex];
       forecast_i = (L_i + T_i) * S_i[cycleindex];
-      sum11 += weight[count - i] * d_forecast_d_alfa * d_forecast_d_alfa;
-      sum12 += weight[count - i] * d_forecast_d_alfa * d_forecast_d_beta;
-      sum22 += weight[count - i] * d_forecast_d_beta * d_forecast_d_beta;
-      sum13 += weight[count - i] * d_forecast_d_alfa * (actual - forecast_i);
-      sum23 += weight[count - i] * d_forecast_d_beta * (actual - forecast_i);
+      sum11 += smapeWeight(count - i) * d_forecast_d_alfa * d_forecast_d_alfa;
+      sum12 += smapeWeight(count - i) * d_forecast_d_alfa * d_forecast_d_beta;
+      sum22 += smapeWeight(count - i) * d_forecast_d_beta * d_forecast_d_beta;
+      sum13 += smapeWeight(count - i) * d_forecast_d_alfa * (actual - forecast_i);
+      sum23 += smapeWeight(count - i) * d_forecast_d_beta * (actual - forecast_i);
       if (i >=
           solver->getForecastSkip())  // Don't measure during the warmup period
       {
         double fcst = (L_i + T_i) * S_i[cycleindex];
-        error += (fcst - actual) * (fcst - actual) * weight[count - i];
+        error += (fcst - actual) * (fcst - actual) * smapeWeight(count - i);
         if (fabs(fcst + actual) > ROUNDING_ERROR) {
           error_smape +=
-              fabs(fcst - actual) / fabs(fcst + actual) * weight[count - i];
-          error_smape_weights += weight[count - i];
+              fabs(fcst - actual) / fabs(fcst + actual) * smapeWeight(count - i);
+          error_smape_weights += smapeWeight(count - i);
           standarddeviation += (fcst - actual) * (fcst - actual);
         }
       }
@@ -1259,6 +1407,7 @@ ForecastSolver::Metrics
   // This enforces the use of the seasonal method.
   return ForecastSolver::Metrics(best_smape, best_standarddeviation,
                                  autocorrelation > max_autocorrelation);
+#endif
 }
 
 void ForecastSolver::Seasonal::applyForecast(
@@ -1308,6 +1457,31 @@ ForecastSolver::Metrics ForecastSolver::Croston::generateForecast(
     const Forecast* fcst, vector<ForecastBucketData>& bucketdata,
     short firstbckt, vector<double>& timeseries, unsigned int count,
     ForecastSolver* solver) {
+#if FREPPLE_RUST_FORECAST
+  // Phase 7: numeric core in Rust. Constant forecast (f_i); upper-only outliers
+  // are returned as indices and recreated as ProblemOutlier here.
+  double params[7] = {min_alfa,
+                      max_alfa,
+                      decay_rate,
+                      ForecastSolver::Forecast_maxDeviation,
+                      ForecastSolver::Forecast_SmapeAlfa,
+                      static_cast<double>(solver->getForecastSkip()),
+                      static_cast<double>(solver->getForecastIterations())};
+  vector<size_t> outl(count + 1);
+  size_t olen = 0;
+  double r_smape = 0.0, r_stddev = 0.0, r_fc = 0.0;
+  frepple_croston(timeseries.data(), count, &r_smape, &r_stddev, &r_fc,
+                  outl.data(), outl.size(), &olen, params, 7);
+  f_i = r_fc;
+  for (size_t k = 0; k < olen && k < outl.size(); ++k)
+    new ProblemOutlier(
+        bucketdata[outl[k] + firstbckt].getOrCreateForecastBucket(), this, true);
+  if (solver->getLogLevel() > 0)
+    logger << (fcst ? fcst->getName() : "") << ": croston (rust) : "
+           << "smape " << r_smape << ", forecast " << f_i
+           << ", standard deviation " << r_stddev << '\n';
+  return ForecastSolver::Metrics(r_smape, r_stddev, false);
+#else
   // Count non-zero buckets
   double nonzero = 0.0;
   double totalsum = 0.0;
@@ -1402,8 +1576,8 @@ ForecastSolver::Metrics ForecastSolver::Croston::generateForecast(
         {
           if (fabs(f_i + history_i) > ROUNDING_ERROR) {
             error_smape += fabs(f_i - history_i) / fabs(f_i + history_i) *
-                           weight[count - i];
-            error_smape_weights += weight[count - i];
+                           smapeWeight(count - i);
+            error_smape_weights += smapeWeight(count - i);
           }
         }
       }
@@ -1460,6 +1634,7 @@ ForecastSolver::Metrics ForecastSolver::Croston::generateForecast(
            << ", forecast " << f_i << ", standard deviation "
            << best_standarddeviation << '\n';
   return ForecastSolver::Metrics(best_smape, best_standarddeviation, false);
+#endif
 }
 
 void ForecastSolver::Croston::applyForecast(

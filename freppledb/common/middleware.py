@@ -282,6 +282,13 @@ class MultiDBMiddleware:
                             # Not a valid API token
                             logger.error(f"Invalid API key: {e}")
                             return HttpResponseForbidden(f"Invalid API key: {e}")
+                    # Block deactivated accounts. The token branch authenticates
+                    # directly (bypassing the auth backend), so is_active is not
+                    # checked anywhere else here - a still-valid token for a
+                    # deactivated user would otherwise keep working.
+                    if not user.is_active:
+                        logger.error("Inactive user in webtoken")
+                        return HttpResponseForbidden("Account is inactive")
                     user.backend = settings.AUTHENTICATION_BACKENDS[0]
                     login(request, user)
                     request.user = user

@@ -1,0 +1,25 @@
+# Engine-backed overlay: swaps the web roles to the frePPLe engine image so real
+# planning works (runplan -> live task progress). Use together with the base:
+#   docker compose -f e2e/docker-compose.yml -f e2e/docker-compose.engine.yml up --build
+#
+# web-wsgi launches runplan (the worker shells out to the `frepple` executable);
+# progress is broadcast via Redis and relayed by web-asgi to the browser.
+services:
+  web-wsgi:
+    image: frepple-e2e-engine
+    build:
+      context: ..
+      dockerfile: e2e/Dockerfile.engine
+    # Compute an initial plan on startup so the C++ engine is warm (CPython +
+    # demo dataset loaded) before the first test-driven runplan, and so the
+    # Redis->websocket broadcast path is exercised once. Removes the cold-start
+    # race where the live-progress test launched a plan faster than a freshly
+    # built engine could complete + broadcast its terminal status.
+    environment:
+      FREPPLE_INIT_RUNPLAN: "1"
+
+  web-asgi:
+    image: frepple-e2e-engine
+    build:
+      context: ..
+      dockerfile: e2e/Dockerfile.engine

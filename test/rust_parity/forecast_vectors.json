@@ -1,0 +1,39 @@
+[
+  { "name": "constant", "history": [10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10] },
+  { "name": "linear_trend", "history": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] },
+  { "name": "outlier_spike", "history": [10, 11, 9, 10, 12, 8, 10, 11, 9, 500, 10, 11, 9, 10, 12] },
+  { "name": "two_outliers", "history": [20, 21, 19, 22, 18, 300, 20, 21, 19, 22, 18, -200, 20, 21, 19, 22] },
+  { "name": "intermittent", "history": [0, 0, 5, 0, 0, 0, 8, 0, 0, 3, 0, 0, 0, 0, 6, 0, 0, 2] },
+  { "name": "noisy", "history": [23, 19, 27, 31, 18, 22, 29, 17, 25, 30, 21, 16, 28, 24, 20, 26, 33, 15, 22, 27] },
+  { "name": "fractional", "history": [1.5, 2.25, 3.125, 2.75, 4.0, 3.5, 2.875, 4.125, 3.75, 5.0, 4.25, 3.625] },
+  { "name": "short_below_skip", "history": [4, 5, 6] },
+  { "name": "long_over_maxbuckets", "generate": { "n": 800, "base": 100, "mod": 7 } },
+  { "name": "long_with_trend", "generate": { "n": 650, "base": 50, "mod": 13 } },
+
+  { "name": "se_constant", "method": "single_exp", "history": [10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10] },
+  { "name": "se_linear_trend", "method": "single_exp", "history": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20] },
+  { "name": "se_outlier", "method": "single_exp", "history": [10, 11, 9, 10, 12, 8, 10, 11, 9, 10, 500, 11, 9, 10, 12, 8, 10, 11, 9, 10] },
+  { "name": "se_noisy", "method": "single_exp", "history": [23, 19, 27, 31, 18, 22, 29, 17, 25, 30, 21, 16, 28, 24, 20, 26, 33, 15, 22, 27] },
+  { "name": "se_too_short", "method": "single_exp", "history": [4, 5, 6, 7, 8, 9, 10] },
+  { "name": "se_long_over_maxbuckets", "method": "single_exp", "generate": { "n": 800, "base": 100, "mod": 7 } },
+
+  { "name": "de_constant", "method": "double_exp", "history": [10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10] },
+  { "name": "de_linear_trend", "method": "double_exp", "history": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25] },
+  { "name": "de_outlier", "method": "double_exp", "history": [10, 13, 16, 19, 22, 25, 28, 31, 34, 37, 500, 43, 46, 49, 52, 55, 58, 61, 64, 67] },
+  { "name": "de_noisy_trend", "method": "double_exp", "history": [5, 9, 8, 14, 13, 19, 17, 24, 22, 29, 26, 34, 31, 39, 36, 44, 41, 49, 46, 54] },
+  { "name": "de_too_short", "method": "double_exp", "history": [4, 5, 6, 7, 8, 9, 10] },
+  { "name": "de_long_over_maxbuckets", "method": "double_exp", "generate": { "n": 800, "base": 100, "mod": 9 } },
+
+  { "name": "cr_all_zero", "method": "croston", "history": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] },
+  { "name": "cr_intermittent", "method": "croston", "history": [5, 0, 0, 8, 0, 0, 0, 6, 0, 3, 0, 0, 7, 0, 0, 4, 0, 9, 0, 2] },
+  { "name": "cr_sparse", "method": "croston", "history": [10, 0, 0, 0, 0, 12, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 15, 0, 0, 0, 0, 11] },
+  { "name": "cr_dense", "method": "croston", "history": [3, 4, 0, 5, 6, 0, 4, 5, 0, 6, 7, 0, 5, 6, 0, 7, 8, 0, 6, 7] },
+  { "name": "cr_outlier", "method": "croston", "history": [5, 0, 6, 0, 5, 0, 200, 0, 6, 0, 5, 0, 6, 0, 5, 0, 7, 0, 6, 0] },
+  { "name": "cr_long_over_maxbuckets", "method": "croston", "generate": { "n": 800, "base": 0, "mod": 4 } },
+
+  { "name": "seas_no_cycle_trend", "method": "seasonal", "history": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30] },
+  { "name": "seas_period7", "method": "seasonal", "generate_cycle": { "cycle": [10, 25, 40, 55, 40, 25, 10], "reps": 10 } },
+  { "name": "seas_period4", "method": "seasonal", "generate_cycle": { "cycle": [5, 20, 35, 20], "reps": 14 } },
+  { "name": "seas_period7_noisy", "method": "seasonal", "generate_cycle": { "cycle": [12, 24, 41, 53, 38, 27, 9], "reps": 9 } },
+  { "name": "seas_long_over_maxbuckets", "method": "seasonal", "generate_cycle": { "cycle": [10, 30, 50, 70, 50, 30, 10], "reps": 120 } }
+]

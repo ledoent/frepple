@@ -24,6 +24,11 @@
 from django.urls import re_path
 
 from freppledb import mode
+from freppledb.common.api.output import (
+    JSONStreamView,
+    PivotJSONStreamView,
+    PeggingJSONView,
+)
 
 # Automatically add these URLs when the application is installed
 autodiscover = True
@@ -38,6 +43,57 @@ if mode == "WSGI":
     import freppledb.output.views.pegging
 
     urlpatterns = [
+        # JSON output API (Phase 0 modernization): thin wrappers that reuse each
+        # report's raw-SQL ?format=json streaming path. See common/api/output.py.
+        re_path(
+            r"^api/output/inventory/$",
+            # Enriched (self-describing measures+buckets) for the SPA inventory
+            # screen; data payload stays byte-identical under "data".
+            PivotJSONStreamView.as_view(
+                report_class=freppledb.output.views.buffer.OverviewReport
+            ),
+            name="api_output_inventory",
+        ),
+        re_path(
+            r"^api/output/demand/$",
+            # Enriched (self-describing measures+buckets) for the SPA demand
+            # screen; data payload stays byte-identical under "data".
+            PivotJSONStreamView.as_view(
+                report_class=freppledb.output.views.demand.OverviewReport
+            ),
+            name="api_output_demand",
+        ),
+        re_path(
+            r"^api/output/resource/$",
+            # Enriched for the SPA resource screen (utilization/load over buckets).
+            PivotJSONStreamView.as_view(
+                report_class=freppledb.output.views.resource.OverviewReport
+            ),
+            name="api_output_resource",
+        ),
+        re_path(
+            r"^api/output/pegging/(.+)/$",
+            # Enriched (absolute time window + due/current markers) for the SPA
+            # pegging Gantt; the tree/bar data stays byte-identical under "data".
+            PeggingJSONView.as_view(
+                report_class=freppledb.output.views.pegging.ReportByDemand
+            ),
+            name="api_output_pegging",
+        ),
+        re_path(
+            r"^api/output/problem/$",
+            # Flat violation list (Phase 3): the report's raw-SQL ?format=json
+            # stream, no enrichment needed (not a pivot).
+            JSONStreamView.as_view(report_class=freppledb.output.views.problem.Report),
+            name="api_output_problem",
+        ),
+        re_path(
+            r"^api/output/constraint/$",
+            JSONStreamView.as_view(
+                report_class=freppledb.output.views.constraint.BaseReport
+            ),
+            name="api_output_constraint",
+        ),
         re_path(
             r"^buffer/item/(.+)/$",
             freppledb.output.views.buffer.OverviewReport.as_view(),

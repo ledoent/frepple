@@ -1,0 +1,1276 @@
+Upstream pegging of operationplan with id component A @ factory with quantity 20.0 of 'Inventory component A @ factory':
+	0	component A @ factory	Inventory component A @ factory	20.0
+Downstream pegging of operationplan with id component A @ factory with quantity 20.0 of 'Inventory component A @ factory':
+	0	component A @ factory	Inventory component A @ factory	20.0
+	1	1	assemble product	3.0
+	2	2	assemble product step C	3.0
+	2	3	assemble product step B	3.0
+	2	4	assemble product step A	3.0
+	2	5	Ship product @ factory	3.0
+	1	6	assemble product	1.0
+	2	7	assemble product step C	1.0
+	2	8	assemble product step B	1.0
+	2	9	assemble product step A	1.0
+	2	10	Ship product @ factory	1.0
+	1	11	assemble product	1.0
+	2	12	assemble product step C	1.0
+	2	13	assemble product step B	1.0
+	2	14	assemble product step A	1.0
+	2	15	Ship product @ factory	1.0
+	1	16	assemble product	1.0
+	2	17	assemble product step C	1.0
+	2	18	assemble product step B	1.0
+	2	19	assemble product step A	1.0
+	2	20	Ship product @ factory	1.0
+	1	21	assemble product	1.0
+	2	22	assemble product step C	1.0
+	2	23	assemble product step B	1.0
+	2	24	assemble product step A	1.0
+	2	25	Ship product @ factory	1.0
+	1	26	assemble product	1.0
+	2	27	assemble product step C	1.0
+	2	28	assemble product step B	1.0
+	2	29	assemble product step A	1.0
+	2	30	Ship product @ factory	1.0
+	1	31	assemble product	1.0
+	2	32	assemble product step C	1.0
+	2	33	assemble product step B	1.0
+	2	34	assemble product step A	1.0
+	2	35	Ship product @ factory	1.0
+	1	36	assemble product	1.0
+	2	37	assemble product step C	1.0
+	2	38	assemble product step B	1.0
+	2	39	assemble product step A	1.0
+	2	40	Ship product @ factory	1.0
+	1	41	assemble product	5.0
+	2	42	assemble product step C	5.0
+	2	43	assemble product step B	5.0
+	2	44	assemble product step A	5.0
+	2	45	Ship product @ factory	5.0
+	1	46	assemble product	5.0
+	2	47	assemble product step C	5.0
+	2	48	assemble product step B	5.0
+	2	49	assemble product step A	5.0
+	2	50	Ship product @ factory	5.0
+Upstream pegging of operationplan with id component D @ factory with quantity 30.0 of 'Inventory component D @ factory':
+	0	component D @ factory	Inventory component D @ factory	30.0
+Downstream pegging of operationplan with id component D @ factory with quantity 30.0 of 'Inventory component D @ factory':
+	0	component D @ factory	Inventory component D @ factory	30.0
+	1	51	assemble product	3.0
+	2	52	assemble product step C	3.0
+	2	53	assemble product step B	3.0
+	2	54	assemble product step A	3.0
+	2	55	Ship product @ factory	3.0
+	1	56	assemble product	1.0
+	2	57	assemble product step C	1.0
+	2	58	assemble product step B	1.0
+	2	59	assemble product step A	1.0
+	2	60	Ship product @ factory	1.0
+	1	61	assemble product	6.0
+	2	62	assemble product step C	6.0
+	2	63	assemble product step B	6.0
+	2	64	assemble product step A	6.0
+	2	65	Ship product @ factory	6.0
+	1	1	assemble product	3.0
+	2	2	assemble product step C	3.0
+	2	3	assemble product step B	3.0
+	2	4	assemble product step A	3.0
+	2	5	Ship product @ factory	3.0
+	1	6	assemble product	1.0
+	2	7	assemble product step C	1.0
+	2	8	assemble product step B	1.0
+	2	9	assemble product step A	1.0
+	2	10	Ship product @ factory	1.0
+	1	11	assemble product	1.0
+	2	12	assemble product step C	1.0
+	2	13	assemble product step B	1.0
+	2	14	assemble product step A	1.0
+	2	15	Ship product @ factory	1.0
+	1	16	assemble product	1.0
+	2	17	assemble product step C	1.0
+	2	18	assemble product step B	1.0
+	2	19	assemble product step A	1.0
+	2	20	Ship product @ factory	1.0
+	1	21	assemble product	1.0
+	2	22	assemble product step C	1.0
+	2	23	assemble product step B	1.0
+	2	24	assemble product step A	1.0
+	2	25	Ship product @ factory	1.0
+	1	26	assemble product	1.0
+	2	27	assemble product step C	1.0
+	2	28	assemble product step B	1.0
+	2	29	assemble product step A	1.0
+	2	30	Ship product @ factory	1.0
+	1	31	assemble product	1.0
+	2	32	assemble product step C	1.0
+	2	33	assemble product step B	1.0
+	2	34	assemble product step A	1.0
+	2	35	Ship product @ factory	1.0
+	1	36	assemble product	1.0
+	2	37	assemble product step C	1.0
+	2	38	assemble product step B	1.0
+	2	39	assemble product step A	1.0
+	2	40	Ship product @ factory	1.0
+	1	41	assemble product	5.0
+	2	42	assemble product step C	5.0
+	2	43	assemble product step B	5.0
+	2	44	assemble product step A	5.0
+	2	45	Ship product @ factory	5.0
+	1	46	assemble product	5.0
+	2	47	assemble product step C	5.0
+	2	48	assemble product step B	5.0
+	2	49	assemble product step A	5.0
+	2	50	Ship product @ factory	5.0
+Upstream pegging of operationplan with id 66 with quantity 6.0 of 'Purchase component A @ factory from Component supplier':
+	0	66	Purchase component A @ factory from Component supplier	6.0
+Downstream pegging of operationplan with id 66 with quantity 6.0 of 'Purchase component A @ factory from Component supplier':
+	0	66	Purchase component A @ factory from Component supplier	6.0
+	1	61	assemble product	6.0
+	2	62	assemble product step C	6.0
+	2	63	assemble product step B	6.0
+	2	64	assemble product step A	6.0
+	2	65	Ship product @ factory	6.0
+Upstream pegging of operationplan with id 67 with quantity 1.0 of 'Purchase component A @ factory from Component supplier':
+	0	67	Purchase component A @ factory from Component supplier	1.0
+Downstream pegging of operationplan with id 67 with quantity 1.0 of 'Purchase component A @ factory from Component supplier':
+	0	67	Purchase component A @ factory from Component supplier	1.0
+	1	56	assemble product	1.0
+	2	57	assemble product step C	1.0
+	2	58	assemble product step B	1.0
+	2	59	assemble product step A	1.0
+	2	60	Ship product @ factory	1.0
+Upstream pegging of operationplan with id 68 with quantity 3.0 of 'Purchase component A @ factory from Component supplier':
+	0	68	Purchase component A @ factory from Component supplier	3.0
+Downstream pegging of operationplan with id 68 with quantity 3.0 of 'Purchase component A @ factory from Component supplier':
+	0	68	Purchase component A @ factory from Component supplier	3.0
+	1	51	assemble product	3.0
+	2	52	assemble product step C	3.0
+	2	53	assemble product step B	3.0
+	2	54	assemble product step A	3.0
+	2	55	Ship product @ factory	3.0
+Upstream pegging of operationplan with id 50 with quantity 5.0 of 'Ship product @ factory':
+	0	50	Ship product @ factory	5.0
+	1	46	assemble product	5.0
+	2	47	assemble product step C	5.0
+	2	48	assemble product step B	5.0
+	2	49	assemble product step A	5.0
+	3	component A @ factory	Inventory component A @ factory	5.0
+	2	component D @ factory	Inventory component D @ factory	5.0
+Downstream pegging of operationplan with id 50 with quantity 5.0 of 'Ship product @ factory':
+	0	50	Ship product @ factory	5.0
+Upstream pegging of operationplan with id 45 with quantity 5.0 of 'Ship product @ factory':
+	0	45	Ship product @ factory	5.0
+	1	41	assemble product	5.0
+	2	42	assemble product step C	5.0
+	2	43	assemble product step B	5.0
+	2	44	assemble product step A	5.0
+	3	component A @ factory	Inventory component A @ factory	5.0
+	2	component D @ factory	Inventory component D @ factory	5.0
+Downstream pegging of operationplan with id 45 with quantity 5.0 of 'Ship product @ factory':
+	0	45	Ship product @ factory	5.0
+Upstream pegging of operationplan with id 40 with quantity 1.0 of 'Ship product @ factory':
+	0	40	Ship product @ factory	1.0
+	1	36	assemble product	1.0
+	2	37	assemble product step C	1.0
+	2	38	assemble product step B	1.0
+	2	39	assemble product step A	1.0
+	3	component A @ factory	Inventory component A @ factory	1.0
+	2	component D @ factory	Inventory component D @ factory	1.0
+Downstream pegging of operationplan with id 40 with quantity 1.0 of 'Ship product @ factory':
+	0	40	Ship product @ factory	1.0
+Upstream pegging of operationplan with id 35 with quantity 1.0 of 'Ship product @ factory':
+	0	35	Ship product @ factory	1.0
+	1	31	assemble product	1.0
+	2	32	assemble product step C	1.0
+	2	33	assemble product step B	1.0
+	2	34	assemble product step A	1.0
+	3	component A @ factory	Inventory component A @ factory	1.0
+	2	component D @ factory	Inventory component D @ factory	1.0
+Downstream pegging of operationplan with id 35 with quantity 1.0 of 'Ship product @ factory':
+	0	35	Ship product @ factory	1.0
+Upstream pegging of operationplan with id 30 with quantity 1.0 of 'Ship product @ factory':
+	0	30	Ship product @ factory	1.0
+	1	26	assemble product	1.0
+	2	27	assemble product step C	1.0
+	2	28	assemble product step B	1.0
+	2	29	assemble product step A	1.0
+	3	component A @ factory	Inventory component A @ factory	1.0
+	2	component D @ factory	Inventory component D @ factory	1.0
+Downstream pegging of operationplan with id 30 with quantity 1.0 of 'Ship product @ factory':
+	0	30	Ship product @ factory	1.0
+Upstream pegging of operationplan with id 25 with quantity 1.0 of 'Ship product @ factory':
+	0	25	Ship product @ factory	1.0
+	1	21	assemble product	1.0
+	2	22	assemble product step C	1.0
+	2	23	assemble product step B	1.0
+	2	24	assemble product step A	1.0
+	3	component A @ factory	Inventory component A @ factory	1.0
+	2	component D @ factory	Inventory component D @ factory	1.0
+Downstream pegging of operationplan with id 25 with quantity 1.0 of 'Ship product @ factory':
+	0	25	Ship product @ factory	1.0
+Upstream pegging of operationplan with id 20 with quantity 1.0 of 'Ship product @ factory':
+	0	20	Ship product @ factory	1.0
+	1	16	assemble product	1.0
+	2	17	assemble product step C	1.0
+	2	18	assemble product step B	1.0
+	2	19	assemble product step A	1.0
+	3	component A @ factory	Inventory component A @ factory	1.0
+	2	component D @ factory	Inventory component D @ factory	1.0
+Downstream pegging of operationplan with id 20 with quantity 1.0 of 'Ship product @ factory':
+	0	20	Ship product @ factory	1.0
+Upstream pegging of operationplan with id 15 with quantity 1.0 of 'Ship product @ factory':
+	0	15	Ship product @ factory	1.0
+	1	11	assemble product	1.0
+	2	12	assemble product step C	1.0
+	2	13	assemble product step B	1.0
+	2	14	assemble product step A	1.0
+	3	component A @ factory	Inventory component A @ factory	1.0
+	2	component D @ factory	Inventory component D @ factory	1.0
+Downstream pegging of operationplan with id 15 with quantity 1.0 of 'Ship product @ factory':
+	0	15	Ship product @ factory	1.0
+Upstream pegging of operationplan with id 10 with quantity 1.0 of 'Ship product @ factory':
+	0	10	Ship product @ factory	1.0
+	1	6	assemble product	1.0
+	2	7	assemble product step C	1.0
+	2	8	assemble product step B	1.0
+	2	9	assemble product step A	1.0
+	3	component A @ factory	Inventory component A @ factory	1.0
+	2	component D @ factory	Inventory component D @ factory	1.0
+Downstream pegging of operationplan with id 10 with quantity 1.0 of 'Ship product @ factory':
+	0	10	Ship product @ factory	1.0
+Upstream pegging of operationplan with id 5 with quantity 3.0 of 'Ship product @ factory':
+	0	5	Ship product @ factory	3.0
+	1	1	assemble product	3.0
+	2	2	assemble product step C	3.0
+	2	3	assemble product step B	3.0
+	2	4	assemble product step A	3.0
+	3	component A @ factory	Inventory component A @ factory	3.0
+	2	component D @ factory	Inventory component D @ factory	3.0
+Downstream pegging of operationplan with id 5 with quantity 3.0 of 'Ship product @ factory':
+	0	5	Ship product @ factory	3.0
+Upstream pegging of operationplan with id 65 with quantity 6.0 of 'Ship product @ factory':
+	0	65	Ship product @ factory	6.0
+	1	61	assemble product	6.0
+	2	62	assemble product step C	6.0
+	2	63	assemble product step B	6.0
+	2	64	assemble product step A	6.0
+	3	66	Purchase component A @ factory from Component supplier	6.0
+	2	component D @ factory	Inventory component D @ factory	6.0
+Downstream pegging of operationplan with id 65 with quantity 6.0 of 'Ship product @ factory':
+	0	65	Ship product @ factory	6.0
+Upstream pegging of operationplan with id 60 with quantity 1.0 of 'Ship product @ factory':
+	0	60	Ship product @ factory	1.0
+	1	56	assemble product	1.0
+	2	57	assemble product step C	1.0
+	2	58	assemble product step B	1.0
+	2	59	assemble product step A	1.0
+	3	67	Purchase component A @ factory from Component supplier	1.0
+	2	component D @ factory	Inventory component D @ factory	1.0
+Downstream pegging of operationplan with id 60 with quantity 1.0 of 'Ship product @ factory':
+	0	60	Ship product @ factory	1.0
+Upstream pegging of operationplan with id 55 with quantity 3.0 of 'Ship product @ factory':
+	0	55	Ship product @ factory	3.0
+	1	51	assemble product	3.0
+	2	52	assemble product step C	3.0
+	2	53	assemble product step B	3.0
+	2	54	assemble product step A	3.0
+	3	68	Purchase component A @ factory from Component supplier	3.0
+	2	component D @ factory	Inventory component D @ factory	3.0
+Downstream pegging of operationplan with id 55 with quantity 3.0 of 'Ship product @ factory':
+	0	55	Ship product @ factory	3.0
+Upstream pegging of operationplan with id 69 with quantity 100.0 of 'WIP product step A':
+	0	MO WIP routing	WIP routing	100.0
+	1	MO WIP product step C	WIP product step C	100.0
+	1	70	WIP product step B	100.0
+	1	69	WIP product step A	100.0
+Downstream pegging of operationplan with id 69 with quantity 100.0 of 'WIP product step A':
+	0	MO WIP routing	WIP routing	100.0
+	1	MO WIP product step C	WIP product step C	100.0
+	1	70	WIP product step B	100.0
+	1	69	WIP product step A	100.0
+Upstream pegging of operationplan with id 70 with quantity 100.0 of 'WIP product step B':
+	0	MO WIP routing	WIP routing	100.0
+	1	MO WIP product step C	WIP product step C	100.0
+	1	70	WIP product step B	100.0
+	1	69	WIP product step A	100.0
+Downstream pegging of operationplan with id 70 with quantity 100.0 of 'WIP product step B':
+	0	MO WIP routing	WIP routing	100.0
+	1	MO WIP product step C	WIP product step C	100.0
+	1	70	WIP product step B	100.0
+	1	69	WIP product step A	100.0
+Upstream pegging of operationplan with id MO WIP product step C with quantity 100.0 of 'WIP product step C':
+	0	MO WIP routing	WIP routing	100.0
+	1	MO WIP product step C	WIP product step C	100.0
+	1	70	WIP product step B	100.0
+	1	69	WIP product step A	100.0
+Downstream pegging of operationplan with id MO WIP product step C with quantity 100.0 of 'WIP product step C':
+	0	MO WIP routing	WIP routing	100.0
+	1	MO WIP product step C	WIP product step C	100.0
+	1	70	WIP product step B	100.0
+	1	69	WIP product step A	100.0
+Upstream pegging of operationplan with id MO WIP routing with quantity 100.0 of 'WIP routing':
+	0	MO WIP routing	WIP routing	100.0
+	1	MO WIP product step C	WIP product step C	100.0
+	1	70	WIP product step B	100.0
+	1	69	WIP product step A	100.0
+Downstream pegging of operationplan with id MO WIP routing with quantity 100.0 of 'WIP routing':
+	0	MO WIP routing	WIP routing	100.0
+	1	MO WIP product step C	WIP product step C	100.0
+	1	70	WIP product step B	100.0
+	1	69	WIP product step A	100.0
+Upstream pegging of operationplan with id 46 with quantity 5.0 of 'assemble product':
+	0	46	assemble product	5.0
+	1	47	assemble product step C	5.0
+	1	48	assemble product step B	5.0
+	1	49	assemble product step A	5.0
+	2	component A @ factory	Inventory component A @ factory	5.0
+	1	component D @ factory	Inventory component D @ factory	5.0
+Downstream pegging of operationplan with id 46 with quantity 5.0 of 'assemble product':
+	0	46	assemble product	5.0
+	1	47	assemble product step C	5.0
+	1	48	assemble product step B	5.0
+	1	49	assemble product step A	5.0
+	1	50	Ship product @ factory	5.0
+Upstream pegging of operationplan with id 41 with quantity 5.0 of 'assemble product':
+	0	41	assemble product	5.0
+	1	42	assemble product step C	5.0
+	1	43	assemble product step B	5.0
+	1	44	assemble product step A	5.0
+	2	component A @ factory	Inventory component A @ factory	5.0
+	1	component D @ factory	Inventory component D @ factory	5.0
+Downstream pegging of operationplan with id 41 with quantity 5.0 of 'assemble product':
+	0	41	assemble product	5.0
+	1	42	assemble product step C	5.0
+	1	43	assemble product step B	5.0
+	1	44	assemble product step A	5.0
+	1	45	Ship product @ factory	5.0
+Upstream pegging of operationplan with id 36 with quantity 1.0 of 'assemble product':
+	0	36	assemble product	1.0
+	1	37	assemble product step C	1.0
+	1	38	assemble product step B	1.0
+	1	39	assemble product step A	1.0
+	2	component A @ factory	Inventory component A @ factory	1.0
+	1	component D @ factory	Inventory component D @ factory	1.0
+Downstream pegging of operationplan with id 36 with quantity 1.0 of 'assemble product':
+	0	36	assemble product	1.0
+	1	37	assemble product step C	1.0
+	1	38	assemble product step B	1.0
+	1	39	assemble product step A	1.0
+	1	40	Ship product @ factory	1.0
+Upstream pegging of operationplan with id 31 with quantity 1.0 of 'assemble product':
+	0	31	assemble product	1.0
+	1	32	assemble product step C	1.0
+	1	33	assemble product step B	1.0
+	1	34	assemble product step A	1.0
+	2	component A @ factory	Inventory component A @ factory	1.0
+	1	component D @ factory	Inventory component D @ factory	1.0
+Downstream pegging of operationplan with id 31 with quantity 1.0 of 'assemble product':
+	0	31	assemble product	1.0
+	1	32	assemble product step C	1.0
+	1	33	assemble product step B	1.0
+	1	34	assemble product step A	1.0
+	1	35	Ship product @ factory	1.0
+Upstream pegging of operationplan with id 26 with quantity 1.0 of 'assemble product':
+	0	26	assemble product	1.0
+	1	27	assemble product step C	1.0
+	1	28	assemble product step B	1.0
+	1	29	assemble product step A	1.0
+	2	component A @ factory	Inventory component A @ factory	1.0
+	1	component D @ factory	Inventory component D @ factory	1.0
+Downstream pegging of operationplan with id 26 with quantity 1.0 of 'assemble product':
+	0	26	assemble product	1.0
+	1	27	assemble product step C	1.0
+	1	28	assemble product step B	1.0
+	1	29	assemble product step A	1.0
+	1	30	Ship product @ factory	1.0
+Upstream pegging of operationplan with id 21 with quantity 1.0 of 'assemble product':
+	0	21	assemble product	1.0
+	1	22	assemble product step C	1.0
+	1	23	assemble product step B	1.0
+	1	24	assemble product step A	1.0
+	2	component A @ factory	Inventory component A @ factory	1.0
+	1	component D @ factory	Inventory component D @ factory	1.0
+Downstream pegging of operationplan with id 21 with quantity 1.0 of 'assemble product':
+	0	21	assemble product	1.0
+	1	22	assemble product step C	1.0
+	1	23	assemble product step B	1.0
+	1	24	assemble product step A	1.0
+	1	25	Ship product @ factory	1.0
+Upstream pegging of operationplan with id 16 with quantity 1.0 of 'assemble product':
+	0	16	assemble product	1.0
+	1	17	assemble product step C	1.0
+	1	18	assemble product step B	1.0
+	1	19	assemble product step A	1.0
+	2	component A @ factory	Inventory component A @ factory	1.0
+	1	component D @ factory	Inventory component D @ factory	1.0
+Downstream pegging of operationplan with id 16 with quantity 1.0 of 'assemble product':
+	0	16	assemble product	1.0
+	1	17	assemble product step C	1.0
+	1	18	assemble product step B	1.0
+	1	19	assemble product step A	1.0
+	1	20	Ship product @ factory	1.0
+Upstream pegging of operationplan with id 11 with quantity 1.0 of 'assemble product':
+	0	11	assemble product	1.0
+	1	12	assemble product step C	1.0
+	1	13	assemble product step B	1.0
+	1	14	assemble product step A	1.0
+	2	component A @ factory	Inventory component A @ factory	1.0
+	1	component D @ factory	Inventory component D @ factory	1.0
+Downstream pegging of operationplan with id 11 with quantity 1.0 of 'assemble product':
+	0	11	assemble product	1.0
+	1	12	assemble product step C	1.0
+	1	13	assemble product step B	1.0
+	1	14	assemble product step A	1.0
+	1	15	Ship product @ factory	1.0
+Upstream pegging of operationplan with id 6 with quantity 1.0 of 'assemble product':
+	0	6	assemble product	1.0
+	1	7	assemble product step C	1.0
+	1	8	assemble product step B	1.0
+	1	9	assemble product step A	1.0
+	2	component A @ factory	Inventory component A @ factory	1.0
+	1	component D @ factory	Inventory component D @ factory	1.0
+Downstream pegging of operationplan with id 6 with quantity 1.0 of 'assemble product':
+	0	6	assemble product	1.0
+	1	7	assemble product step C	1.0
+	1	8	assemble product step B	1.0
+	1	9	assemble product step A	1.0
+	1	10	Ship product @ factory	1.0
+Upstream pegging of operationplan with id 1 with quantity 3.0 of 'assemble product':
+	0	1	assemble product	3.0
+	1	2	assemble product step C	3.0
+	1	3	assemble product step B	3.0
+	1	4	assemble product step A	3.0
+	2	component A @ factory	Inventory component A @ factory	3.0
+	1	component D @ factory	Inventory component D @ factory	3.0
+Downstream pegging of operationplan with id 1 with quantity 3.0 of 'assemble product':
+	0	1	assemble product	3.0
+	1	2	assemble product step C	3.0
+	1	3	assemble product step B	3.0
+	1	4	assemble product step A	3.0
+	1	5	Ship product @ factory	3.0
+Upstream pegging of operationplan with id 61 with quantity 6.0 of 'assemble product':
+	0	61	assemble product	6.0
+	1	62	assemble product step C	6.0
+	1	63	assemble product step B	6.0
+	1	64	assemble product step A	6.0
+	2	66	Purchase component A @ factory from Component supplier	6.0
+	1	component D @ factory	Inventory component D @ factory	6.0
+Downstream pegging of operationplan with id 61 with quantity 6.0 of 'assemble product':
+	0	61	assemble product	6.0
+	1	62	assemble product step C	6.0
+	1	63	assemble product step B	6.0
+	1	64	assemble product step A	6.0
+	1	65	Ship product @ factory	6.0
+Upstream pegging of operationplan with id 56 with quantity 1.0 of 'assemble product':
+	0	56	assemble product	1.0
+	1	57	assemble product step C	1.0
+	1	58	assemble product step B	1.0
+	1	59	assemble product step A	1.0
+	2	67	Purchase component A @ factory from Component supplier	1.0
+	1	component D @ factory	Inventory component D @ factory	1.0
+Downstream pegging of operationplan with id 56 with quantity 1.0 of 'assemble product':
+	0	56	assemble product	1.0
+	1	57	assemble product step C	1.0
+	1	58	assemble product step B	1.0
+	1	59	assemble product step A	1.0
+	1	60	Ship product @ factory	1.0
+Upstream pegging of operationplan with id 51 with quantity 3.0 of 'assemble product':
+	0	51	assemble product	3.0
+	1	52	assemble product step C	3.0
+	1	53	assemble product step B	3.0
+	1	54	assemble product step A	3.0
+	2	68	Purchase component A @ factory from Component supplier	3.0
+	1	component D @ factory	Inventory component D @ factory	3.0
+Downstream pegging of operationplan with id 51 with quantity 3.0 of 'assemble product':
+	0	51	assemble product	3.0
+	1	52	assemble product step C	3.0
+	1	53	assemble product step B	3.0
+	1	54	assemble product step A	3.0
+	1	55	Ship product @ factory	3.0
+Upstream pegging of operationplan with id 49 with quantity 5.0 of 'assemble product step A':
+	0	46	assemble product	5.0
+	1	47	assemble product step C	5.0
+	1	48	assemble product step B	5.0
+	1	49	assemble product step A	5.0
+	2	component A @ factory	Inventory component A @ factory	5.0
+	1	component D @ factory	Inventory component D @ factory	5.0
+Downstream pegging of operationplan with id 49 with quantity 5.0 of 'assemble product step A':
+	0	46	assemble product	5.0
+	1	47	assemble product step C	5.0
+	1	48	assemble product step B	5.0
+	1	49	assemble product step A	5.0
+	1	50	Ship product @ factory	5.0
+Upstream pegging of operationplan with id 44 with quantity 5.0 of 'assemble product step A':
+	0	41	assemble product	5.0
+	1	42	assemble product step C	5.0
+	1	43	assemble product step B	5.0
+	1	44	assemble product step A	5.0
+	2	component A @ factory	Inventory component A @ factory	5.0
+	1	component D @ factory	Inventory component D @ factory	5.0
+Downstream pegging of operationplan with id 44 with quantity 5.0 of 'assemble product step A':
+	0	41	assemble product	5.0
+	1	42	assemble product step C	5.0
+	1	43	assemble product step B	5.0
+	1	44	assemble product step A	5.0
+	1	45	Ship product @ factory	5.0
+Upstream pegging of operationplan with id 39 with quantity 1.0 of 'assemble product step A':
+	0	36	assemble product	1.0
+	1	37	assemble product step C	1.0
+	1	38	assemble product step B	1.0
+	1	39	assemble product step A	1.0
+	2	component A @ factory	Inventory component A @ factory	1.0
+	1	component D @ factory	Inventory component D @ factory	1.0
+Downstream pegging of operationplan with id 39 with quantity 1.0 of 'assemble product step A':
+	0	36	assemble product	1.0
+	1	37	assemble product step C	1.0
+	1	38	assemble product step B	1.0
+	1	39	assemble product step A	1.0
+	1	40	Ship product @ factory	1.0
+Upstream pegging of operationplan with id 34 with quantity 1.0 of 'assemble product step A':
+	0	31	assemble product	1.0
+	1	32	assemble product step C	1.0
+	1	33	assemble product step B	1.0
+	1	34	assemble product step A	1.0
+	2	component A @ factory	Inventory component A @ factory	1.0
+	1	component D @ factory	Inventory component D @ factory	1.0
+Downstream pegging of operationplan with id 34 with quantity 1.0 of 'assemble product step A':
+	0	31	assemble product	1.0
+	1	32	assemble product step C	1.0
+	1	33	assemble product step B	1.0
+	1	34	assemble product step A	1.0
+	1	35	Ship product @ factory	1.0
+Upstream pegging of operationplan with id 29 with quantity 1.0 of 'assemble product step A':
+	0	26	assemble product	1.0
+	1	27	assemble product step C	1.0
+	1	28	assemble product step B	1.0
+	1	29	assemble product step A	1.0
+	2	component A @ factory	Inventory component A @ factory	1.0
+	1	component D @ factory	Inventory component D @ factory	1.0
+Downstream pegging of operationplan with id 29 with quantity 1.0 of 'assemble product step A':
+	0	26	assemble product	1.0
+	1	27	assemble product step C	1.0
+	1	28	assemble product step B	1.0
+	1	29	assemble product step A	1.0
+	1	30	Ship product @ factory	1.0
+Upstream pegging of operationplan with id 24 with quantity 1.0 of 'assemble product step A':
+	0	21	assemble product	1.0
+	1	22	assemble product step C	1.0
+	1	23	assemble product step B	1.0
+	1	24	assemble product step A	1.0
+	2	component A @ factory	Inventory component A @ factory	1.0
+	1	component D @ factory	Inventory component D @ factory	1.0
+Downstream pegging of operationplan with id 24 with quantity 1.0 of 'assemble product step A':
+	0	21	assemble product	1.0
+	1	22	assemble product step C	1.0
+	1	23	assemble product step B	1.0
+	1	24	assemble product step A	1.0
+	1	25	Ship product @ factory	1.0
+Upstream pegging of operationplan with id 19 with quantity 1.0 of 'assemble product step A':
+	0	16	assemble product	1.0
+	1	17	assemble product step C	1.0
+	1	18	assemble product step B	1.0
+	1	19	assemble product step A	1.0
+	2	component A @ factory	Inventory component A @ factory	1.0
+	1	component D @ factory	Inventory component D @ factory	1.0
+Downstream pegging of operationplan with id 19 with quantity 1.0 of 'assemble product step A':
+	0	16	assemble product	1.0
+	1	17	assemble product step C	1.0
+	1	18	assemble product step B	1.0
+	1	19	assemble product step A	1.0
+	1	20	Ship product @ factory	1.0
+Upstream pegging of operationplan with id 14 with quantity 1.0 of 'assemble product step A':
+	0	11	assemble product	1.0
+	1	12	assemble product step C	1.0
+	1	13	assemble product step B	1.0
+	1	14	assemble product step A	1.0
+	2	component A @ factory	Inventory component A @ factory	1.0
+	1	component D @ factory	Inventory component D @ factory	1.0
+Downstream pegging of operationplan with id 14 with quantity 1.0 of 'assemble product step A':
+	0	11	assemble product	1.0
+	1	12	assemble product step C	1.0
+	1	13	assemble product step B	1.0
+	1	14	assemble product step A	1.0
+	1	15	Ship product @ factory	1.0
+Upstream pegging of operationplan with id 9 with quantity 1.0 of 'assemble product step A':
+	0	6	assemble product	1.0
+	1	7	assemble product step C	1.0
+	1	8	assemble product step B	1.0
+	1	9	assemble product step A	1.0
+	2	component A @ factory	Inventory component A @ factory	1.0
+	1	component D @ factory	Inventory component D @ factory	1.0
+Downstream pegging of operationplan with id 9 with quantity 1.0 of 'assemble product step A':
+	0	6	assemble product	1.0
+	1	7	assemble product step C	1.0
+	1	8	assemble product step B	1.0
+	1	9	assemble product step A	1.0
+	1	10	Ship product @ factory	1.0
+Upstream pegging of operationplan with id 4 with quantity 3.0 of 'assemble product step A':
+	0	1	assemble product	3.0
+	1	2	assemble product step C	3.0
+	1	3	assemble product step B	3.0
+	1	4	assemble product step A	3.0
+	2	component A @ factory	Inventory component A @ factory	3.0
+	1	component D @ factory	Inventory component D @ factory	3.0
+Downstream pegging of operationplan with id 4 with quantity 3.0 of 'assemble product step A':
+	0	1	assemble product	3.0
+	1	2	assemble product step C	3.0
+	1	3	assemble product step B	3.0
+	1	4	assemble product step A	3.0
+	1	5	Ship product @ factory	3.0
+Upstream pegging of operationplan with id 64 with quantity 6.0 of 'assemble product step A':
+	0	61	assemble product	6.0
+	1	62	assemble product step C	6.0
+	1	63	assemble product step B	6.0
+	1	64	assemble product step A	6.0
+	2	66	Purchase component A @ factory from Component supplier	6.0
+	1	component D @ factory	Inventory component D @ factory	6.0
+Downstream pegging of operationplan with id 64 with quantity 6.0 of 'assemble product step A':
+	0	61	assemble product	6.0
+	1	62	assemble product step C	6.0
+	1	63	assemble product step B	6.0
+	1	64	assemble product step A	6.0
+	1	65	Ship product @ factory	6.0
+Upstream pegging of operationplan with id 59 with quantity 1.0 of 'assemble product step A':
+	0	56	assemble product	1.0
+	1	57	assemble product step C	1.0
+	1	58	assemble product step B	1.0
+	1	59	assemble product step A	1.0
+	2	67	Purchase component A @ factory from Component supplier	1.0
+	1	component D @ factory	Inventory component D @ factory	1.0
+Downstream pegging of operationplan with id 59 with quantity 1.0 of 'assemble product step A':
+	0	56	assemble product	1.0
+	1	57	assemble product step C	1.0
+	1	58	assemble product step B	1.0
+	1	59	assemble product step A	1.0
+	1	60	Ship product @ factory	1.0
+Upstream pegging of operationplan with id 54 with quantity 3.0 of 'assemble product step A':
+	0	51	assemble product	3.0
+	1	52	assemble product step C	3.0
+	1	53	assemble product step B	3.0
+	1	54	assemble product step A	3.0
+	2	68	Purchase component A @ factory from Component supplier	3.0
+	1	component D @ factory	Inventory component D @ factory	3.0
+Downstream pegging of operationplan with id 54 with quantity 3.0 of 'assemble product step A':
+	0	51	assemble product	3.0
+	1	52	assemble product step C	3.0
+	1	53	assemble product step B	3.0
+	1	54	assemble product step A	3.0
+	1	55	Ship product @ factory	3.0
+Upstream pegging of operationplan with id 48 with quantity 5.0 of 'assemble product step B':
+	0	46	assemble product	5.0
+	1	47	assemble product step C	5.0
+	1	48	assemble product step B	5.0
+	1	49	assemble product step A	5.0
+	2	component A @ factory	Inventory component A @ factory	5.0
+	1	component D @ factory	Inventory component D @ factory	5.0
+Downstream pegging of operationplan with id 48 with quantity 5.0 of 'assemble product step B':
+	0	46	assemble product	5.0
+	1	47	assemble product step C	5.0
+	1	48	assemble product step B	5.0
+	1	49	assemble product step A	5.0
+	1	50	Ship product @ factory	5.0
+Upstream pegging of operationplan with id 43 with quantity 5.0 of 'assemble product step B':
+	0	41	assemble product	5.0
+	1	42	assemble product step C	5.0
+	1	43	assemble product step B	5.0
+	1	44	assemble product step A	5.0
+	2	component A @ factory	Inventory component A @ factory	5.0
+	1	component D @ factory	Inventory component D @ factory	5.0
+Downstream pegging of operationplan with id 43 with quantity 5.0 of 'assemble product step B':
+	0	41	assemble product	5.0
+	1	42	assemble product step C	5.0
+	1	43	assemble product step B	5.0
+	1	44	assemble product step A	5.0
+	1	45	Ship product @ factory	5.0
+Upstream pegging of operationplan with id 38 with quantity 1.0 of 'assemble product step B':
+	0	36	assemble product	1.0
+	1	37	assemble product step C	1.0
+	1	38	assemble product step B	1.0
+	1	39	assemble product step A	1.0
+	2	component A @ factory	Inventory component A @ factory	1.0
+	1	component D @ factory	Inventory component D @ factory	1.0
+Downstream pegging of operationplan with id 38 with quantity 1.0 of 'assemble product step B':
+	0	36	assemble product	1.0
+	1	37	assemble product step C	1.0
+	1	38	assemble product step B	1.0
+	1	39	assemble product step A	1.0
+	1	40	Ship product @ factory	1.0
+Upstream pegging of operationplan with id 33 with quantity 1.0 of 'assemble product step B':
+	0	31	assemble product	1.0
+	1	32	assemble product step C	1.0
+	1	33	assemble product step B	1.0
+	1	34	assemble product step A	1.0
+	2	component A @ factory	Inventory component A @ factory	1.0
+	1	component D @ factory	Inventory component D @ factory	1.0
+Downstream pegging of operationplan with id 33 with quantity 1.0 of 'assemble product step B':
+	0	31	assemble product	1.0
+	1	32	assemble product step C	1.0
+	1	33	assemble product step B	1.0
+	1	34	assemble product step A	1.0
+	1	35	Ship product @ factory	1.0
+Upstream pegging of operationplan with id 28 with quantity 1.0 of 'assemble product step B':
+	0	26	assemble product	1.0
+	1	27	assemble product step C	1.0
+	1	28	assemble product step B	1.0
+	1	29	assemble product step A	1.0
+	2	component A @ factory	Inventory component A @ factory	1.0
+	1	component D @ factory	Inventory component D @ factory	1.0
+Downstream pegging of operationplan with id 28 with quantity 1.0 of 'assemble product step B':
+	0	26	assemble product	1.0
+	1	27	assemble product step C	1.0
+	1	28	assemble product step B	1.0
+	1	29	assemble product step A	1.0
+	1	30	Ship product @ factory	1.0
+Upstream pegging of operationplan with id 23 with quantity 1.0 of 'assemble product step B':
+	0	21	assemble product	1.0
+	1	22	assemble product step C	1.0
+	1	23	assemble product step B	1.0
+	1	24	assemble product step A	1.0
+	2	component A @ factory	Inventory component A @ factory	1.0
+	1	component D @ factory	Inventory component D @ factory	1.0
+Downstream pegging of operationplan with id 23 with quantity 1.0 of 'assemble product step B':
+	0	21	assemble product	1.0
+	1	22	assemble product step C	1.0
+	1	23	assemble product step B	1.0
+	1	24	assemble product step A	1.0
+	1	25	Ship product @ factory	1.0
+Upstream pegging of operationplan with id 18 with quantity 1.0 of 'assemble product step B':
+	0	16	assemble product	1.0
+	1	17	assemble product step C	1.0
+	1	18	assemble product step B	1.0
+	1	19	assemble product step A	1.0
+	2	component A @ factory	Inventory component A @ factory	1.0
+	1	component D @ factory	Inventory component D @ factory	1.0
+Downstream pegging of operationplan with id 18 with quantity 1.0 of 'assemble product step B':
+	0	16	assemble product	1.0
+	1	17	assemble product step C	1.0
+	1	18	assemble product step B	1.0
+	1	19	assemble product step A	1.0
+	1	20	Ship product @ factory	1.0
+Upstream pegging of operationplan with id 13 with quantity 1.0 of 'assemble product step B':
+	0	11	assemble product	1.0
+	1	12	assemble product step C	1.0
+	1	13	assemble product step B	1.0
+	1	14	assemble product step A	1.0
+	2	component A @ factory	Inventory component A @ factory	1.0
+	1	component D @ factory	Inventory component D @ factory	1.0
+Downstream pegging of operationplan with id 13 with quantity 1.0 of 'assemble product step B':
+	0	11	assemble product	1.0
+	1	12	assemble product step C	1.0
+	1	13	assemble product step B	1.0
+	1	14	assemble product step A	1.0
+	1	15	Ship product @ factory	1.0
+Upstream pegging of operationplan with id 8 with quantity 1.0 of 'assemble product step B':
+	0	6	assemble product	1.0
+	1	7	assemble product step C	1.0
+	1	8	assemble product step B	1.0
+	1	9	assemble product step A	1.0
+	2	component A @ factory	Inventory component A @ factory	1.0
+	1	component D @ factory	Inventory component D @ factory	1.0
+Downstream pegging of operationplan with id 8 with quantity 1.0 of 'assemble product step B':
+	0	6	assemble product	1.0
+	1	7	assemble product step C	1.0
+	1	8	assemble product step B	1.0
+	1	9	assemble product step A	1.0
+	1	10	Ship product @ factory	1.0
+Upstream pegging of operationplan with id 3 with quantity 3.0 of 'assemble product step B':
+	0	1	assemble product	3.0
+	1	2	assemble product step C	3.0
+	1	3	assemble product step B	3.0
+	1	4	assemble product step A	3.0
+	2	component A @ factory	Inventory component A @ factory	3.0
+	1	component D @ factory	Inventory component D @ factory	3.0
+Downstream pegging of operationplan with id 3 with quantity 3.0 of 'assemble product step B':
+	0	1	assemble product	3.0
+	1	2	assemble product step C	3.0
+	1	3	assemble product step B	3.0
+	1	4	assemble product step A	3.0
+	1	5	Ship product @ factory	3.0
+Upstream pegging of operationplan with id 63 with quantity 6.0 of 'assemble product step B':
+	0	61	assemble product	6.0
+	1	62	assemble product step C	6.0
+	1	63	assemble product step B	6.0
+	1	64	assemble product step A	6.0
+	2	66	Purchase component A @ factory from Component supplier	6.0
+	1	component D @ factory	Inventory component D @ factory	6.0
+Downstream pegging of operationplan with id 63 with quantity 6.0 of 'assemble product step B':
+	0	61	assemble product	6.0
+	1	62	assemble product step C	6.0
+	1	63	assemble product step B	6.0
+	1	64	assemble product step A	6.0
+	1	65	Ship product @ factory	6.0
+Upstream pegging of operationplan with id 58 with quantity 1.0 of 'assemble product step B':
+	0	56	assemble product	1.0
+	1	57	assemble product step C	1.0
+	1	58	assemble product step B	1.0
+	1	59	assemble product step A	1.0
+	2	67	Purchase component A @ factory from Component supplier	1.0
+	1	component D @ factory	Inventory component D @ factory	1.0
+Downstream pegging of operationplan with id 58 with quantity 1.0 of 'assemble product step B':
+	0	56	assemble product	1.0
+	1	57	assemble product step C	1.0
+	1	58	assemble product step B	1.0
+	1	59	assemble product step A	1.0
+	1	60	Ship product @ factory	1.0
+Upstream pegging of operationplan with id 53 with quantity 3.0 of 'assemble product step B':
+	0	51	assemble product	3.0
+	1	52	assemble product step C	3.0
+	1	53	assemble product step B	3.0
+	1	54	assemble product step A	3.0
+	2	68	Purchase component A @ factory from Component supplier	3.0
+	1	component D @ factory	Inventory component D @ factory	3.0
+Downstream pegging of operationplan with id 53 with quantity 3.0 of 'assemble product step B':
+	0	51	assemble product	3.0
+	1	52	assemble product step C	3.0
+	1	53	assemble product step B	3.0
+	1	54	assemble product step A	3.0
+	1	55	Ship product @ factory	3.0
+Upstream pegging of operationplan with id 47 with quantity 5.0 of 'assemble product step C':
+	0	46	assemble product	5.0
+	1	47	assemble product step C	5.0
+	1	48	assemble product step B	5.0
+	1	49	assemble product step A	5.0
+	2	component A @ factory	Inventory component A @ factory	5.0
+	1	component D @ factory	Inventory component D @ factory	5.0
+Downstream pegging of operationplan with id 47 with quantity 5.0 of 'assemble product step C':
+	0	46	assemble product	5.0
+	1	47	assemble product step C	5.0
+	1	48	assemble product step B	5.0
+	1	49	assemble product step A	5.0
+	1	50	Ship product @ factory	5.0
+Upstream pegging of operationplan with id 42 with quantity 5.0 of 'assemble product step C':
+	0	41	assemble product	5.0
+	1	42	assemble product step C	5.0
+	1	43	assemble product step B	5.0
+	1	44	assemble product step A	5.0
+	2	component A @ factory	Inventory component A @ factory	5.0
+	1	component D @ factory	Inventory component D @ factory	5.0
+Downstream pegging of operationplan with id 42 with quantity 5.0 of 'assemble product step C':
+	0	41	assemble product	5.0
+	1	42	assemble product step C	5.0
+	1	43	assemble product step B	5.0
+	1	44	assemble product step A	5.0
+	1	45	Ship product @ factory	5.0
+Upstream pegging of operationplan with id 37 with quantity 1.0 of 'assemble product step C':
+	0	36	assemble product	1.0
+	1	37	assemble product step C	1.0
+	1	38	assemble product step B	1.0
+	1	39	assemble product step A	1.0
+	2	component A @ factory	Inventory component A @ factory	1.0
+	1	component D @ factory	Inventory component D @ factory	1.0
+Downstream pegging of operationplan with id 37 with quantity 1.0 of 'assemble product step C':
+	0	36	assemble product	1.0
+	1	37	assemble product step C	1.0
+	1	38	assemble product step B	1.0
+	1	39	assemble product step A	1.0
+	1	40	Ship product @ factory	1.0
+Upstream pegging of operationplan with id 32 with quantity 1.0 of 'assemble product step C':
+	0	31	assemble product	1.0
+	1	32	assemble product step C	1.0
+	1	33	assemble product step B	1.0
+	1	34	assemble product step A	1.0
+	2	component A @ factory	Inventory component A @ factory	1.0
+	1	component D @ factory	Inventory component D @ factory	1.0
+Downstream pegging of operationplan with id 32 with quantity 1.0 of 'assemble product step C':
+	0	31	assemble product	1.0
+	1	32	assemble product step C	1.0
+	1	33	assemble product step B	1.0
+	1	34	assemble product step A	1.0
+	1	35	Ship product @ factory	1.0
+Upstream pegging of operationplan with id 22 with quantity 1.0 of 'assemble product step C':
+	0	21	assemble product	1.0
+	1	22	assemble product step C	1.0
+	1	23	assemble product step B	1.0
+	1	24	assemble product step A	1.0
+	2	component A @ factory	Inventory component A @ factory	1.0
+	1	component D @ factory	Inventory component D @ factory	1.0
+Downstream pegging of operationplan with id 22 with quantity 1.0 of 'assemble product step C':
+	0	21	assemble product	1.0
+	1	22	assemble product step C	1.0
+	1	23	assemble product step B	1.0
+	1	24	assemble product step A	1.0
+	1	25	Ship product @ factory	1.0
+Upstream pegging of operationplan with id 27 with quantity 1.0 of 'assemble product step C':
+	0	26	assemble product	1.0
+	1	27	assemble product step C	1.0
+	1	28	assemble product step B	1.0
+	1	29	assemble product step A	1.0
+	2	component A @ factory	Inventory component A @ factory	1.0
+	1	component D @ factory	Inventory component D @ factory	1.0
+Downstream pegging of operationplan with id 27 with quantity 1.0 of 'assemble product step C':
+	0	26	assemble product	1.0
+	1	27	assemble product step C	1.0
+	1	28	assemble product step B	1.0
+	1	29	assemble product step A	1.0
+	1	30	Ship product @ factory	1.0
+Upstream pegging of operationplan with id 17 with quantity 1.0 of 'assemble product step C':
+	0	16	assemble product	1.0
+	1	17	assemble product step C	1.0
+	1	18	assemble product step B	1.0
+	1	19	assemble product step A	1.0
+	2	component A @ factory	Inventory component A @ factory	1.0
+	1	component D @ factory	Inventory component D @ factory	1.0
+Downstream pegging of operationplan with id 17 with quantity 1.0 of 'assemble product step C':
+	0	16	assemble product	1.0
+	1	17	assemble product step C	1.0
+	1	18	assemble product step B	1.0
+	1	19	assemble product step A	1.0
+	1	20	Ship product @ factory	1.0
+Upstream pegging of operationplan with id 7 with quantity 1.0 of 'assemble product step C':
+	0	6	assemble product	1.0
+	1	7	assemble product step C	1.0
+	1	8	assemble product step B	1.0
+	1	9	assemble product step A	1.0
+	2	component A @ factory	Inventory component A @ factory	1.0
+	1	component D @ factory	Inventory component D @ factory	1.0
+Downstream pegging of operationplan with id 7 with quantity 1.0 of 'assemble product step C':
+	0	6	assemble product	1.0
+	1	7	assemble product step C	1.0
+	1	8	assemble product step B	1.0
+	1	9	assemble product step A	1.0
+	1	10	Ship product @ factory	1.0
+Upstream pegging of operationplan with id 12 with quantity 1.0 of 'assemble product step C':
+	0	11	assemble product	1.0
+	1	12	assemble product step C	1.0
+	1	13	assemble product step B	1.0
+	1	14	assemble product step A	1.0
+	2	component A @ factory	Inventory component A @ factory	1.0
+	1	component D @ factory	Inventory component D @ factory	1.0
+Downstream pegging of operationplan with id 12 with quantity 1.0 of 'assemble product step C':
+	0	11	assemble product	1.0
+	1	12	assemble product step C	1.0
+	1	13	assemble product step B	1.0
+	1	14	assemble product step A	1.0
+	1	15	Ship product @ factory	1.0
+Upstream pegging of operationplan with id 2 with quantity 3.0 of 'assemble product step C':
+	0	1	assemble product	3.0
+	1	2	assemble product step C	3.0
+	1	3	assemble product step B	3.0
+	1	4	assemble product step A	3.0
+	2	component A @ factory	Inventory component A @ factory	3.0
+	1	component D @ factory	Inventory component D @ factory	3.0
+Downstream pegging of operationplan with id 2 with quantity 3.0 of 'assemble product step C':
+	0	1	assemble product	3.0
+	1	2	assemble product step C	3.0
+	1	3	assemble product step B	3.0
+	1	4	assemble product step A	3.0
+	1	5	Ship product @ factory	3.0
+Upstream pegging of operationplan with id 62 with quantity 6.0 of 'assemble product step C':
+	0	61	assemble product	6.0
+	1	62	assemble product step C	6.0
+	1	63	assemble product step B	6.0
+	1	64	assemble product step A	6.0
+	2	66	Purchase component A @ factory from Component supplier	6.0
+	1	component D @ factory	Inventory component D @ factory	6.0
+Downstream pegging of operationplan with id 62 with quantity 6.0 of 'assemble product step C':
+	0	61	assemble product	6.0
+	1	62	assemble product step C	6.0
+	1	63	assemble product step B	6.0
+	1	64	assemble product step A	6.0
+	1	65	Ship product @ factory	6.0
+Upstream pegging of operationplan with id 57 with quantity 1.0 of 'assemble product step C':
+	0	56	assemble product	1.0
+	1	57	assemble product step C	1.0
+	1	58	assemble product step B	1.0
+	1	59	assemble product step A	1.0
+	2	67	Purchase component A @ factory from Component supplier	1.0
+	1	component D @ factory	Inventory component D @ factory	1.0
+Downstream pegging of operationplan with id 57 with quantity 1.0 of 'assemble product step C':
+	0	56	assemble product	1.0
+	1	57	assemble product step C	1.0
+	1	58	assemble product step B	1.0
+	1	59	assemble product step A	1.0
+	1	60	Ship product @ factory	1.0
+Upstream pegging of operationplan with id 52 with quantity 3.0 of 'assemble product step C':
+	0	51	assemble product	3.0
+	1	52	assemble product step C	3.0
+	1	53	assemble product step B	3.0
+	1	54	assemble product step A	3.0
+	2	68	Purchase component A @ factory from Component supplier	3.0
+	1	component D @ factory	Inventory component D @ factory	3.0
+Downstream pegging of operationplan with id 52 with quantity 3.0 of 'assemble product step C':
+	0	51	assemble product	3.0
+	1	52	assemble product step C	3.0
+	1	53	assemble product step B	3.0
+	1	54	assemble product step A	3.0
+	1	55	Ship product @ factory	3.0
+Upstream pegging of operationplan with id 71 with quantity 10.0 of 'routing 8':
+	0	71	routing 8	10.0
+	1	72	routing 8 step 3	10.0
+	1	73	routing 8 step 2	10.0
+	1	74	routing 8 step 1	10.0
+Downstream pegging of operationplan with id 71 with quantity 10.0 of 'routing 8':
+	0	71	routing 8	10.0
+	1	72	routing 8 step 3	10.0
+	1	73	routing 8 step 2	10.0
+	1	74	routing 8 step 1	10.0
+Upstream pegging of operationplan with id 75 with quantity 10.0 of 'routing 8':
+	0	75	routing 8	10.0
+	1	76	routing 8 step 3	10.0
+	1	77	routing 8 step 2	10.0
+	1	78	routing 8 step 1	10.0
+Downstream pegging of operationplan with id 75 with quantity 10.0 of 'routing 8':
+	0	75	routing 8	10.0
+	1	76	routing 8 step 3	10.0
+	1	77	routing 8 step 2	10.0
+	1	78	routing 8 step 1	10.0
+Upstream pegging of operationplan with id 74 with quantity 10.0 of 'routing 8 step 1':
+	0	71	routing 8	10.0
+	1	72	routing 8 step 3	10.0
+	1	73	routing 8 step 2	10.0
+	1	74	routing 8 step 1	10.0
+Downstream pegging of operationplan with id 74 with quantity 10.0 of 'routing 8 step 1':
+	0	71	routing 8	10.0
+	1	72	routing 8 step 3	10.0
+	1	73	routing 8 step 2	10.0
+	1	74	routing 8 step 1	10.0
+Upstream pegging of operationplan with id 78 with quantity 10.0 of 'routing 8 step 1':
+	0	75	routing 8	10.0
+	1	76	routing 8 step 3	10.0
+	1	77	routing 8 step 2	10.0
+	1	78	routing 8 step 1	10.0
+Downstream pegging of operationplan with id 78 with quantity 10.0 of 'routing 8 step 1':
+	0	75	routing 8	10.0
+	1	76	routing 8 step 3	10.0
+	1	77	routing 8 step 2	10.0
+	1	78	routing 8 step 1	10.0
+Upstream pegging of operationplan with id 73 with quantity 10.0 of 'routing 8 step 2':
+	0	71	routing 8	10.0
+	1	72	routing 8 step 3	10.0
+	1	73	routing 8 step 2	10.0
+	1	74	routing 8 step 1	10.0
+Downstream pegging of operationplan with id 73 with quantity 10.0 of 'routing 8 step 2':
+	0	71	routing 8	10.0
+	1	72	routing 8 step 3	10.0
+	1	73	routing 8 step 2	10.0
+	1	74	routing 8 step 1	10.0
+Upstream pegging of operationplan with id 77 with quantity 10.0 of 'routing 8 step 2':
+	0	75	routing 8	10.0
+	1	76	routing 8 step 3	10.0
+	1	77	routing 8 step 2	10.0
+	1	78	routing 8 step 1	10.0
+Downstream pegging of operationplan with id 77 with quantity 10.0 of 'routing 8 step 2':
+	0	75	routing 8	10.0
+	1	76	routing 8 step 3	10.0
+	1	77	routing 8 step 2	10.0
+	1	78	routing 8 step 1	10.0
+Upstream pegging of operationplan with id 72 with quantity 10.0 of 'routing 8 step 3':
+	0	71	routing 8	10.0
+	1	72	routing 8 step 3	10.0
+	1	73	routing 8 step 2	10.0
+	1	74	routing 8 step 1	10.0
+Downstream pegging of operationplan with id 72 with quantity 10.0 of 'routing 8 step 3':
+	0	71	routing 8	10.0
+	1	72	routing 8 step 3	10.0
+	1	73	routing 8 step 2	10.0
+	1	74	routing 8 step 1	10.0
+Upstream pegging of operationplan with id 76 with quantity 10.0 of 'routing 8 step 3':
+	0	75	routing 8	10.0
+	1	76	routing 8 step 3	10.0
+	1	77	routing 8 step 2	10.0
+	1	78	routing 8 step 1	10.0
+Downstream pegging of operationplan with id 76 with quantity 10.0 of 'routing 8 step 3':
+	0	75	routing 8	10.0
+	1	76	routing 8 step 3	10.0
+	1	77	routing 8 step 2	10.0
+	1	78	routing 8 step 1	10.0
+Upstream pegging of operationplan with id 79 with quantity 10.0 of 'routing 9':
+	0	79	routing 9	10.0
+	1	80	routing 9 step 3	10.0
+	1	81	routing 9 step 2	10.0
+	1	82	routing 9 step 1	10.0
+Downstream pegging of operationplan with id 79 with quantity 10.0 of 'routing 9':
+	0	79	routing 9	10.0
+	1	80	routing 9 step 3	10.0
+	1	81	routing 9 step 2	10.0
+	1	82	routing 9 step 1	10.0
+Upstream pegging of operationplan with id 83 with quantity 10.0 of 'routing 9':
+	0	83	routing 9	10.0
+	1	84	routing 9 step 3	10.0
+	1	85	routing 9 step 2	10.0
+	1	86	routing 9 step 1	10.0
+Downstream pegging of operationplan with id 83 with quantity 10.0 of 'routing 9':
+	0	83	routing 9	10.0
+	1	84	routing 9 step 3	10.0
+	1	85	routing 9 step 2	10.0
+	1	86	routing 9 step 1	10.0
+Upstream pegging of operationplan with id 82 with quantity 10.0 of 'routing 9 step 1':
+	0	79	routing 9	10.0
+	1	80	routing 9 step 3	10.0
+	1	81	routing 9 step 2	10.0
+	1	82	routing 9 step 1	10.0
+Downstream pegging of operationplan with id 82 with quantity 10.0 of 'routing 9 step 1':
+	0	79	routing 9	10.0
+	1	80	routing 9 step 3	10.0
+	1	81	routing 9 step 2	10.0
+	1	82	routing 9 step 1	10.0
+Upstream pegging of operationplan with id 86 with quantity 10.0 of 'routing 9 step 1':
+	0	83	routing 9	10.0
+	1	84	routing 9 step 3	10.0
+	1	85	routing 9 step 2	10.0
+	1	86	routing 9 step 1	10.0
+Downstream pegging of operationplan with id 86 with quantity 10.0 of 'routing 9 step 1':
+	0	83	routing 9	10.0
+	1	84	routing 9 step 3	10.0
+	1	85	routing 9 step 2	10.0
+	1	86	routing 9 step 1	10.0
+Upstream pegging of operationplan with id 81 with quantity 10.0 of 'routing 9 step 2':
+	0	79	routing 9	10.0
+	1	80	routing 9 step 3	10.0
+	1	81	routing 9 step 2	10.0
+	1	82	routing 9 step 1	10.0
+Downstream pegging of operationplan with id 81 with quantity 10.0 of 'routing 9 step 2':
+	0	79	routing 9	10.0
+	1	80	routing 9 step 3	10.0
+	1	81	routing 9 step 2	10.0
+	1	82	routing 9 step 1	10.0
+Upstream pegging of operationplan with id 85 with quantity 10.0 of 'routing 9 step 2':
+	0	83	routing 9	10.0
+	1	84	routing 9 step 3	10.0
+	1	85	routing 9 step 2	10.0
+	1	86	routing 9 step 1	10.0
+Downstream pegging of operationplan with id 85 with quantity 10.0 of 'routing 9 step 2':
+	0	83	routing 9	10.0
+	1	84	routing 9 step 3	10.0
+	1	85	routing 9 step 2	10.0
+	1	86	routing 9 step 1	10.0
+Upstream pegging of operationplan with id 80 with quantity 10.0 of 'routing 9 step 3':
+	0	79	routing 9	10.0
+	1	80	routing 9 step 3	10.0
+	1	81	routing 9 step 2	10.0
+	1	82	routing 9 step 1	10.0
+Downstream pegging of operationplan with id 80 with quantity 10.0 of 'routing 9 step 3':
+	0	79	routing 9	10.0
+	1	80	routing 9 step 3	10.0
+	1	81	routing 9 step 2	10.0
+	1	82	routing 9 step 1	10.0
+Upstream pegging of operationplan with id 84 with quantity 10.0 of 'routing 9 step 3':
+	0	83	routing 9	10.0
+	1	84	routing 9 step 3	10.0
+	1	85	routing 9 step 2	10.0
+	1	86	routing 9 step 1	10.0
+Downstream pegging of operationplan with id 84 with quantity 10.0 of 'routing 9 step 3':
+	0	83	routing 9	10.0
+	1	84	routing 9 step 3	10.0
+	1	85	routing 9 step 2	10.0
+	1	86	routing 9 step 1	10.0
+Pegging of demand order 1 with quantity 5.0:
+	0	45	Ship product @ factory	5.0
+	1	41	assemble product	5.0
+	2	42	assemble product step C	5.0
+	2	43	assemble product step B	5.0
+	2	44	assemble product step A	5.0
+	3	component A @ factory	Inventory component A @ factory	5.0
+	2	component D @ factory	Inventory component D @ factory	5.0
+Pegging of demand order 2 with quantity 5.0:
+	0	50	Ship product @ factory	5.0
+	1	46	assemble product	5.0
+	2	47	assemble product step C	5.0
+	2	48	assemble product step B	5.0
+	2	49	assemble product step A	5.0
+	3	component A @ factory	Inventory component A @ factory	5.0
+	2	component D @ factory	Inventory component D @ factory	5.0
+Pegging of demand order 3a with quantity 1.0:
+	0	40	Ship product @ factory	1.0
+	1	36	assemble product	1.0
+	2	37	assemble product step C	1.0
+	2	38	assemble product step B	1.0
+	2	39	assemble product step A	1.0
+	3	component A @ factory	Inventory component A @ factory	1.0
+	2	component D @ factory	Inventory component D @ factory	1.0
+Pegging of demand order 3b with quantity 1.0:
+	0	35	Ship product @ factory	1.0
+	1	31	assemble product	1.0
+	2	32	assemble product step C	1.0
+	2	33	assemble product step B	1.0
+	2	34	assemble product step A	1.0
+	3	component A @ factory	Inventory component A @ factory	1.0
+	2	component D @ factory	Inventory component D @ factory	1.0
+Pegging of demand order 4a with quantity 1.0:
+	0	30	Ship product @ factory	1.0
+	1	26	assemble product	1.0
+	2	27	assemble product step C	1.0
+	2	28	assemble product step B	1.0
+	2	29	assemble product step A	1.0
+	3	component A @ factory	Inventory component A @ factory	1.0
+	2	component D @ factory	Inventory component D @ factory	1.0
+Pegging of demand order 4b with quantity 1.0:
+	0	25	Ship product @ factory	1.0
+	1	21	assemble product	1.0
+	2	22	assemble product step C	1.0
+	2	23	assemble product step B	1.0
+	2	24	assemble product step A	1.0
+	3	component A @ factory	Inventory component A @ factory	1.0
+	2	component D @ factory	Inventory component D @ factory	1.0
+Pegging of demand order 5a with quantity 1.0:
+	0	20	Ship product @ factory	1.0
+	1	16	assemble product	1.0
+	2	17	assemble product step C	1.0
+	2	18	assemble product step B	1.0
+	2	19	assemble product step A	1.0
+	3	component A @ factory	Inventory component A @ factory	1.0
+	2	component D @ factory	Inventory component D @ factory	1.0
+Pegging of demand order 5b with quantity 1.0:
+	0	15	Ship product @ factory	1.0
+	1	11	assemble product	1.0
+	2	12	assemble product step C	1.0
+	2	13	assemble product step B	1.0
+	2	14	assemble product step A	1.0
+	3	component A @ factory	Inventory component A @ factory	1.0
+	2	component D @ factory	Inventory component D @ factory	1.0
+Pegging of demand order 5c with quantity 1.0:
+	0	10	Ship product @ factory	1.0
+	1	6	assemble product	1.0
+	2	7	assemble product step C	1.0
+	2	8	assemble product step B	1.0
+	2	9	assemble product step A	1.0
+	3	component A @ factory	Inventory component A @ factory	1.0
+	2	component D @ factory	Inventory component D @ factory	1.0
+Pegging of demand order 6 with quantity 10.0:
+	0	5	Ship product @ factory	3.0
+	1	1	assemble product	3.0
+	2	2	assemble product step C	3.0
+	2	3	assemble product step B	3.0
+	2	4	assemble product step A	3.0
+	3	component A @ factory	Inventory component A @ factory	3.0
+	2	component D @ factory	Inventory component D @ factory	10.0
+	0	65	Ship product @ factory	6.0
+	1	61	assemble product	6.0
+	2	62	assemble product step C	6.0
+	2	63	assemble product step B	6.0
+	2	64	assemble product step A	6.0
+	3	66	Purchase component A @ factory from Component supplier	6.0
+	0	60	Ship product @ factory	1.0
+	1	56	assemble product	1.0
+	2	57	assemble product step C	1.0
+	2	58	assemble product step B	1.0
+	2	59	assemble product step A	1.0
+	3	67	Purchase component A @ factory from Component supplier	1.0
+Pegging of demand order 7 with quantity 10.0:
+	0	55	Ship product @ factory	3.0
+	1	51	assemble product	3.0
+	2	52	assemble product step C	3.0
+	2	53	assemble product step B	3.0
+	2	54	assemble product step A	3.0
+	3	68	Purchase component A @ factory from Component supplier	3.0
+	2	component D @ factory	Inventory component D @ factory	3.0
+Pegging of demand order 8A with quantity 10.0:
+	0	71	routing 8	10.0
+	1	72	routing 8 step 3	10.0
+	1	73	routing 8 step 2	10.0
+	1	74	routing 8 step 1	10.0
+Pegging of demand order 8B with quantity 10.0:
+	0	75	routing 8	10.0
+	1	76	routing 8 step 3	10.0
+	1	77	routing 8 step 2	10.0
+	1	78	routing 8 step 1	10.0
+Pegging of demand order 9A with quantity 10.0:
+	0	79	routing 9	10.0
+	1	80	routing 9 step 3	10.0
+	1	81	routing 9 step 2	10.0
+	1	82	routing 9 step 1	10.0
+Pegging of demand order 9B with quantity 10.0:
+	0	83	routing 9	10.0
+	1	84	routing 9 step 3	10.0
+	1	85	routing 9 step 2	10.0
+	1	86	routing 9 step 1	10.0

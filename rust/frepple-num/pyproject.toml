@@ -1,0 +1,13 @@
+[build-system]
+requires = ["maturin>=1.5,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "frepple-num"
+version = "0.1.0"
+requires-python = ">=3.12"
+description = "frePPLe Rust/PyO3 pilot: memory-safe JSON number clamping (Engine track E4)"
+
+[tool.maturin]
+# Build the cdylib as a CPython extension module named `frepple_num`.
+features = ["extension-module"]

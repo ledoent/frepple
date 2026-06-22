@@ -1,0 +1,166 @@
+//! frePPLe Rust/PyO3 pilot — forecast slice (Engine track E4).
+//!
+//! Pure numeric ports (memory-safe, `#![forbid(unsafe_code)]`, `cargo test`ed
+//! with no Python) live in the method modules; the PyO3 bindings below are
+//! compiled only into the wheel (`maturin build --features extension-module`) so
+//! the parity tests can diff them against the verbatim C++ references.
+
+pub mod capi; // C ABI for the engine link (phase 7)
+pub mod common;
+pub mod croston; // Croston (phase 5)
+pub mod double_exp; // DoubleExponential (phase 4)
+pub mod forecast; // MovingAverage (slice 2)
+pub mod seasonal; // Seasonal / Holt-Winters (phase 6)
+pub mod single_exp; // SingleExponential (phase 3)
+
+#[cfg(feature = "extension-module")]
+mod bindings {
+    use crate::croston as croston_mod;
+    use crate::seasonal as seasonal_mod;
+    use crate::{double_exp, forecast, single_exp};
+    use pyo3::prelude::*;
+
+    /// MovingAverage -> (smape, standarddeviation, forecast, outlier_indices).
+    #[pyfunction]
+    #[pyo3(signature = (history, order=5, max_deviation=4.0, smape_alfa=0.95, skip=5))]
+    fn moving_average(
+        history: Vec<f64>,
+        order: u32,
+        max_deviation: f64,
+        smape_alfa: f64,
+        skip: u64,
+    ) -> (f64, f64, f64, Vec<usize>) {
+        let r = forecast::moving_average(&history, order, max_deviation, smape_alfa, skip);
+        (r.smape, r.standarddeviation, r.forecast, r.outliers)
+    }
+
+    /// SingleExponential -> (smape, standarddeviation, forecast, outlier_indices).
+    #[pyfunction]
+    #[pyo3(signature = (
+        history, initial_alfa=0.2, min_alfa=0.03, max_alfa=1.0,
+        max_deviation=4.0, smape_alfa=0.95, skip=5, iterations=15
+    ))]
+    #[allow(clippy::too_many_arguments)]
+    fn single_exponential(
+        history: Vec<f64>,
+        initial_alfa: f64,
+        min_alfa: f64,
+        max_alfa: f64,
+        max_deviation: f64,
+        smape_alfa: f64,
+        skip: u64,
+        iterations: u64,
+    ) -> (f64, f64, f64, Vec<usize>) {
+        let r = single_exp::single_exponential(
+            &history,
+            initial_alfa,
+            min_alfa,
+            max_alfa,
+            max_deviation,
+            smape_alfa,
+            skip,
+            iterations,
+        );
+        (r.smape, r.standarddeviation, r.forecast, r.outliers)
+    }
+
+    /// DoubleExponential -> (smape, standarddeviation, forecast, outlier_indices).
+    #[pyfunction]
+    #[pyo3(signature = (
+        history, initial_alfa=0.2, min_alfa=0.02, max_alfa=1.0,
+        initial_gamma=0.2, min_gamma=0.05, max_gamma=1.0,
+        max_deviation=4.0, smape_alfa=0.95, skip=5, iterations=15
+    ))]
+    #[allow(clippy::too_many_arguments)]
+    fn double_exponential(
+        history: Vec<f64>,
+        initial_alfa: f64,
+        min_alfa: f64,
+        max_alfa: f64,
+        initial_gamma: f64,
+        min_gamma: f64,
+        max_gamma: f64,
+        max_deviation: f64,
+        smape_alfa: f64,
+        skip: u64,
+        iterations: u64,
+    ) -> (f64, f64, f64, Vec<usize>) {
+        let r = double_exp::double_exponential(
+            &history, initial_alfa, min_alfa, max_alfa, initial_gamma, min_gamma,
+            max_gamma, max_deviation, smape_alfa, skip, iterations,
+        );
+        (r.smape, r.standarddeviation, r.forecast, r.outliers)
+    }
+
+    /// Croston -> (smape, standarddeviation, forecast, outlier_indices).
+    #[pyfunction]
+    #[pyo3(signature = (
+        history, min_alfa=0.03, max_alfa=0.8, decay_rate=0.1,
+        max_deviation=4.0, smape_alfa=0.95, skip=5, iterations=15
+    ))]
+    #[allow(clippy::too_many_arguments)]
+    fn croston(
+        history: Vec<f64>,
+        min_alfa: f64,
+        max_alfa: f64,
+        decay_rate: f64,
+        max_deviation: f64,
+        smape_alfa: f64,
+        skip: u64,
+        iterations: u64,
+    ) -> (f64, f64, f64, Vec<usize>) {
+        let r = croston_mod::croston(
+            &history, min_alfa, max_alfa, decay_rate, max_deviation, smape_alfa, skip,
+            iterations,
+        );
+        (r.smape, r.standarddeviation, r.forecast, r.outliers)
+    }
+
+    /// Seasonal -> (smape, standarddeviation, forecast, period, force, s_i[]).
+    #[pyfunction]
+    #[pyo3(signature = (
+        history, initial_alfa=0.2, min_alfa=0.02, max_alfa=1.0,
+        initial_beta=0.2, min_beta=0.2, max_beta=1.0, gamma=0.05,
+        min_period=2, max_period=14, min_autocorrelation=0.5, max_autocorrelation=0.8,
+        smape_alfa=0.95, skip=5, iterations=15
+    ))]
+    #[allow(clippy::too_many_arguments)]
+    fn seasonal(
+        history: Vec<f64>,
+        initial_alfa: f64,
+        min_alfa: f64,
+        max_alfa: f64,
+        initial_beta: f64,
+        min_beta: f64,
+        max_beta: f64,
+        gamma: f64,
+        min_period: usize,
+        max_period: usize,
+        min_autocorrelation: f64,
+        max_autocorrelation: f64,
+        smape_alfa: f64,
+        skip: u64,
+        iterations: u64,
+    ) -> (f64, f64, f64, u32, bool, Vec<f64>, f64, f64, u32) {
+        let r = seasonal_mod::seasonal(
+            &history, initial_alfa, min_alfa, max_alfa, initial_beta, min_beta,
+            max_beta, gamma, min_period, max_period, min_autocorrelation,
+            max_autocorrelation, smape_alfa, skip, iterations,
+        );
+        // ...+ apply-state (l_i, t_i, cycleindex) for the phase-7 parity check.
+        (
+            r.smape, r.standarddeviation, r.forecast, r.period, r.force, r.s_i,
+            r.l_i, r.t_i, r.cycleindex,
+        )
+    }
+
+    #[pymodule]
+    fn frepple_forecast(m: &Bound<'_, PyModule>) -> PyResult<()> {
+        m.add_function(wrap_pyfunction!(moving_average, m)?)?;
+        m.add_function(wrap_pyfunction!(single_exponential, m)?)?;
+        m.add_function(wrap_pyfunction!(double_exponential, m)?)?;
+        m.add_function(wrap_pyfunction!(croston, m)?)?;
+        m.add_function(wrap_pyfunction!(seasonal, m)?)?;
+        Ok(())
+    }
+}

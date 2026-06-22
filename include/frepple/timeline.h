@@ -290,7 +290,9 @@ class TimeLine {
 
     const_iterator(const iterator& c) : cur(c.cur) {}
 
-    const Event& operator*() const { return *cur; }
+    // Forms a reference to null at end()/default-ctor; never dereferenced there
+    // (operator++ guards). See FREPPLE_NO_SANITIZE_NULL in utils.h.
+    FREPPLE_NO_SANITIZE_NULL const Event& operator*() const { return *cur; }
 
     const Event* operator->() const { return cur; }
 

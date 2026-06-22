@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<plan xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <name>Test model for suppliers</name>
+  <description>
+  This test model demonstrates the distribution network modeling features.
+  </description>
+  <current>2015-01-01T00:00:00</current>
+  <locations>
+    <location name="Region 1"/>
+    <location name="Region 2"/>
+    <location name="Central WH"/>
+    <location name="Regional DC 1"/>
+    <location name="Local DC 1a">
+      <owner name="Region 1"/>
+    </location>
+    <location name="Local DC 1b">
+      <owner name="Region 1"/>
+    </location>
+    <location name="Regional DC 2"/>
+    <location name="Local DC 2a">
+      <owner name="Region 2"/>
+    </location>
+    <location name="Local DC 2b">
+      <owner name="Region 2"/>
+    </location>
+  </locations>
+  <suppliers>
+    <supplier name="Supplier 1"/>
+    <supplier name="Supplier 2"/>
+    <supplier name="Supplier 3"/>
+  </suppliers>
+  <items>
+    <!-- DEFAULT NETWORK FOR ALL PRODUCTS -->
+    <item name="All products" cost="1">
+	    <itemsuppliers>
+	      <itemsupplier>
+          <supplier name="Supplier 1" />
+          <leadtime>P7D</leadtime>
+          <location name="Central WH"/>
+          <priority>1</priority>
+        </itemsupplier>
+        <itemsupplier>
+          <supplier name="Supplier 1" />
+          <leadtime>P7D</leadtime>
+          <location name="Regional DC 2"/>
+          <priority>2</priority>
+        </itemsupplier>
+	    </itemsuppliers>
+	    <itemdistributions>
+        <itemdistribution>
+          <origin name="Central WH" />
+          <leadtime>P10D</leadtime>
+          <destination name="Regional DC 1"/>
+          <priority>1</priority>
+        </itemdistribution>
+        <itemdistribution>
+          <origin name="Central WH" />
+          <leadtime>P12D</leadtime>
+          <destination name="Regional DC 2"/>
+          <priority>1</priority>
+        </itemdistribution>
+        <itemdistribution>
+          <origin name="Regional DC 1" />
+          <destination name="Local DC 1a"/>
+          <leadtime>P3D</leadtime>
+          <priority>1</priority>
+        </itemdistribution>
+        <itemdistribution>
+          <origin name="Regional DC 1" />
+          <destination name="Local DC 1b"/>
+          <leadtime>P3D</leadtime>
+          <priority>1</priority>
+        </itemdistribution>
+        <itemdistribution>
+          <origin name="Regional DC 2" />
+          <destination name="Local DC 2a"/>
+          <leadtime>P3D</leadtime>
+          <priority>1</priority>
+        </itemdistribution>
+        <itemdistribution>
+          <origin name="Regional DC 2" />
+          <destination name="Local DC 2b"/>
+          <leadtime>P3D</leadtime>
+          <priority>1</priority>
+        </itemdistribution>
+      </itemdistributions>
+    </item>
+    <!-- ITEM USING DEFAULT DISTRIBUTION AND PURCHASING -->
+    <item name="product A">
+      <owner name="All products"/>
+      <cost>2</cost>
+    </item>
+  </items>
+
+  <buffers>
+    <buffer name="product A @ Central WH" onhand="10"><item name="product A"/><location name="Central WH"/></buffer>
+  </buffers>
+
+  <demands>
+    <!--
+    Generates a material flow: Supplier 1 -> Central WH -> Regional DC 1 -> Local DC 1a
+    Partial shipment of the inventory in the Central WH, followed with a late delivery.
+    -->
+    <demand name="order 1a for product A">
+      <quantity>50</quantity>
+      <due>2015-01-01T00:00:00</due>
+      <priority>1</priority>
+      <item name="product A"/>
+      <location name="Local DC 1a"/>
+    </demand>
+    <demand name="order 1b for product A">
+      <quantity>50</quantity>
+      <due>2015-01-01T00:00:00</due>
+      <priority>1</priority>
+      <item name="product A"/>
+      <location name="Local DC 1a"/>
+    </demand>
+        <!--
+    Generates a material flow: Supplier 1 -> Central WH -> Regional DC 1 -> Local DC 1a
+    Unconstrained case.
+    -->
+    <demand name="order 2 for product A">
+      <quantity>100</quantity>
+      <due>2015-03-01T00:00:00</due>
+      <priority>1</priority>
+      <item name="product A"/>
+      <location name="Local DC 1b"/>
+    </demand>
+    <!--
+    Generates a material flow: Supplier 1 -> Regional DC 2 -> Local DC 2a
+    The supplier ships directly to the regional DC2 to reduce the lateness.
+    -->
+    <demand name="order 3 for product A">
+      <quantity>100</quantity>
+      <due>2015-01-01T00:00:00</due>
+      <priority>1</priority>
+      <item name="product A"/>
+      <location name="Local DC 2a"/>
+    </demand>
+    <!--
+    Generates a material flow: Supplier 1 -> Central WH -> Regional DC 1 -> Local DC 1a
+    Unconstrained case.
+    -->
+    <demand name="order 4 for product A">
+      <quantity>100</quantity>
+      <due>2015-03-01T00:00:00</due>
+      <priority>1</priority>
+      <item name="product A"/>
+      <location name="Local DC 2b"/>
+    </demand>
+  </demands>
+
+  <operationplans>
+    <operationplan ordertype="DO" end="2015-06-06T00:00:00"
+      quantity="100" status="confirmed">
+      <item name="product A"/>
+      <location name="Local DC 2b"/>
+      <origin name="Central WH"/>
+    </operationplan>
+	
+	<!-- Testing intransit with blank source or destination location. -->
+	<operationplan ordertype="DO" end="2015-06-05T00:00:00"
+      quantity="100" status="confirmed">
+      <item name="In transit product"/>
+      <location name="Destination"/>
+      <origin name="Source"/>
+    </operationplan>
+	<operationplan ordertype="DO" end="2015-06-06T00:00:00"
+      quantity="100" status="confirmed">
+      <item name="In transit product"/>
+      <location name="Destination"/>
+    </operationplan>
+	<operationplan ordertype="DO" start="2015-06-07T00:00:00"
+      quantity="100" status="confirmed">
+      <item name="In transit product"/>
+      <origin name="Source"/>
+    </operationplan>	
+  </operationplans>
+
+<?python
+frepple.solver_mrp(constraints=15,loglevel=1).solve()
+with open("output.1.xml","wt") as output:
+  for opplan in frepple.operationplans():
+    print("Upstream pegging of operationplan with id %s with quantity %s of '%s':" % (opplan.id, opplan.quantity, opplan.operation.name), file=output)
+    for j in opplan.pegging_upstream:
+      print("\t%s\t%s\t%s\t%s" % (j.level, j.operationplan.id, j.operationplan.operation.name, j.quantity), file=output)
+    print("Downstream pegging of operationplan with id %s with quantity %s of '%s':" % (opplan.id, opplan.quantity, opplan.operation.name), file=output)
+    for j in opplan.pegging_downstream:
+      print("\t%s\t%s\t%s\t%s" % (j.level, j.operationplan.id, j.operationplan.operation.name, j.quantity), file=output)
+  for dmd in frepple.demands():
+    print("Pegging of demand %s with quantity %s:" % (dmd.name, dmd.quantity), file=output)
+    for j in dmd.pegging:
+      print("\t%s\t%s\t%s\t%s" % (j.level, j.operationplan.id, j.operationplan.operation.name, j.quantity), file=output)
+?>
+</plan>

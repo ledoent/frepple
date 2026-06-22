@@ -1,0 +1,387 @@
+Upstream pegging of operationplan with id 8 with quantity 1.0 of '1. produce end item':
+	0	8	1. produce end item	1.0
+	1	9	1. produce intermediate item	2.0
+	2	10	Purchase 1. raw material @ 1. factory from 1. supplier	6.0
+Downstream pegging of operationplan with id 8 with quantity 1.0 of '1. produce end item':
+	0	8	1. produce end item	1.0
+	1	11	Ship 1. end item @ 1. factory	1.0
+Upstream pegging of operationplan with id 9 with quantity 2.0 of '1. produce intermediate item':
+	0	9	1. produce intermediate item	2.0
+	1	10	Purchase 1. raw material @ 1. factory from 1. supplier	6.0
+Downstream pegging of operationplan with id 9 with quantity 2.0 of '1. produce intermediate item':
+	0	9	1. produce intermediate item	2.0
+	1	8	1. produce end item	1.0
+	2	11	Ship 1. end item @ 1. factory	1.0
+Upstream pegging of operationplan with id 12 with quantity 1.0 of '2. produce end item':
+	0	12	2. produce end item	1.0
+	1	13	2. produce intermediate item	2.0
+	2	14	Purchase 2. raw material @ 2. factory from 2. supplier	6.0
+Downstream pegging of operationplan with id 12 with quantity 1.0 of '2. produce end item':
+	0	12	2. produce end item	1.0
+	1	15	Ship 2. end item @ 2. factory	1.0
+Upstream pegging of operationplan with id 13 with quantity 2.0 of '2. produce intermediate item':
+	0	13	2. produce intermediate item	2.0
+	1	14	Purchase 2. raw material @ 2. factory from 2. supplier	6.0
+Downstream pegging of operationplan with id 13 with quantity 2.0 of '2. produce intermediate item':
+	0	13	2. produce intermediate item	2.0
+	1	12	2. produce end item	1.0
+	2	15	Ship 2. end item @ 2. factory	1.0
+Upstream pegging of operationplan with id 16 with quantity 1.0 of '3. produce end item':
+	0	16	3. produce end item	1.0
+	1	17	3. produce intermediate item	2.0
+	2	18	Purchase 3. raw material @ 3. factory from 3. supplier	6.0
+Downstream pegging of operationplan with id 16 with quantity 1.0 of '3. produce end item':
+	0	16	3. produce end item	1.0
+	1	19	Ship 3. end item @ 3. factory	1.0
+Upstream pegging of operationplan with id 17 with quantity 2.0 of '3. produce intermediate item':
+	0	17	3. produce intermediate item	2.0
+	1	18	Purchase 3. raw material @ 3. factory from 3. supplier	6.0
+Downstream pegging of operationplan with id 17 with quantity 2.0 of '3. produce intermediate item':
+	0	17	3. produce intermediate item	2.0
+	1	16	3. produce end item	1.0
+	2	19	Ship 3. end item @ 3. factory	1.0
+Upstream pegging of operationplan with id 20 with quantity 1.0 of '4. produce end item':
+	0	20	4. produce end item	1.0
+	1	21	4. produce intermediate item	2.0
+	2	22	Purchase 4. raw material @ 4. factory from 4. supplier	6.0
+Downstream pegging of operationplan with id 20 with quantity 1.0 of '4. produce end item':
+	0	20	4. produce end item	1.0
+	1	23	Ship 4. end item @ 4. factory	1.0
+Upstream pegging of operationplan with id 21 with quantity 2.0 of '4. produce intermediate item':
+	0	21	4. produce intermediate item	2.0
+	1	22	Purchase 4. raw material @ 4. factory from 4. supplier	6.0
+Downstream pegging of operationplan with id 21 with quantity 2.0 of '4. produce intermediate item':
+	0	21	4. produce intermediate item	2.0
+	1	20	4. produce end item	1.0
+	2	23	Ship 4. end item @ 4. factory	1.0
+Upstream pegging of operationplan with id 24 with quantity 1.0 of '5. produce end item':
+	0	24	5. produce end item	1.0
+	1	25	5. produce intermediate item	2.0
+	2	26	Purchase 5. raw material @ 5. factory from 5. supplier	6.0
+Downstream pegging of operationplan with id 24 with quantity 1.0 of '5. produce end item':
+	0	24	5. produce end item	1.0
+	1	27	Ship 5. end item @ 5. factory	1.0
+Upstream pegging of operationplan with id 25 with quantity 2.0 of '5. produce intermediate item':
+	0	25	5. produce intermediate item	2.0
+	1	26	Purchase 5. raw material @ 5. factory from 5. supplier	6.0
+Downstream pegging of operationplan with id 25 with quantity 2.0 of '5. produce intermediate item':
+	0	25	5. produce intermediate item	2.0
+	1	24	5. produce end item	1.0
+	2	27	Ship 5. end item @ 5. factory	1.0
+Upstream pegging of operationplan with id 28 with quantity 1.0 of '6. produce end item':
+	0	28	6. produce end item	1.0
+	1	29	6. produce intermediate item	2.0
+	2	30	Purchase 6. raw material @ 6. factory from 6. supplier	6.0
+Downstream pegging of operationplan with id 28 with quantity 1.0 of '6. produce end item':
+	0	28	6. produce end item	1.0
+	1	31	Ship 6. end item @ 6. factory	1.0
+Upstream pegging of operationplan with id 29 with quantity 2.0 of '6. produce intermediate item':
+	0	29	6. produce intermediate item	2.0
+	1	30	Purchase 6. raw material @ 6. factory from 6. supplier	6.0
+Downstream pegging of operationplan with id 29 with quantity 2.0 of '6. produce intermediate item':
+	0	29	6. produce intermediate item	2.0
+	1	28	6. produce end item	1.0
+	2	31	Ship 6. end item @ 6. factory	1.0
+Upstream pegging of operationplan with id 7. completed MO with quantity 4.0 of '7. produce intermediate item':
+	0	7. completed MO	7. produce intermediate item	4.0
+	1	32	Purchase 7. raw material @ 7. factory from 7. supplier	12.0
+Downstream pegging of operationplan with id 7. completed MO with quantity 4.0 of '7. produce intermediate item':
+	0	7. completed MO	7. produce intermediate item	4.0
+Upstream pegging of operationplan with id 7. approved MO with quantity 4.0 of '7. produce intermediate item':
+	0	7. approved MO	7. produce intermediate item	4.0
+	1	32	Purchase 7. raw material @ 7. factory from 7. supplier	12.0
+Downstream pegging of operationplan with id 7. approved MO with quantity 4.0 of '7. produce intermediate item':
+	0	7. approved MO	7. produce intermediate item	4.0
+Upstream pegging of operationplan with id 7. confirmed MO with quantity 4.0 of '7. produce intermediate item':
+	0	7. confirmed MO	7. produce intermediate item	4.0
+	1	32	Purchase 7. raw material @ 7. factory from 7. supplier	12.0
+Downstream pegging of operationplan with id 7. confirmed MO with quantity 4.0 of '7. produce intermediate item':
+	0	7. confirmed MO	7. produce intermediate item	4.0
+Upstream pegging of operationplan with id 33 with quantity 1.0 of '8. produce end item - alt 1':
+	0	34	Replenish 8. end item @ 8. factory	1.0
+	1	33	8. produce end item - alt 1	1.0
+Downstream pegging of operationplan with id 33 with quantity 1.0 of '8. produce end item - alt 1':
+	0	34	Replenish 8. end item @ 8. factory	1.0
+	1	33	8. produce end item - alt 1	1.0
+	2	35	Ship 8. end item @ 8. factory	1.0
+Upstream pegging of operationplan with id 36 with quantity 1.0 of '8. produce end item - alt 1':
+	0	37	Replenish 8. end item @ 8. factory	1.0
+	1	36	8. produce end item - alt 1	1.0
+Downstream pegging of operationplan with id 36 with quantity 1.0 of '8. produce end item - alt 1':
+	0	37	Replenish 8. end item @ 8. factory	1.0
+	1	36	8. produce end item - alt 1	1.0
+	2	38	Ship 8. end item @ 8. factory	1.0
+Upstream pegging of operationplan with id 39 with quantity 8.0 of '8. produce end item - alt 2':
+	0	40	Replenish 8. end item @ 8. factory	8.0
+	1	39	8. produce end item - alt 2	8.0
+	2	41	8. produce end item - alt 2 - step B	8.0
+	2	42	8. produce end item - alt 2 - step A	8.0
+	3	43	8. produce intermediate item	8.0
+	4	44	Purchase 8. raw material @ 8. factory from 8. supplier	24.0
+Downstream pegging of operationplan with id 39 with quantity 8.0 of '8. produce end item - alt 2':
+	0	40	Replenish 8. end item @ 8. factory	8.0
+	1	39	8. produce end item - alt 2	8.0
+	2	41	8. produce end item - alt 2 - step B	8.0
+	3	45	Ship 8. end item @ 8. factory	8.0
+	2	42	8. produce end item - alt 2 - step A	8.0
+Upstream pegging of operationplan with id 42 with quantity 8.0 of '8. produce end item - alt 2 - step A':
+	0	40	Replenish 8. end item @ 8. factory	8.0
+	1	39	8. produce end item - alt 2	8.0
+	2	41	8. produce end item - alt 2 - step B	8.0
+	2	42	8. produce end item - alt 2 - step A	8.0
+	3	43	8. produce intermediate item	8.0
+	4	44	Purchase 8. raw material @ 8. factory from 8. supplier	24.0
+Downstream pegging of operationplan with id 42 with quantity 8.0 of '8. produce end item - alt 2 - step A':
+	0	40	Replenish 8. end item @ 8. factory	8.0
+	1	39	8. produce end item - alt 2	8.0
+	2	41	8. produce end item - alt 2 - step B	8.0
+	3	45	Ship 8. end item @ 8. factory	8.0
+	2	42	8. produce end item - alt 2 - step A	8.0
+Upstream pegging of operationplan with id 41 with quantity 8.0 of '8. produce end item - alt 2 - step B':
+	0	40	Replenish 8. end item @ 8. factory	8.0
+	1	39	8. produce end item - alt 2	8.0
+	2	41	8. produce end item - alt 2 - step B	8.0
+	2	42	8. produce end item - alt 2 - step A	8.0
+	3	43	8. produce intermediate item	8.0
+	4	44	Purchase 8. raw material @ 8. factory from 8. supplier	24.0
+Downstream pegging of operationplan with id 41 with quantity 8.0 of '8. produce end item - alt 2 - step B':
+	0	40	Replenish 8. end item @ 8. factory	8.0
+	1	39	8. produce end item - alt 2	8.0
+	2	41	8. produce end item - alt 2 - step B	8.0
+	3	45	Ship 8. end item @ 8. factory	8.0
+	2	42	8. produce end item - alt 2 - step A	8.0
+Upstream pegging of operationplan with id 43 with quantity 8.0 of '8. produce intermediate item':
+	0	43	8. produce intermediate item	8.0
+	1	44	Purchase 8. raw material @ 8. factory from 8. supplier	24.0
+Downstream pegging of operationplan with id 43 with quantity 8.0 of '8. produce intermediate item':
+	0	43	8. produce intermediate item	8.0
+	1	40	Replenish 8. end item @ 8. factory	8.0
+	2	39	8. produce end item - alt 2	8.0
+	3	41	8. produce end item - alt 2 - step B	8.0
+	4	45	Ship 8. end item @ 8. factory	8.0
+	3	42	8. produce end item - alt 2 - step A	8.0
+Upstream pegging of operationplan with id 46 with quantity 1.0 of '9. produce end item':
+	0	46	9. produce end item	1.0
+	1	47	Purchase 9. component 2 @ 9. factory from 9. supplier	2.0
+	1	48	Purchase 9. component 1 @ 9. factory from 9. supplier	2.0
+Downstream pegging of operationplan with id 46 with quantity 1.0 of '9. produce end item':
+	0	46	9. produce end item	1.0
+	1	49	Ship 9. end item @ 9. factory	1.0
+Upstream pegging of operationplan with id 10 with quantity 6.0 of 'Purchase 1. raw material @ 1. factory from 1. supplier':
+	0	10	Purchase 1. raw material @ 1. factory from 1. supplier	6.0
+Downstream pegging of operationplan with id 10 with quantity 6.0 of 'Purchase 1. raw material @ 1. factory from 1. supplier':
+	0	10	Purchase 1. raw material @ 1. factory from 1. supplier	6.0
+	1	9	1. produce intermediate item	2.0
+	2	8	1. produce end item	1.0
+	3	11	Ship 1. end item @ 1. factory	1.0
+Upstream pegging of operationplan with id 14 with quantity 6.0 of 'Purchase 2. raw material @ 2. factory from 2. supplier':
+	0	14	Purchase 2. raw material @ 2. factory from 2. supplier	6.0
+Downstream pegging of operationplan with id 14 with quantity 6.0 of 'Purchase 2. raw material @ 2. factory from 2. supplier':
+	0	14	Purchase 2. raw material @ 2. factory from 2. supplier	6.0
+	1	13	2. produce intermediate item	2.0
+	2	12	2. produce end item	1.0
+	3	15	Ship 2. end item @ 2. factory	1.0
+Upstream pegging of operationplan with id 18 with quantity 6.0 of 'Purchase 3. raw material @ 3. factory from 3. supplier':
+	0	18	Purchase 3. raw material @ 3. factory from 3. supplier	6.0
+Downstream pegging of operationplan with id 18 with quantity 6.0 of 'Purchase 3. raw material @ 3. factory from 3. supplier':
+	0	18	Purchase 3. raw material @ 3. factory from 3. supplier	6.0
+	1	17	3. produce intermediate item	2.0
+	2	16	3. produce end item	1.0
+	3	19	Ship 3. end item @ 3. factory	1.0
+Upstream pegging of operationplan with id 22 with quantity 6.0 of 'Purchase 4. raw material @ 4. factory from 4. supplier':
+	0	22	Purchase 4. raw material @ 4. factory from 4. supplier	6.0
+Downstream pegging of operationplan with id 22 with quantity 6.0 of 'Purchase 4. raw material @ 4. factory from 4. supplier':
+	0	22	Purchase 4. raw material @ 4. factory from 4. supplier	6.0
+	1	21	4. produce intermediate item	2.0
+	2	20	4. produce end item	1.0
+	3	23	Ship 4. end item @ 4. factory	1.0
+Upstream pegging of operationplan with id 26 with quantity 6.0 of 'Purchase 5. raw material @ 5. factory from 5. supplier':
+	0	26	Purchase 5. raw material @ 5. factory from 5. supplier	6.0
+Downstream pegging of operationplan with id 26 with quantity 6.0 of 'Purchase 5. raw material @ 5. factory from 5. supplier':
+	0	26	Purchase 5. raw material @ 5. factory from 5. supplier	6.0
+	1	25	5. produce intermediate item	2.0
+	2	24	5. produce end item	1.0
+	3	27	Ship 5. end item @ 5. factory	1.0
+Upstream pegging of operationplan with id 30 with quantity 6.0 of 'Purchase 6. raw material @ 6. factory from 6. supplier':
+	0	30	Purchase 6. raw material @ 6. factory from 6. supplier	6.0
+Downstream pegging of operationplan with id 30 with quantity 6.0 of 'Purchase 6. raw material @ 6. factory from 6. supplier':
+	0	30	Purchase 6. raw material @ 6. factory from 6. supplier	6.0
+	1	29	6. produce intermediate item	2.0
+	2	28	6. produce end item	1.0
+	3	31	Ship 6. end item @ 6. factory	1.0
+Upstream pegging of operationplan with id 32 with quantity 100.0 of 'Purchase 7. raw material @ 7. factory from 7. supplier':
+	0	32	Purchase 7. raw material @ 7. factory from 7. supplier	100.0
+Downstream pegging of operationplan with id 32 with quantity 100.0 of 'Purchase 7. raw material @ 7. factory from 7. supplier':
+	0	32	Purchase 7. raw material @ 7. factory from 7. supplier	100.0
+	1	7. confirmed MO	7. produce intermediate item	4.0
+	1	7. approved MO	7. produce intermediate item	4.0
+	1	7. completed MO	7. produce intermediate item	4.0
+Upstream pegging of operationplan with id 44 with quantity 24.0 of 'Purchase 8. raw material @ 8. factory from 8. supplier':
+	0	44	Purchase 8. raw material @ 8. factory from 8. supplier	24.0
+Downstream pegging of operationplan with id 44 with quantity 24.0 of 'Purchase 8. raw material @ 8. factory from 8. supplier':
+	0	44	Purchase 8. raw material @ 8. factory from 8. supplier	24.0
+	1	43	8. produce intermediate item	8.0
+	2	40	Replenish 8. end item @ 8. factory	8.0
+	3	39	8. produce end item - alt 2	8.0
+	4	41	8. produce end item - alt 2 - step B	8.0
+	5	45	Ship 8. end item @ 8. factory	8.0
+	4	42	8. produce end item - alt 2 - step A	8.0
+Upstream pegging of operationplan with id 48 with quantity 2.0 of 'Purchase 9. component 1 @ 9. factory from 9. supplier':
+	0	48	Purchase 9. component 1 @ 9. factory from 9. supplier	2.0
+Downstream pegging of operationplan with id 48 with quantity 2.0 of 'Purchase 9. component 1 @ 9. factory from 9. supplier':
+	0	48	Purchase 9. component 1 @ 9. factory from 9. supplier	2.0
+	1	46	9. produce end item	1.0
+	2	49	Ship 9. end item @ 9. factory	1.0
+Upstream pegging of operationplan with id 47 with quantity 2.0 of 'Purchase 9. component 2 @ 9. factory from 9. supplier':
+	0	47	Purchase 9. component 2 @ 9. factory from 9. supplier	2.0
+Downstream pegging of operationplan with id 47 with quantity 2.0 of 'Purchase 9. component 2 @ 9. factory from 9. supplier':
+	0	47	Purchase 9. component 2 @ 9. factory from 9. supplier	2.0
+	1	46	9. produce end item	1.0
+	2	49	Ship 9. end item @ 9. factory	1.0
+Upstream pegging of operationplan with id 34 with quantity 1.0 of 'Replenish 8. end item @ 8. factory':
+	0	34	Replenish 8. end item @ 8. factory	1.0
+	1	33	8. produce end item - alt 1	1.0
+Downstream pegging of operationplan with id 34 with quantity 1.0 of 'Replenish 8. end item @ 8. factory':
+	0	34	Replenish 8. end item @ 8. factory	1.0
+	1	33	8. produce end item - alt 1	1.0
+	2	35	Ship 8. end item @ 8. factory	1.0
+Upstream pegging of operationplan with id 37 with quantity 1.0 of 'Replenish 8. end item @ 8. factory':
+	0	37	Replenish 8. end item @ 8. factory	1.0
+	1	36	8. produce end item - alt 1	1.0
+Downstream pegging of operationplan with id 37 with quantity 1.0 of 'Replenish 8. end item @ 8. factory':
+	0	37	Replenish 8. end item @ 8. factory	1.0
+	1	36	8. produce end item - alt 1	1.0
+	2	38	Ship 8. end item @ 8. factory	1.0
+Upstream pegging of operationplan with id 40 with quantity 8.0 of 'Replenish 8. end item @ 8. factory':
+	0	40	Replenish 8. end item @ 8. factory	8.0
+	1	39	8. produce end item - alt 2	8.0
+	2	41	8. produce end item - alt 2 - step B	8.0
+	2	42	8. produce end item - alt 2 - step A	8.0
+	3	43	8. produce intermediate item	8.0
+	4	44	Purchase 8. raw material @ 8. factory from 8. supplier	24.0
+Downstream pegging of operationplan with id 40 with quantity 8.0 of 'Replenish 8. end item @ 8. factory':
+	0	40	Replenish 8. end item @ 8. factory	8.0
+	1	39	8. produce end item - alt 2	8.0
+	2	41	8. produce end item - alt 2 - step B	8.0
+	3	45	Ship 8. end item @ 8. factory	8.0
+	2	42	8. produce end item - alt 2 - step A	8.0
+Upstream pegging of operationplan with id 11 with quantity 1.0 of 'Ship 1. end item @ 1. factory':
+	0	11	Ship 1. end item @ 1. factory	1.0
+	1	8	1. produce end item	1.0
+	2	9	1. produce intermediate item	2.0
+	3	10	Purchase 1. raw material @ 1. factory from 1. supplier	6.0
+Downstream pegging of operationplan with id 11 with quantity 1.0 of 'Ship 1. end item @ 1. factory':
+	0	11	Ship 1. end item @ 1. factory	1.0
+Upstream pegging of operationplan with id 15 with quantity 1.0 of 'Ship 2. end item @ 2. factory':
+	0	15	Ship 2. end item @ 2. factory	1.0
+	1	12	2. produce end item	1.0
+	2	13	2. produce intermediate item	2.0
+	3	14	Purchase 2. raw material @ 2. factory from 2. supplier	6.0
+Downstream pegging of operationplan with id 15 with quantity 1.0 of 'Ship 2. end item @ 2. factory':
+	0	15	Ship 2. end item @ 2. factory	1.0
+Upstream pegging of operationplan with id 19 with quantity 1.0 of 'Ship 3. end item @ 3. factory':
+	0	19	Ship 3. end item @ 3. factory	1.0
+	1	16	3. produce end item	1.0
+	2	17	3. produce intermediate item	2.0
+	3	18	Purchase 3. raw material @ 3. factory from 3. supplier	6.0
+Downstream pegging of operationplan with id 19 with quantity 1.0 of 'Ship 3. end item @ 3. factory':
+	0	19	Ship 3. end item @ 3. factory	1.0
+Upstream pegging of operationplan with id 23 with quantity 1.0 of 'Ship 4. end item @ 4. factory':
+	0	23	Ship 4. end item @ 4. factory	1.0
+	1	20	4. produce end item	1.0
+	2	21	4. produce intermediate item	2.0
+	3	22	Purchase 4. raw material @ 4. factory from 4. supplier	6.0
+Downstream pegging of operationplan with id 23 with quantity 1.0 of 'Ship 4. end item @ 4. factory':
+	0	23	Ship 4. end item @ 4. factory	1.0
+Upstream pegging of operationplan with id 27 with quantity 1.0 of 'Ship 5. end item @ 5. factory':
+	0	27	Ship 5. end item @ 5. factory	1.0
+	1	24	5. produce end item	1.0
+	2	25	5. produce intermediate item	2.0
+	3	26	Purchase 5. raw material @ 5. factory from 5. supplier	6.0
+Downstream pegging of operationplan with id 27 with quantity 1.0 of 'Ship 5. end item @ 5. factory':
+	0	27	Ship 5. end item @ 5. factory	1.0
+Upstream pegging of operationplan with id 31 with quantity 1.0 of 'Ship 6. end item @ 6. factory':
+	0	31	Ship 6. end item @ 6. factory	1.0
+	1	28	6. produce end item	1.0
+	2	29	6. produce intermediate item	2.0
+	3	30	Purchase 6. raw material @ 6. factory from 6. supplier	6.0
+Downstream pegging of operationplan with id 31 with quantity 1.0 of 'Ship 6. end item @ 6. factory':
+	0	31	Ship 6. end item @ 6. factory	1.0
+Upstream pegging of operationplan with id 35 with quantity 1.0 of 'Ship 8. end item @ 8. factory':
+	0	35	Ship 8. end item @ 8. factory	1.0
+	1	34	Replenish 8. end item @ 8. factory	1.0
+	2	33	8. produce end item - alt 1	1.0
+Downstream pegging of operationplan with id 35 with quantity 1.0 of 'Ship 8. end item @ 8. factory':
+	0	35	Ship 8. end item @ 8. factory	1.0
+Upstream pegging of operationplan with id 38 with quantity 1.0 of 'Ship 8. end item @ 8. factory':
+	0	38	Ship 8. end item @ 8. factory	1.0
+	1	37	Replenish 8. end item @ 8. factory	1.0
+	2	36	8. produce end item - alt 1	1.0
+Downstream pegging of operationplan with id 38 with quantity 1.0 of 'Ship 8. end item @ 8. factory':
+	0	38	Ship 8. end item @ 8. factory	1.0
+Upstream pegging of operationplan with id 45 with quantity 8.0 of 'Ship 8. end item @ 8. factory':
+	0	45	Ship 8. end item @ 8. factory	8.0
+	1	40	Replenish 8. end item @ 8. factory	8.0
+	2	39	8. produce end item - alt 2	8.0
+	3	41	8. produce end item - alt 2 - step B	8.0
+	3	42	8. produce end item - alt 2 - step A	8.0
+	4	43	8. produce intermediate item	8.0
+	5	44	Purchase 8. raw material @ 8. factory from 8. supplier	24.0
+Downstream pegging of operationplan with id 45 with quantity 8.0 of 'Ship 8. end item @ 8. factory':
+	0	45	Ship 8. end item @ 8. factory	8.0
+Upstream pegging of operationplan with id 49 with quantity 1.0 of 'Ship 9. end item @ 9. factory':
+	0	49	Ship 9. end item @ 9. factory	1.0
+	1	46	9. produce end item	1.0
+	2	47	Purchase 9. component 2 @ 9. factory from 9. supplier	2.0
+	2	48	Purchase 9. component 1 @ 9. factory from 9. supplier	2.0
+Downstream pegging of operationplan with id 49 with quantity 1.0 of 'Ship 9. end item @ 9. factory':
+	0	49	Ship 9. end item @ 9. factory	1.0
+Pegging of demand 1. order 1 with quantity 1.0:
+	0	11	Ship 1. end item @ 1. factory	1.0
+	1	8	1. produce end item	1.0
+	2	9	1. produce intermediate item	2.0
+	3	10	Purchase 1. raw material @ 1. factory from 1. supplier	6.0
+Pegging of demand 2. order 1 with quantity 1.0:
+	0	15	Ship 2. end item @ 2. factory	1.0
+	1	12	2. produce end item	1.0
+	2	13	2. produce intermediate item	2.0
+	3	14	Purchase 2. raw material @ 2. factory from 2. supplier	6.0
+Pegging of demand 3. order 1 with quantity 1.0:
+	0	19	Ship 3. end item @ 3. factory	1.0
+	1	16	3. produce end item	1.0
+	2	17	3. produce intermediate item	2.0
+	3	18	Purchase 3. raw material @ 3. factory from 3. supplier	6.0
+Pegging of demand 4. order 1 with quantity 1.0:
+	0	23	Ship 4. end item @ 4. factory	1.0
+	1	20	4. produce end item	1.0
+	2	21	4. produce intermediate item	2.0
+	3	22	Purchase 4. raw material @ 4. factory from 4. supplier	6.0
+Pegging of demand 5. order 1 with quantity 1.0:
+	0	27	Ship 5. end item @ 5. factory	1.0
+	1	24	5. produce end item	1.0
+	2	25	5. produce intermediate item	2.0
+	3	26	Purchase 5. raw material @ 5. factory from 5. supplier	6.0
+Pegging of demand 6. order 1 with quantity 1.0:
+	0	31	Ship 6. end item @ 6. factory	1.0
+	1	28	6. produce end item	1.0
+	2	29	6. produce intermediate item	2.0
+	3	30	Purchase 6. raw material @ 6. factory from 6. supplier	6.0
+Pegging of demand 8. order 1 with quantity 10.0:
+	0	35	Ship 8. end item @ 8. factory	1.0
+	1	34	Replenish 8. end item @ 8. factory	1.0
+	2	33	8. produce end item - alt 1	1.0
+	0	38	Ship 8. end item @ 8. factory	1.0
+	1	37	Replenish 8. end item @ 8. factory	1.0
+	2	36	8. produce end item - alt 1	1.0
+	0	45	Ship 8. end item @ 8. factory	8.0
+	1	40	Replenish 8. end item @ 8. factory	8.0
+	2	39	8. produce end item - alt 2	8.0
+	3	41	8. produce end item - alt 2 - step B	8.0
+	3	42	8. produce end item - alt 2 - step A	8.0
+	4	43	8. produce intermediate item	8.0
+	5	44	Purchase 8. raw material @ 8. factory from 8. supplier	24.0
+Pegging of demand 9. order 1 with quantity 1.0:
+	0	49	Ship 9. end item @ 9. factory	1.0
+	1	46	9. produce end item	1.0
+	2	47	Purchase 9. component 2 @ 9. factory from 9. supplier	2.0
+	2	48	Purchase 9. component 1 @ 9. factory from 9. supplier	2.0

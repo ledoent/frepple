@@ -45,3 +45,6 @@ venv
 *.egg-info
 /freppledb/forecast/frontend/node_modules
 /freppledb/common/frontend/node_modules
+
+# macOS Finder metadata
+.DS_Store

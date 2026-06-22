@@ -1,0 +1,12 @@
+[build-system]
+requires = ["maturin>=1.5,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "frepple-forecast"
+version = "0.1.0"
+requires-python = ">=3.12"
+description = "frePPLe Rust/PyO3 pilot (Engine track E4, slice 2): MovingAverage forecast method"
+
+[tool.maturin]
+features = ["extension-module"]

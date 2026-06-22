@@ -78,6 +78,13 @@ if(grunt)
   )
 endif()
 
+# Engine track E4 / phase 7: link the Rust forecast methods (rust/frepple-forecast)
+# into libfrepple behind this flag. Default OFF — the C++ forecast remains the
+# shipping path; ON swaps each generateForecast body for the extern "C" Rust call
+# and builds the forecast TU with -ffp-contract=off to match rustc (no FMA), the
+# documented requirement for byte-exact golden parity (tools/modernization/rust-pilot.md).
+option(FREPPLE_RUST_FORECAST "Use the Rust forecast methods instead of C++ (phase 7)" OFF)
+
 # C++ compiler flags and features
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
@@ -85,7 +92,23 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error=date-time")
 set(CMAKE_CXX_FLAGS_PROFILING "${CMAKE_CXX_FLAGS_DEBUG} -DNDEBUG")
 set(CMAKE_C_FLAGS_PROFILING "${CMAKE_C_FLAGS_DEBUG} -DNDEBUG")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address -Wuninitialized -Wunused -Wswitch -Wunused-parameter -Wall") # -Wextra
+# Engine track E1: the Debug build is sanitizer-instrumented. ASan by default
+# (the existing green engine-asan gate); -DFREPPLE_SANITIZER=undefined runs the
+# UBSan leg, or "address,undefined" both. The runtime behaviour (abort on first
+# error) is set per-run via {A,UB}SAN_OPTIONS in the CI workflow, not here.
+set(FREPPLE_SANITIZER "address" CACHE STRING "Sanitizer(s) for the Debug build: address | undefined | address,undefined")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=${FREPPLE_SANITIZER} -fno-omit-frame-pointer -Wuninitialized -Wunused -Wswitch -Wunused-parameter -Wall") # -Wextra
+if(FREPPLE_SANITIZER MATCHES "undefined")
+  # frePPLe's object model uses a hand-rolled MetaClass RTTI (downcast by type
+  # tag, not C++ polymorphism), which is fundamentally incompatible with UBSan's
+  # -fsanitize=vptr check - it would flood every run with by-design "wrong
+  # dynamic type" reports (utils.h cast sites) and bury the real findings.
+  # Excluded by design; see tools/modernization/ubsan-baseline.md.
+  string(APPEND CMAKE_CXX_FLAGS_DEBUG " -fno-sanitize=vptr")
+endif()
+# The sanitizer runtime must be on the link line too (esp. UBSan for the shared lib).
+set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -fsanitize=${FREPPLE_SANITIZER}")
+set(CMAKE_SHARED_LINKER_FLAGS_DEBUG "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} -fsanitize=${FREPPLE_SANITIZER}")
 # Extra debug flags for specific audits/analysis:
 # -Wpadded: Warn if memory isn't used efficiently due to padding and alignments.
 set(CMAKE_EXE_LINKER_FLAGS_PROFILING "")

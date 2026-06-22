@@ -5,15 +5,18 @@
 import { authedFetch } from "./api";
 import { HttpError } from "./errors";
 import { fmtDate, fmtNum, type Column, type RecordRow } from "./records";
+import type { OrderStatus } from "./apiSchema";
 
 // Statuses an order can move through; executed ones are locked from editing.
+// `satisfies readonly OrderStatus[]` type-couples this list to the API's status
+// enum (Phase 0) — a renamed/removed status in Django breaks this typecheck.
 export const ORDER_STATUSES = [
   "proposed",
   "approved",
   "confirmed",
   "completed",
   "closed",
-];
+] as const satisfies readonly OrderStatus[];
 const LOCKED = new Set(["completed", "closed"]);
 
 // The editable core columns: status (pill + select), the two dates, the quantity.

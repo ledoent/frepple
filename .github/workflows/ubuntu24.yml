@@ -85,23 +85,28 @@ jobs:
           ./frepplectl.py test freppledb --verbosity=2
 
       - name: Generate typed API client (Phase 0 ts-client gate)
-        if: contains(github.ref_name, 'modernization') || contains(github.head_ref, 'modernization')
+        if: contains(github.ref_name, 'modernization') || contains(github.head_ref, 'modernization') || contains(github.base_ref, 'modernization')
         working-directory: ${{github.workspace}}
         run: |
           export POSTGRES_HOST=localhost
           export POSTGRES_PORT=5432
           ./frepplectl.py createdatabase --noinput
           ./frepplectl.py migrate --noinput
-          ./tools/modernization/gen_api_client.sh generated
+          ./tools/modernization/gen_api_client.sh
+          # Drift gate: the committed schema + typed client must match a fresh
+          # regeneration from the live API. If this fails, run the script locally
+          # and commit the result.
+          git diff --exit-code -- generated/openapi.yaml frontend/lib/api-types.ts \
+            || { echo "::error::OpenAPI schema / typed client is stale - run tools/modernization/gen_api_client.sh and commit"; exit 1; }
 
       - name: Upload generated API client
-        if: contains(github.ref_name, 'modernization') || contains(github.head_ref, 'modernization')
+        if: always() && (contains(github.ref_name, 'modernization') || contains(github.head_ref, 'modernization') || contains(github.base_ref, 'modernization'))
         uses: actions/upload-artifact@v6
         with:
           name: api-client
           path: |
             generated/openapi.yaml
-            generated/api-types.ts
+            frontend/lib/api-types.ts
           retention-days: 7
 
       - name: Test uninstalling apps

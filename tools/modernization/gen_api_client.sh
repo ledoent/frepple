@@ -1,38 +1,41 @@
 #!/usr/bin/env bash
 #
-# Generate a typed TypeScript client from the frePPLe OpenAPI schema (Phase 0).
+# Regenerate the typed TypeScript client from the frePPLe OpenAPI schema (Phase 0).
 #
-# Run this where a frePPLe Django runtime is available (a dev box or CI) and
-# Node.js is installed. It emits the OpenAPI document and a typed client into
-# the target directory (default: ./generated). In Phase 1 this runs as the
-# Next.js app's codegen step so the SPA stays type-safe against the API.
+# Two committed artifacts are the source of truth (so the SPA builds/typechecks
+# without a Django runtime), and CI runs this script + `git diff --exit-code` to
+# guarantee they never drift from the live API:
 #
-# Usage:
-#   tools/modernization/gen_api_client.sh [OUTDIR]
+#   generated/openapi.yaml        - the OpenAPI 3 schema (drf-spectacular)
+#   frontend/lib/api-types.ts     - the typed client (openapi-typescript)
 #
+# Run where a frePPLe Django runtime + Node.js are available (a dev box or CI).
+# Usage: tools/modernization/gen_api_client.sh
 set -euo pipefail
 
-OUTDIR="${1:-generated}"
-SCHEMA="${OUTDIR}/openapi.yaml"
-CLIENT="${OUTDIR}/api-types.ts"
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+cd "$ROOT"
 
-mkdir -p "${OUTDIR}"
+SCHEMA="generated/openapi.yaml"
+mkdir -p generated
 
-# 1. Emit the OpenAPI 3 schema from the live Django app (drf-spectacular).
-#    --validate fails the build on an invalid schema.
+# 1. Emit the OpenAPI 3 schema from the Django app. --validate fails on an
+#    invalid schema (operationId collisions are warnings, auto-resolved).
 echo ">> generating OpenAPI schema -> ${SCHEMA}"
 ./frepplectl.py spectacular --validate --file "${SCHEMA}"
 
-# 2. Generate TypeScript types from the schema. openapi-typescript emits a
-#    single, dependency-free .d.ts-style types file; pair with openapi-fetch
-#    in the SPA for a typed client. (Swap for openapi-generator/orval if a
-#    full client with hooks is preferred.)
-echo ">> generating TypeScript types -> ${CLIENT}"
-npx --yes openapi-typescript "${SCHEMA}" -o "${CLIENT}"
+# 2. Generate the typed client into the SPA (openapi-typescript). npx auto-fetches
+#    it, so CI needn't `pnpm install` the frontend. Same output path as the
+#    frontend's own `gen:api` script (lib/api-types.ts).
+CLIENT="frontend/lib/api-types.ts"
+# Pin to the frontend's openapi-typescript version so CI regeneration is
+# byte-identical to a local `pnpm gen:api` (the drift gate compares them).
+OAT_VERSION="$(node -p "const p=require('./frontend/package.json'); (p.devDependencies||{})['openapi-typescript'] || (p.dependencies||{})['openapi-typescript'] || '7.0.0'" 2>/dev/null || echo 7.0.0)"
+echo ">> generating typed client -> ${CLIENT} (openapi-typescript@${OAT_VERSION})"
+npx --yes "openapi-typescript@${OAT_VERSION}" "${SCHEMA}" -o "${CLIENT}"
 
-# 3. Smoke type-check the generated file. Run tsc from the typescript package
-#    (-p), in strict mode; --skipLibCheck keeps it to the generated file only.
-echo ">> type-checking ${CLIENT}"
+# 3. Type-check the generated client (strict) so a bad schema fails the build.
+echo ">> type-checking the generated client"
 npx --yes -p typescript tsc --noEmit --strict --skipLibCheck "${CLIENT}"
 
-echo ">> done: ${SCHEMA}, ${CLIENT}"
+echo ">> done: ${SCHEMA}, frontend/lib/api-types.ts"

@@ -2742,9 +2742,15 @@ class OperationPlan final : public Object,
    * Subclasses of the Operation class may use this constructor in their
    * own override of the createOperationPlan method.
    */
-  OperationPlan() { initType(metadata); }
+  OperationPlan() {
+    sequence = sequenceCounter.fetch_add(1, memory_order_relaxed);
+    initType(metadata);
+  }
 
-  OperationPlan(Operation* o) : oper(o) { initType(metadata); }
+  OperationPlan(Operation* o) : oper(o) {
+    sequence = sequenceCounter.fetch_add(1, memory_order_relaxed);
+    initType(metadata);
+  }
 
   static const unsigned short STATUS_APPROVED = 1;
   static const unsigned short STATUS_CONFIRMED = 2;
@@ -2771,6 +2777,15 @@ class OperationPlan final : public Object,
    */
   static unsigned long counterMin;
   static string referenceMax;
+
+  /* Monotonic counter handing each operationplan a unique creation-sequence
+   * number (the `sequence` data member below). Used only as the final,
+   * deterministic tie-breaker in operator< - replacing a pointer comparison that
+   * was not reproducible across platforms/runs. Atomic so concurrent per-cluster
+   * solver threads don't race; relaxed because only uniqueness is needed, not
+   * cross-thread ordering. The sequence is deterministic for a single-threaded
+   * solve (the reproducible case). 64-bit so a long-running daemon never wraps. */
+  static atomic<unsigned long> sequenceCounter;
 
   /* Flag controlling where setup time verification should be performed. */
   static bool propagatesetups;
@@ -2843,6 +2858,10 @@ class OperationPlan final : public Object,
    * planning algorithm rather than the user.
    */
   PooledString info;
+
+  /* Unique creation-sequence number, assigned from sequenceCounter in the
+   * constructor. The deterministic final tie-breaker in operator<. */
+  unsigned long sequence = 0;
 
   /* Hidden, static field to store the location during import. */
   static Location* loc;

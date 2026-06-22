@@ -34,6 +34,7 @@ const MetaCategory* OperationPlan::metacategory;
 const MetaClass* OperationPlan::InterruptionIterator::metadata;
 const MetaCategory* OperationPlan::InterruptionIterator::metacategory;
 unsigned long OperationPlan::counterMin = 1;
+atomic<unsigned long> OperationPlan::sequenceCounter{0};
 string OperationPlan::referenceMax;
 bool OperationPlan::propagatesetups = true;
 
@@ -1043,9 +1044,10 @@ bool OperationPlan::operator<(const OperationPlan& a) const {
     // Use the reference (without auto-generating new ones)
     return getName() < a.getName();
 
-  // Using a pointer comparison as tie breaker. This can give
-  // results that are not reproducible across platforms and runs.
-  return this < &a;
+  // Final tie-breaker: the monotonic creation sequence. Deterministic for a
+  // single-threaded solve and reproducible across platforms/runs, unlike the
+  // pointer comparison this replaced.
+  return sequence < a.sequence;
 }
 
 void OperationPlan::createFlowLoads(

@@ -15,7 +15,9 @@ export type Column = {
   format?: (value: unknown, row: RecordRow) => string;
   pill?: boolean;
   edit?: "number" | "date" | "select";
-  options?: string[];
+  // readonly so a `... as const satisfies readonly OrderStatus[]` list (orders.ts,
+  // type-coupled to the API enum) can be passed directly; options are read-only.
+  options?: readonly string[];
 };
 
 type RawList = RecordRow[] | { rows?: RecordRow[]; data?: { rows?: RecordRow[] } };

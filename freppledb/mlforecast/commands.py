@@ -34,7 +34,6 @@ from freppledb.common.commands import PlanTaskRegistry, PlanTask
 from freppledb.common.models import Parameter
 from freppledb.common.report import getCurrentDate
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -54,6 +53,14 @@ class ExportForecast(PlanTask):
 
     @classmethod
     def run(cls, database=DEFAULT_DB_ALIAS, **kwargs):
+        # Engine selector: "orbit" (default, per-series Bayesian) or "nixtla"
+        # (a single global gradient-boosting model across all series).
+        engine = Parameter.getValue(
+            "forecast.MachineLearning_engine", database, "orbit"
+        )
+        if engine == "nixtla":
+            return cls.run_nixtla(database=database, **kwargs)
+
         import frepple
 
         try:
@@ -125,3 +132,103 @@ class ExportForecast(PlanTask):
                         "skipping machine learning forecast calculation for %s: %s"
                         % (i.name, e)
                     )
+
+    @classmethod
+    def run_nixtla(cls, database=DEFAULT_DB_ALIAS, **kwargs):
+        """Global gradient-boosting variant of the ML forecast.
+
+        Collects the demand history of every automatic forecast into a single
+        panel, fits ONE LightGBM model across all series, and writes the
+        predicted baseline back. Series with too little history are left to the
+        statistical forecast, exactly like the orbit engine.
+        """
+        import frepple
+
+        try:
+            import pandas as pd
+
+            from freppledb.mlforecast.nixtla import generate_forecasts
+        except Exception:
+            raise ImportError(
+                "Please install the mlforecast and lightgbm python packages to "
+                "use the nixtla engine of the frepple ML forecasting module"
+            )
+
+        calendar = Parameter.getValue("forecast.calendar", database, None)
+        currentdate = getCurrentDate(database)
+        horizon_future = int(
+            Parameter.getValue("forecast.Horizon_future", database, 365)
+        )
+        freq = "W-MON" if calendar == "week" else "MS"
+        minimal_training_size = 52 if calendar == "week" else 12
+
+        # Future buckets to forecast — shared by every series (one calendar).
+        future_dates = [
+            i.start
+            for i in frepple.calendar(name=calendar).buckets
+            if i.end >= currentdate
+            and i.start <= currentdate + timedelta(days=horizon_future)
+        ]
+        if not future_dates:
+            return
+        future_set = set(future_dates)
+        horizon = len(future_dates)
+
+        # Assemble the training panel across all automatic forecasts. Leading
+        # zero buckets are trimmed (the `found` flag) to match the orbit engine.
+        rows = []
+        forecasts = {}
+        for i in frepple.demands():
+            if not (
+                isinstance(i, frepple.demand_forecast) and i.methods == "automatic"
+            ):
+                continue
+            series = []
+            found = False
+            for b in i.buckets:
+                if b.end >= currentdate:
+                    break
+                qty = b.orderstotal + b.ordersadjustment
+                if qty > 0 or found:
+                    found = True
+                    series.append((b.start, qty))
+            if len(series) < minimal_training_size:
+                # Too small for ML — handled by the statistical forecast.
+                continue
+            for ds, qty in series:
+                rows.append((i.name, ds, qty))
+            forecasts[i.name] = i
+
+        if not rows:
+            return
+
+        try:
+            panel = pd.DataFrame(rows, columns=["unique_id", "ds", "y"])
+            preds = generate_forecasts(panel, h=horizon, freq=freq)
+        except Exception as e:
+            # Whole-panel failure: fall back to the statistical forecast.
+            print("skipping nixtla machine learning forecast calculation: %s" % e)
+            return
+
+        logger.info(
+            "nixtla engine forecasted %d series over %d buckets",
+            preds["unique_id"].nunique(),
+            horizon,
+        )
+
+        # Write the baseline back, aligning predictions to each forecast's future
+        # buckets positionally (both are date-ordered and length `horizon`).
+        preds_by_series = {
+            uid: sub.sort_values("ds")["prediction"].tolist()
+            for uid, sub in preds.groupby("unique_id")
+        }
+        for name, i in forecasts.items():
+            series_preds = preds_by_series.get(name)
+            if not series_preds:
+                continue
+            members = sorted(
+                (j for j in i.members if j.start in future_set),
+                key=lambda j: j.start,
+            )
+            for j, value in zip(members, series_preds):
+                j.forecastbaseline = max(0.0, float(value))
